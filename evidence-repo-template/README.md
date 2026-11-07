@@ -39,6 +39,21 @@ Descreva o projeto aqui antes que a implementação seja considerada estabelecid
 
 Antes do primeiro release oficial, substitua esta seção por instruções de instalação, configuração e uso básico.
 
+## Exemplo de Smoke Test - Hello World
+
+Este repositório contém um exemplo mínimo de smoke test com a seguinte função de saudação:
+
+```python
+from src.greeting import greet
+print(greet("World"))  # Saída: "Hello, World!"
+```
+
+O teste verifica:
+1. Saudações para nomes normais (ex: `greet("Alice")` → "Hello, Alice!")
+2. Saudações para strings vazias (ex: `greet("")` → "Hello!")
+
+Este é um exemplo descartável para testar a cadeia de toolchain do repositório.
+
 ## Relato de defeitos
 
 Use GitHub Issues para defeitos não sensíveis. Vulnerabilidades de segurança devem seguir `SECURITY.md`.
