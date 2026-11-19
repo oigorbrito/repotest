@@ -1,0 +1,400 @@
+{
+  "metao_before": {
+    "head": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+    "status": [
+      "?? benchmark-evidence/",
+      "?? codex-gpt6-luna-smoke.json",
+      "?? codex-l7-pilot-explicit-model.json",
+      "?? gemini-b4-diag.stderr",
+      "?? gemini-b4-diag.stdout"
+    ]
+  },
+  "occ": [
+    {
+      "rep": 1,
+      "first_update_revision": 2,
+      "db_after_first": {
+        "revision": 2,
+        "objective": "rev2 by writer 1"
+      },
+      "stale_base_revision": 1,
+      "stale_replace": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale writer 2', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runtim"
+      },
+      "db_final": {
+        "revision": 3,
+        "objective": "stale writer 2"
+      },
+      "stale_overwrote_newer_content": true,
+      "verdict": "FAILED_SILENT_OVERWRITE",
+      "db_path": "test-2\\raw\\metao\\occ_rep1\\metao.db"
+    },
+    {
+      "rep": 2,
+      "first_update_revision": 2,
+      "db_after_first": {
+        "revision": 2,
+        "objective": "rev2 by writer 1"
+      },
+      "stale_base_revision": 1,
+      "stale_replace": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale writer 2', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runtim"
+      },
+      "db_final": {
+        "revision": 3,
+        "objective": "stale writer 2"
+      },
+      "stale_overwrote_newer_content": true,
+      "verdict": "FAILED_SILENT_OVERWRITE",
+      "db_path": "test-2\\raw\\metao\\occ_rep2\\metao.db"
+    },
+    {
+      "rep": 3,
+      "first_update_revision": 2,
+      "db_after_first": {
+        "revision": 2,
+        "objective": "rev2 by writer 1"
+      },
+      "stale_base_revision": 1,
+      "stale_replace": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale writer 2', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runtim"
+      },
+      "db_final": {
+        "revision": 3,
+        "objective": "stale writer 2"
+      },
+      "stale_overwrote_newer_content": true,
+      "verdict": "FAILED_SILENT_OVERWRITE",
+      "db_path": "test-2\\raw\\metao\\occ_rep3\\metao.db"
+    }
+  ],
+  "occ_prototype_strict": [
+    {
+      "rep": 1,
+      "fresh_update_accepted": true,
+      "stale_update_accepted": false,
+      "db_final": {
+        "revision": 2,
+        "objective": "rev2 proto"
+      }
+    },
+    {
+      "rep": 2,
+      "fresh_update_accepted": true,
+      "stale_update_accepted": false,
+      "db_final": {
+        "revision": 2,
+        "objective": "rev2 proto"
+      }
+    },
+    {
+      "rep": 3,
+      "fresh_update_accepted": true,
+      "stale_update_accepted": false,
+      "db_final": {
+        "revision": 2,
+        "objective": "rev2 proto"
+      }
+    }
+  ],
+  "fencing": [
+    {
+      "rep": 1,
+      "b_takeover": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.ACTIVE: 'ACTIVE'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=None, execution_status=None, exter"
+      },
+      "active_execution_after_takeover": "m-fence-exec-B",
+      "seq_max_before_A_publish": 3,
+      "mission_before_A": {
+        "revision": 2,
+        "objective": "advanced by B"
+      },
+      "A_publish_event_with_stale_token": {
+        "accepted": true,
+        "value": "MissionEvent(event_id='m-fence:event:4', mission_id='m-fence', sequence=4, kind=<MissionEventKind.EVIDENCE_RECORDED: 'EVIDENCE_RECORDED'>, occurred_at_epoch=0.0, payload=mappingproxy({'worker': 'A', 'execution_id': 'm-fence-exec-A', 'generation': 1}))"
+      },
+      "A_publish_used_unused_sequence": true,
+      "A_replace_mission_stale_copy": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale write by A', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runt"
+      },
+      "A_complete_handle": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.COMPLETED: 'COMPLETED'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=3.0, execution_status=<Execu"
+      },
+      "A_bind_external_by_stale_execution_id": {
+        "accepted": false,
+        "error": "ActiveExecutionNotFound",
+        "message": "'m-fence-exec-A'"
+      },
+      "helper_reject_stale_worker_direct_call": {
+        "accepted": false,
+        "error": "StaleWorkerError",
+        "message": "stale worker token 1; current is 2"
+      },
+      "helper_reject_stale_worker_raises": true,
+      "final_mission": {
+        "revision": 3,
+        "objective": "stale write by A"
+      },
+      "final_handle_status": "COMPLETED",
+      "final_events": [
+        {
+          "seq": 1,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        },
+        {
+          "seq": 2,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 3,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 4,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        }
+      ],
+      "sql_unique_mission_sequence": true,
+      "append_signature": "(self, mission_id: 'str', kind: 'MissionEventKind', *, payload: 'Mapping[str, Any] | None' = None, occurred_at_epoch: 'float' = 0.0) -> 'MissionEvent'",
+      "store_fenced": false,
+      "db_path": "test-2\\raw\\metao\\fencing_rep1\\metao.db"
+    },
+    {
+      "rep": 2,
+      "b_takeover": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.ACTIVE: 'ACTIVE'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=None, execution_status=None, exter"
+      },
+      "active_execution_after_takeover": "m-fence-exec-B",
+      "seq_max_before_A_publish": 3,
+      "mission_before_A": {
+        "revision": 2,
+        "objective": "advanced by B"
+      },
+      "A_publish_event_with_stale_token": {
+        "accepted": true,
+        "value": "MissionEvent(event_id='m-fence:event:4', mission_id='m-fence', sequence=4, kind=<MissionEventKind.EVIDENCE_RECORDED: 'EVIDENCE_RECORDED'>, occurred_at_epoch=0.0, payload=mappingproxy({'worker': 'A', 'execution_id': 'm-fence-exec-A', 'generation': 1}))"
+      },
+      "A_publish_used_unused_sequence": true,
+      "A_replace_mission_stale_copy": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale write by A', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runt"
+      },
+      "A_complete_handle": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.COMPLETED: 'COMPLETED'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=3.0, execution_status=<Execu"
+      },
+      "A_bind_external_by_stale_execution_id": {
+        "accepted": false,
+        "error": "ActiveExecutionNotFound",
+        "message": "'m-fence-exec-A'"
+      },
+      "helper_reject_stale_worker_direct_call": {
+        "accepted": false,
+        "error": "StaleWorkerError",
+        "message": "stale worker token 1; current is 2"
+      },
+      "helper_reject_stale_worker_raises": true,
+      "final_mission": {
+        "revision": 3,
+        "objective": "stale write by A"
+      },
+      "final_handle_status": "COMPLETED",
+      "final_events": [
+        {
+          "seq": 1,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        },
+        {
+          "seq": 2,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 3,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 4,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        }
+      ],
+      "sql_unique_mission_sequence": true,
+      "append_signature": "(self, mission_id: 'str', kind: 'MissionEventKind', *, payload: 'Mapping[str, Any] | None' = None, occurred_at_epoch: 'float' = 0.0) -> 'MissionEvent'",
+      "store_fenced": false,
+      "db_path": "test-2\\raw\\metao\\fencing_rep2\\metao.db"
+    },
+    {
+      "rep": 3,
+      "b_takeover": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.ACTIVE: 'ACTIVE'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=None, execution_status=None, exter"
+      },
+      "active_execution_after_takeover": "m-fence-exec-B",
+      "seq_max_before_A_publish": 3,
+      "mission_before_A": {
+        "revision": 2,
+        "objective": "advanced by B"
+      },
+      "A_publish_event_with_stale_token": {
+        "accepted": true,
+        "value": "MissionEvent(event_id='m-fence:event:4', mission_id='m-fence', sequence=4, kind=<MissionEventKind.EVIDENCE_RECORDED: 'EVIDENCE_RECORDED'>, occurred_at_epoch=0.0, payload=mappingproxy({'worker': 'A', 'execution_id': 'm-fence-exec-A', 'generation': 1}))"
+      },
+      "A_publish_used_unused_sequence": true,
+      "A_replace_mission_stale_copy": {
+        "accepted": true,
+        "value": "MissionRecord(mission=Mission(mission_id='m-fence', objective='stale write by A', required_capabilities=frozenset({'workflow'}), task_family=None), outcome=MissionOutcome(mission_id='m-fence', orchestrator_id='runtime-b', execution=ExecutionResult(execution_id='m-fence-exec-2', orchestrator_id='runt"
+      },
+      "A_complete_handle": {
+        "accepted": true,
+        "value": "ActiveExecutionHandle(mission_id='m-fence', execution_id='m-fence-exec-B', orchestrator_id='runtime-b', attempt_number=2, started_at_epoch=1.0, cost=0.0, status=<ExecutionHandleStatus.COMPLETED: 'COMPLETED'>, cancel_requested=False, cancel_delegated=False, ended_at_epoch=3.0, execution_status=<Execu"
+      },
+      "A_bind_external_by_stale_execution_id": {
+        "accepted": false,
+        "error": "ActiveExecutionNotFound",
+        "message": "'m-fence-exec-A'"
+      },
+      "helper_reject_stale_worker_direct_call": {
+        "accepted": false,
+        "error": "StaleWorkerError",
+        "message": "stale worker token 1; current is 2"
+      },
+      "helper_reject_stale_worker_raises": true,
+      "final_mission": {
+        "revision": 3,
+        "objective": "stale write by A"
+      },
+      "final_handle_status": "COMPLETED",
+      "final_events": [
+        {
+          "seq": 1,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        },
+        {
+          "seq": 2,
+          "kind": "RUNTIME_STARTED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 3,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-B",
+            "generation": 2,
+            "worker": "B"
+          }
+        },
+        {
+          "seq": 4,
+          "kind": "EVIDENCE_RECORDED",
+          "payload": {
+            "execution_id": "m-fence-exec-A",
+            "generation": 1,
+            "worker": "A"
+          }
+        }
+      ],
+      "sql_unique_mission_sequence": true,
+      "append_signature": "(self, mission_id: 'str', kind: 'MissionEventKind', *, payload: 'Mapping[str, Any] | None' = None, occurred_at_epoch: 'float' = 0.0) -> 'MissionEvent'",
+      "store_fenced": false,
+      "db_path": "test-2\\raw\\metao\\fencing_rep3\\metao.db"
+    }
+  ],
+  "fencing_prototype": [
+    {
+      "rep": 1,
+      "stale_A_accepted": false,
+      "current_B_accepted": true,
+      "events": [
+        {
+          "worker": "B"
+        }
+      ]
+    },
+    {
+      "rep": 2,
+      "stale_A_accepted": false,
+      "current_B_accepted": true,
+      "events": [
+        {
+          "worker": "B"
+        }
+      ]
+    },
+    {
+      "rep": 3,
+      "stale_A_accepted": false,
+      "current_B_accepted": true,
+      "events": [
+        {
+          "worker": "B"
+        }
+      ]
+    }
+  ],
+  "metao_after": {
+    "head": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+    "status": [
+      "?? benchmark-evidence/",
+      "?? codex-gpt6-luna-smoke.json",
+      "?? codex-l7-pilot-explicit-model.json",
+      "?? gemini-b4-diag.stderr",
+      "?? gemini-b4-diag.stdout"
+    ]
+  },
+  "metao_unchanged": true
+}

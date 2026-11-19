@@ -1,0 +1,1053 @@
+{
+  "tree": "D:\\projetos\\durability-benchmark\\test-3\\work\\metao-baseline",
+  "occ": [
+    {
+      "rep": 1,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 22,
+      "lost_updates": 38,
+      "integrity": "ok"
+    },
+    {
+      "rep": 2,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 18,
+      "lost_updates": 42,
+      "integrity": "ok"
+    },
+    {
+      "rep": 3,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 21,
+      "lost_updates": 39,
+      "integrity": "ok"
+    },
+    {
+      "rep": 4,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 22,
+      "lost_updates": 38,
+      "integrity": "ok"
+    },
+    {
+      "rep": 5,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 15,
+      "lost_updates": 45,
+      "integrity": "ok"
+    },
+    {
+      "rep": 6,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 22,
+      "lost_updates": 38,
+      "integrity": "ok"
+    },
+    {
+      "rep": 7,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 17,
+      "lost_updates": 43,
+      "integrity": "ok"
+    },
+    {
+      "rep": 8,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 19,
+      "lost_updates": 41,
+      "integrity": "ok"
+    },
+    {
+      "rep": 9,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 29,
+      "lost_updates": 31,
+      "integrity": "ok"
+    },
+    {
+      "rep": 10,
+      "successes": 60,
+      "conflicts_retried": 0,
+      "final_revision": 61,
+      "expected_revision": 61,
+      "markers_in_final": 29,
+      "lost_updates": 31,
+      "integrity": "ok"
+    }
+  ],
+  "append": [
+    {
+      "rep": 1,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 2,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 3,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 4,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 5,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 6,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 7,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 8,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 9,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 10,
+      "appended_ok": 100,
+      "errors": [],
+      "unique_sequences": 100,
+      "stored_events": 100,
+      "sequences_contiguous": true,
+      "integrity": "ok"
+    }
+  ],
+  "complete_race": [
+    {
+      "rep": 1,
+      "b_accepted": 74,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 63,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 2,
+      "b_accepted": 69,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 60,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 3,
+      "b_accepted": 68,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 67,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 4,
+      "b_accepted": 56,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 53,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 5,
+      "b_accepted": 46,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 45,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 6,
+      "b_accepted": 77,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 65,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 7,
+      "b_accepted": 67,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 62,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 8,
+      "b_accepted": 58,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 56,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 9,
+      "b_accepted": 77,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 63,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 10,
+      "b_accepted": 70,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 66,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 11,
+      "b_accepted": 67,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 57,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 12,
+      "b_accepted": 86,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 84,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 13,
+      "b_accepted": 64,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 60,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 14,
+      "b_accepted": 66,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 54,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 15,
+      "b_accepted": 53,
+      "b_rejected": 1,
+      "stale_completions_of_newer_execution": 47,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 16,
+      "b_accepted": 69,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 68,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 17,
+      "b_accepted": 61,
+      "b_rejected": 2,
+      "stale_completions_of_newer_execution": 58,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 18,
+      "b_accepted": 67,
+      "b_rejected": 2,
+      "stale_completions_of_newer_execution": 62,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 19,
+      "b_accepted": 67,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 65,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    },
+    {
+      "rep": 20,
+      "b_accepted": 64,
+      "b_rejected": 0,
+      "stale_completions_of_newer_execution": 33,
+      "final_execution_id": "e2",
+      "final_status": "COMPLETED",
+      "integrity": "ok"
+    }
+  ],
+  "suspended_worker": [
+    {
+      "rep": 1,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 2,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 3,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 4,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 5,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 6,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 7,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 8,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 9,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    },
+    {
+      "rep": 10,
+      "A_attempts": {
+        "append": "ACCEPTED",
+        "replace": "ACCEPTED",
+        "complete": "ACCEPTED",
+        "bind": "REJECTED:ActiveExecutionNotFound"
+      },
+      "A_accepted_count": 3,
+      "objective_final": "by A",
+      "events_final_by": [
+        "B",
+        "B",
+        "A"
+      ],
+      "handle_final": [
+        [
+          "eB",
+          "COMPLETED",
+          "FAILED"
+        ]
+      ],
+      "stale_write_visible": true,
+      "integrity": "ok"
+    }
+  ],
+  "crash_windows": [
+    {
+      "window": "tx:append",
+      "op": "append",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 1,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:append",
+      "op": "append",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 1,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:append",
+      "op": "append",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 1,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:append",
+      "op": "append",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 1,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:append",
+      "op": "append",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 1,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:replace",
+      "op": "replace",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:replace",
+      "op": "replace",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:replace",
+      "op": "replace",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:replace",
+      "op": "replace",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:replace",
+      "op": "replace",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:complete",
+      "op": "complete",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:complete",
+      "op": "complete",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:complete",
+      "op": "complete",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:complete",
+      "op": "complete",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:complete",
+      "op": "complete",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:activate",
+      "op": "activate",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:activate",
+      "op": "activate",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:activate",
+      "op": "activate",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:activate",
+      "op": "activate",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "tx:activate",
+      "op": "activate",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": true,
+      "after_commit_state_persisted": false,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:append",
+      "op": "append",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 1,
+      "events_final": 2,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:append",
+      "op": "append",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 1,
+      "events_final": 2,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:append",
+      "op": "append",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 1,
+      "events_final": 2,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:append",
+      "op": "append",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 1,
+      "events_final": 2,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:append",
+      "op": "append",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 1,
+      "events_final": 2,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:replace",
+      "op": "replace",
+      "rep": 1,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:replace",
+      "op": "replace",
+      "rep": 2,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:replace",
+      "op": "replace",
+      "rep": 3,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:replace",
+      "op": "replace",
+      "rep": 4,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    },
+    {
+      "window": "after:replace",
+      "op": "replace",
+      "rep": 5,
+      "crash_exit_code": 137,
+      "crashed_before_commit_state_unchanged": false,
+      "after_commit_state_persisted": true,
+      "retry_outcome": "ACCEPTED",
+      "events_before": 0,
+      "events_after_crash": 0,
+      "events_final": 0,
+      "integrity_after_crash": "ok",
+      "integrity_final": "ok"
+    }
+  ]
+}

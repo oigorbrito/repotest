@@ -1,0 +1,17 @@
+{"t":1795057355733,"pid":23496,"run":"run1","ev":"resume"}
+{"t":1795057355739,"pid":23496,"run":"run1","ev":"phase_start","n":1}
+{"t":1795057355739,"pid":23496,"run":"run1","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057355740,"pid":23496,"run":"run1","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057355742,"pid":23496,"run":"run1","ev":"effect","key":"unit_1"}
+{"t":1795057355743,"pid":23496,"run":"run1","ev":"checkpoint_committed","next":2}
+{"t":1795057355769,"pid":23496,"run":"run1","ev":"phase_start","n":2}
+{"t":1795057355770,"pid":23496,"run":"run1","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057355771,"pid":23496,"run":"run1","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057355772,"pid":23496,"run":"run1","ev":"effect","key":"unit_2"}
+{"t":1795057355773,"pid":23496,"run":"run1","ev":"checkpoint_committed","next":3}
+{"t":1795057355774,"pid":23496,"run":"run1","ev":"stop_committed"}
+{"t":1795057356657,"pid":37948,"run":"recover","ev":"resume"}
+{"t":1795057357280,"pid":37948,"run":"recover","ev":"phase_start","n":3}
+{"t":1795057357281,"pid":37948,"run":"recover","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057357281,"pid":37948,"run":"recover","ev":"memo_write","key":"unit_3","winner":true}
+{"t":1795057357283,"pid":37948,"run":"recover","ev":"effect","key":"unit_3"}

@@ -1,0 +1,25 @@
+{"t":1795055529464,"pid":18892,"run":"instA","ev":"resume"}
+{"t":1795055529463,"pid":4472,"run":"instB","ev":"resume"}
+{"t":1795055529483,"pid":4472,"run":"instB","ev":"phase_start","n":1}
+{"t":1795055529484,"pid":4472,"run":"instB","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795055529489,"pid":4472,"run":"instB","ev":"effect","key":"unit_1"}
+{"t":1795055529492,"pid":4472,"run":"instB","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795055529501,"pid":18892,"run":"instA","ev":"phase_start","n":1}
+{"t":1795055529502,"pid":18892,"run":"instA","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795055529507,"pid":18892,"run":"instA","ev":"effect","key":"unit_1"}
+{"t":1795055529509,"pid":18892,"run":"instA","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795055529511,"pid":18892,"run":"instA","ev":"checkpoint_committed","next":2}
+{"t":1795055529513,"pid":4472,"run":"instB","ev":"checkpoint_committed","next":2}
+{"t":1795055529514,"pid":4472,"run":"instB","ev":"phase_start","n":2}
+{"t":1795055529515,"pid":4472,"run":"instB","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795055529515,"pid":4472,"run":"instB","ev":"effect","key":"unit_2"}
+{"t":1795055529516,"pid":4472,"run":"instB","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795055529516,"pid":4472,"run":"instB","ev":"checkpoint_committed","next":3}
+{"t":1795055529530,"pid":4472,"run":"instB","ev":"phase_start","n":3}
+{"t":1795055529531,"pid":4472,"run":"instB","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795055529532,"pid":4472,"run":"instB","ev":"effect","key":"unit_3"}
+{"t":1795055529534,"pid":4472,"run":"instB","ev":"memo_write","key":"unit_3","winner":true}
+{"t":1795055529537,"pid":18892,"run":"instA","ev":"phase_start","n":2}
+{"t":1795055529538,"pid":18892,"run":"instA","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795055529538,"pid":18892,"run":"instA","ev":"effect","key":"unit_2"}
+{"t":1795055529546,"pid":18892,"run":"instA","ev":"report","message":"Task 7 is already terminal","stack":"Error: Task 7 is already terminal\n    at #assemble (file:///D:/projetos/finecode/packages/durable/src/session/transaction.ts:769:53)\n    at async Transaction.settleSuccess (file:///D:/projetos/finecode/packages/durable/src/session/transaction.ts:687:11)\n    at async #runCommit (file:///D:/projetos/finecode/packages/durable/src/session/session.ts:736:13)","info":{"type":"session_failed"}}

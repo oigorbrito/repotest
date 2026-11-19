@@ -1,0 +1,1 @@
+{"role": "activate", "id": "C", "fenced_tree": false, "occ_tree": false, "token": null, "exec_id": "e2", "state": {"revision": 1, "objective": "persist mission lifecycle", "events": [], "handle": [["e2", "ACTIVE", null]], "integrity": "ok"}}

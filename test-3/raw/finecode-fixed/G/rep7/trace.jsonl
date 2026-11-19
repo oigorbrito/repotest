@@ -1,0 +1,24 @@
+{"t":1795057547237,"pid":30324,"run":"instA","ev":"resume"}
+{"t":1795057547242,"pid":30324,"run":"instA","ev":"phase_start","n":1}
+{"t":1795057547242,"pid":30324,"run":"instA","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057547244,"pid":30324,"run":"instA","ev":"effect","key":"unit_1"}
+{"t":1795057547245,"pid":30324,"run":"instA","ev":"pause","point":"effect:unit_1"}
+{"t":1795057548091,"pid":19088,"run":"instB","ev":"resume"}
+{"t":1795057548094,"pid":19088,"run":"instB","ev":"phase_start","n":1}
+{"t":1795057548094,"pid":19088,"run":"instB","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057548096,"pid":19088,"run":"instB","ev":"effect","key":"unit_1"}
+{"t":1795057548097,"pid":19088,"run":"instB","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057548101,"pid":19088,"run":"instB","ev":"checkpoint_committed","next":2}
+{"t":1795057548115,"pid":19088,"run":"instB","ev":"phase_start","n":2}
+{"t":1795057548116,"pid":19088,"run":"instB","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057548116,"pid":19088,"run":"instB","ev":"pause","point":"read:unit_2"}
+{"t":1795057548148,"pid":30324,"run":"instA","ev":"resumed_from_pause","point":"effect:unit_1"}
+{"t":1795057548153,"pid":30324,"run":"instA","ev":"report","message":"SQLite storage epoch 2 is superseded by epoch 3; a newer instance owns this database","info":{"type":"session_failed"}}
+{"t":1795057548449,"pid":19088,"run":"instB","ev":"resumed_from_pause","point":"read:unit_2"}
+{"t":1795057548449,"pid":19088,"run":"instB","ev":"effect","key":"unit_2"}
+{"t":1795057548454,"pid":19088,"run":"instB","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057548455,"pid":19088,"run":"instB","ev":"checkpoint_committed","next":3}
+{"t":1795057548465,"pid":19088,"run":"instB","ev":"phase_start","n":3}
+{"t":1795057548465,"pid":19088,"run":"instB","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057548466,"pid":19088,"run":"instB","ev":"effect","key":"unit_3"}
+{"t":1795057548466,"pid":19088,"run":"instB","ev":"memo_write","key":"unit_3","winner":true}

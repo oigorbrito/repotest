@@ -1,0 +1,8 @@
+{
+  "kind": "settled",
+  "outcome": {
+    "status": "completed",
+    "result": "units=3"
+  },
+  "status": "terminal"
+}

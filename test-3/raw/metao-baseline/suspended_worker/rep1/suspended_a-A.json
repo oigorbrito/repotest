@@ -1,0 +1,1 @@
+{"role": "suspended_a", "id": "A", "fenced_tree": false, "occ_tree": false, "token": null, "attempts": {"append": "ACCEPTED", "replace": "ACCEPTED", "complete": "ACCEPTED", "bind": "REJECTED:ActiveExecutionNotFound"}, "state": {"revision": 3, "objective": "by A", "events": [[1, "B"], [2, "B"], [3, "A"]], "handle": [["eB", "COMPLETED", "FAILED"]], "integrity": "ok"}}

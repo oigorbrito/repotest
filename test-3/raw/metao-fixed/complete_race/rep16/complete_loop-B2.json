@@ -1,0 +1,1 @@
+{"role": "complete_loop", "id": "B2", "fenced_tree": true, "occ_tree": true, "errors": {"StaleWorkerError": 88}, "accepted": 1, "rejected": 88, "stale_completions_of_other_execution": 0, "returned": [["e1", "COMPLETED", "SUCCEEDED"]], "state": {"revision": 1, "objective": "persist mission lifecycle", "events": [], "handle": [["e2", "ACTIVE", null, 2]], "integrity": "ok"}}

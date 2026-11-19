@@ -1,0 +1,4 @@
+{
+  "kind": "error",
+  "error": "Session failed after a storage error; close and reopen it"
+}

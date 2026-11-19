@@ -1,0 +1,17 @@
+{"t":1795057022423,"pid":22504,"run":"run1","ev":"resume"}
+{"t":1795057022435,"pid":22504,"run":"run1","ev":"phase_start","n":1}
+{"t":1795057022435,"pid":22504,"run":"run1","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057022436,"pid":22504,"run":"run1","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057022439,"pid":22504,"run":"run1","ev":"effect","key":"unit_1"}
+{"t":1795057022441,"pid":22504,"run":"run1","ev":"checkpoint_committed","next":2}
+{"t":1795057022450,"pid":22504,"run":"run1","ev":"phase_start","n":2}
+{"t":1795057022450,"pid":22504,"run":"run1","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057022451,"pid":22504,"run":"run1","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057022451,"pid":22504,"run":"run1","ev":"effect","key":"unit_2"}
+{"t":1795057022452,"pid":22504,"run":"run1","ev":"checkpoint_committed","next":3}
+{"t":1795057022452,"pid":22504,"run":"run1","ev":"stop_committed"}
+{"t":1795057023484,"pid":19220,"run":"recover","ev":"resume"}
+{"t":1795057023971,"pid":19220,"run":"recover","ev":"phase_start","n":3}
+{"t":1795057023971,"pid":19220,"run":"recover","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057023972,"pid":19220,"run":"recover","ev":"memo_write","key":"unit_3","winner":true}
+{"t":1795057023974,"pid":19220,"run":"recover","ev":"effect","key":"unit_3"}

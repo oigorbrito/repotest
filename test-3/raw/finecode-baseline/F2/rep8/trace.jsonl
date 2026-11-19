@@ -1,0 +1,26 @@
+{"t":1795057204725,"pid":23292,"run":"instA","ev":"resume"}
+{"t":1795057204733,"pid":23292,"run":"instA","ev":"phase_start","n":1}
+{"t":1795057204733,"pid":23292,"run":"instA","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057204734,"pid":23292,"run":"instA","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057204734,"pid":23292,"run":"instA","ev":"pause","point":"memo:unit_1"}
+{"t":1795057205665,"pid":27472,"run":"instB","ev":"resume"}
+{"t":1795057205668,"pid":27472,"run":"instB","ev":"phase_start","n":1}
+{"t":1795057205668,"pid":27472,"run":"instB","ev":"memo_read","key":"unit_1","seen":true}
+{"t":1795057205669,"pid":27472,"run":"instB","ev":"checkpoint_committed","next":2}
+{"t":1795057205686,"pid":27472,"run":"instB","ev":"phase_start","n":2}
+{"t":1795057205690,"pid":27472,"run":"instB","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057205690,"pid":27472,"run":"instB","ev":"pause","point":"read:unit_2"}
+{"t":1795057205719,"pid":23292,"run":"instA","ev":"resumed_from_pause","point":"memo:unit_1"}
+{"t":1795057205721,"pid":23292,"run":"instA","ev":"effect","key":"unit_1"}
+{"t":1795057205722,"pid":23292,"run":"instA","ev":"checkpoint_committed","next":2}
+{"t":1795057205735,"pid":23292,"run":"instA","ev":"phase_start","n":2}
+{"t":1795057205735,"pid":23292,"run":"instA","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057205736,"pid":23292,"run":"instA","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057205736,"pid":23292,"run":"instA","ev":"effect","key":"unit_2"}
+{"t":1795057205737,"pid":23292,"run":"instA","ev":"checkpoint_committed","next":3}
+{"t":1795057205750,"pid":23292,"run":"instA","ev":"phase_start","n":3}
+{"t":1795057205750,"pid":23292,"run":"instA","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057205751,"pid":23292,"run":"instA","ev":"memo_write","key":"unit_3","winner":true}
+{"t":1795057205751,"pid":23292,"run":"instA","ev":"effect","key":"unit_3"}
+{"t":1795057206029,"pid":27472,"run":"instB","ev":"resumed_from_pause","point":"read:unit_2"}
+{"t":1795057206034,"pid":27472,"run":"instB","ev":"report","message":"Task 7 is already terminal","info":{"type":"session_failed"}}

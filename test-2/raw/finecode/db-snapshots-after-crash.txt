@@ -1,0 +1,8 @@
+tables: tasks
+tasks id 7 status running state {"status":"running","checkpoint":{"phase":"unit","n":2}} memos {"unit_1":true,"unit_2":true} restarts 0
+tables: tasks
+tasks id 7 status running state {"status":"running","checkpoint":{"phase":"unit","n":2}} memos {"unit_1":true} restarts 0
+tables: tasks
+tasks id 7 status running state {"status":"running","checkpoint":{"phase":"unit","n":2}} memos {"unit_1":true,"unit_2":true} restarts 0
+tables: tasks
+tasks id 7 status terminal state {"status":"terminal","outcome":{"status":"completed","result":"units=3"}} memos null restarts 0

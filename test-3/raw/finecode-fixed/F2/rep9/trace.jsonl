@@ -1,0 +1,23 @@
+{"t":1795057522756,"pid":21332,"run":"instA","ev":"resume"}
+{"t":1795057522761,"pid":21332,"run":"instA","ev":"phase_start","n":1}
+{"t":1795057522761,"pid":21332,"run":"instA","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057522762,"pid":21332,"run":"instA","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057522763,"pid":21332,"run":"instA","ev":"pause","point":"memo:unit_1"}
+{"t":1795057523602,"pid":17636,"run":"instB","ev":"resume"}
+{"t":1795057523605,"pid":17636,"run":"instB","ev":"phase_start","n":1}
+{"t":1795057523606,"pid":17636,"run":"instB","ev":"memo_read","key":"unit_1","seen":true}
+{"t":1795057523607,"pid":17636,"run":"instB","ev":"checkpoint_committed","next":2}
+{"t":1795057523626,"pid":17636,"run":"instB","ev":"phase_start","n":2}
+{"t":1795057523630,"pid":17636,"run":"instB","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057523631,"pid":17636,"run":"instB","ev":"pause","point":"read:unit_2"}
+{"t":1795057523655,"pid":21332,"run":"instA","ev":"resumed_from_pause","point":"memo:unit_1"}
+{"t":1795057523661,"pid":21332,"run":"instA","ev":"effect","key":"unit_1"}
+{"t":1795057523664,"pid":21332,"run":"instA","ev":"report","message":"SQLite storage epoch 2 is superseded by epoch 3; a newer instance owns this database","info":{"type":"session_failed"}}
+{"t":1795057523969,"pid":17636,"run":"instB","ev":"resumed_from_pause","point":"read:unit_2"}
+{"t":1795057523975,"pid":17636,"run":"instB","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057523978,"pid":17636,"run":"instB","ev":"effect","key":"unit_2"}
+{"t":1795057523979,"pid":17636,"run":"instB","ev":"checkpoint_committed","next":3}
+{"t":1795057524000,"pid":17636,"run":"instB","ev":"phase_start","n":3}
+{"t":1795057524000,"pid":17636,"run":"instB","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057524000,"pid":17636,"run":"instB","ev":"memo_write","key":"unit_3","winner":true}
+{"t":1795057524001,"pid":17636,"run":"instB","ev":"effect","key":"unit_3"}

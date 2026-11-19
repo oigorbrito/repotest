@@ -1,0 +1,17 @@
+{"t":1795057449392,"pid":19796,"run":"instA","ev":"resume"}
+{"t":1795057449385,"pid":38696,"run":"instB","ev":"resume"}
+{"t":1795057449406,"pid":19796,"run":"instA","ev":"report","message":"SQLite storage epoch 2 is superseded by epoch 3; a newer instance owns this database","info":{"type":"session_failed"}}
+{"t":1795057449410,"pid":38696,"run":"instB","ev":"phase_start","n":1}
+{"t":1795057449411,"pid":38696,"run":"instB","ev":"memo_read","key":"unit_1","seen":null}
+{"t":1795057449417,"pid":38696,"run":"instB","ev":"effect","key":"unit_1"}
+{"t":1795057449433,"pid":38696,"run":"instB","ev":"memo_write","key":"unit_1","winner":true}
+{"t":1795057449434,"pid":38696,"run":"instB","ev":"checkpoint_committed","next":2}
+{"t":1795057449455,"pid":38696,"run":"instB","ev":"phase_start","n":2}
+{"t":1795057449456,"pid":38696,"run":"instB","ev":"memo_read","key":"unit_2","seen":null}
+{"t":1795057449457,"pid":38696,"run":"instB","ev":"effect","key":"unit_2"}
+{"t":1795057449459,"pid":38696,"run":"instB","ev":"memo_write","key":"unit_2","winner":true}
+{"t":1795057449462,"pid":38696,"run":"instB","ev":"checkpoint_committed","next":3}
+{"t":1795057449479,"pid":38696,"run":"instB","ev":"phase_start","n":3}
+{"t":1795057449480,"pid":38696,"run":"instB","ev":"memo_read","key":"unit_3","seen":null}
+{"t":1795057449481,"pid":38696,"run":"instB","ev":"effect","key":"unit_3"}
+{"t":1795057449483,"pid":38696,"run":"instB","ev":"memo_write","key":"unit_3","winner":true}

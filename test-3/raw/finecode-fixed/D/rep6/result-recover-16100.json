@@ -1,0 +1,8 @@
+{
+  "kind": "settled",
+  "outcome": {
+    "status": "completed",
+    "result": "{\"read\":\"v1\",\"w3\":\"v1\",\"burstRead\":\"b0\"}"
+  },
+  "status": "terminal"
+}

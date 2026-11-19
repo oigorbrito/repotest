@@ -1,0 +1,1 @@
+{"role": "takeover_b", "id": "B", "fenced_tree": true, "occ_tree": true, "token": 2, "state": {"revision": 2, "objective": "by B", "events": [[1, "B"], [2, "B"]], "handle": [["eB", "ACTIVE", null, 2]], "integrity": "ok"}}

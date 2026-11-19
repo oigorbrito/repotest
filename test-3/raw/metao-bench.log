@@ -1,0 +1,12 @@
+baseline:occ done (10 reps, 12.3s)
+baseline:append done (10 reps, 13.9s)
+baseline:complete_race done (20 reps, 26.1s)
+baseline:suspended_worker done (10 reps, 11.0s)
+baseline:crash_windows done (5 reps, 46.6s)
+fixed:occ done (10 reps, 11.9s)
+fixed:append done (10 reps, 14.3s)
+fixed:complete_race done (20 reps, 27.0s)
+fixed:suspended_worker done (10 reps, 10.8s)
+fixed:crash_windows done (5 reps, 45.3s)
+written
+DONE

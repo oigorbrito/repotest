@@ -1,0 +1,1072 @@
+{
+  "test": "Teste Comparativo 2 — idempotência e fencing real",
+  "generated_by": "test-2/consolidate.py (a partir de raw/)",
+  "origins": {
+    "finecode": {
+      "path": "D:/projetos/FineCode",
+      "commit_before": "ad41b5c344d5399982718720db975b1e020e2c40",
+      "commit_after": "ad41b5c344d5399982718720db975b1e020e2c40",
+      "unchanged": true,
+      "git_status_before": [
+        "?? nul"
+      ],
+      "git_status_after": [
+        "?? nul"
+      ]
+    },
+    "metao": {
+      "path": "D:/projetos/metaO",
+      "commit_before": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+      "commit_after": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+      "unchanged": true,
+      "git_status_before": [
+        "?? benchmark-evidence/",
+        "?? codex-gpt6-luna-smoke.json",
+        "?? codex-l7-pilot-explicit-model.json",
+        "?? gemini-b4-diag.stderr",
+        "?? gemini-b4-diag.stdout"
+      ],
+      "git_status_after": [
+        "?? benchmark-evidence/",
+        "?? codex-gpt6-luna-smoke.json",
+        "?? codex-l7-pilot-explicit-model.json",
+        "?? gemini-b4-diag.stderr",
+        "?? gemini-b4-diag.stdout"
+      ]
+    }
+  },
+  "mechanisms": {
+    "finecode.runtime.memo": {
+      "classification": "PARCIAL",
+      "files": [
+        "packages/durable/src/harness/scheduler.ts (memo 2014–2029, #gated 2188, open 352–390)",
+        "packages/durable/src/storage/sqlite/storage.ts (commit 187, task upsert 818–830, task read 427)",
+        "packages/chord/src/sqlite/node.ts (transaction BEGIN IMMEDIATE 139–158, WAL 189)"
+      ],
+      "guarantee_obtained": {
+        "intra_process_first_writer_wins": "COMPROVADO (D)",
+        "persistence_before_restart": "COMPROVADO (A, B2, C, D)",
+        "exactly_once_effect": "NÃO OBTIDO",
+        "at_most_once": "obtida com padrão intent (A: efeito perdido 3/3)",
+        "at_least_once": "obtida com padrão effect-first (B: duplicado 3/3)",
+        "cross_instance_uniqueness": "FALHOU (E-intent, E-intent-widened, E-effect: duplicados 3/3 em cada)"
+      },
+      "scenarios": {
+        "A": {
+          "description": "memo intent gravado; efeito não executado; crash after_memo:2",
+          "mode": "crash",
+          "pattern": "intent",
+          "crash": "after_memo:2",
+          "widen_ms": null,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 2,
+              "effects_duplicated": 0,
+              "effects_lost": [
+                "unit_2"
+              ],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_memo:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 2,
+              "effects_duplicated": 0,
+              "effects_lost": [
+                "unit_2"
+              ],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_memo:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 2,
+              "effects_duplicated": 0,
+              "effects_lost": [
+                "unit_2"
+              ],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_memo:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "B": {
+          "description": "efeito executado; memo não gravado; crash after_effect:2 (padrão effect-first)",
+          "mode": "crash",
+          "pattern": "effect",
+          "crash": "after_effect:2",
+          "widen_ms": null,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 4,
+              "effects_duplicated": 1,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 4,
+              "effects_duplicated": 1,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 4,
+              "effects_duplicated": 1,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "B2": {
+          "description": "efeito executado após memo intent; crash after_effect:2 (controle extra)",
+          "mode": "crash",
+          "pattern": "intent",
+          "crash": "after_effect:2",
+          "widen_ms": null,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [
+                {
+                  "key": "unit_2",
+                  "seen": true
+                }
+              ],
+              "phase_starts_after_restart": 2,
+              "crash_points_reached": [
+                "after_effect:2"
+              ],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 1,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "C": {
+          "description": "memo, efeito e checkpoint confirmados; parada graciosa após unit_2; reinício",
+          "mode": "graceful",
+          "pattern": "intent",
+          "crash": null,
+          "widen_ms": null,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 1,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 1,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 3,
+              "effects_duplicated": 0,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 1,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "D": {
+          "description": "mesma chave com valores diferentes (intra-processo e após reinício)",
+          "mode": "values",
+          "pattern": null,
+          "crash": null,
+          "widen_ms": null,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 0,
+              "effects_duplicated": 0,
+              "effects_lost": "N/A",
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "{\"read\":\"v1\",\"w3\":\"v1\",\"burstRead\":\"b0\"}"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 0,
+              "effects_duplicated": 0,
+              "effects_lost": "N/A",
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "{\"read\":\"v1\",\"w3\":\"v1\",\"burstRead\":\"b0\"}"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 0,
+              "effects_duplicated": 0,
+              "effects_lost": "N/A",
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "run1": 0,
+                "recover": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "{\"read\":\"v1\",\"w3\":\"v1\",\"burstRead\":\"b0\"}"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "stopped",
+                  "outcome": null,
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "E-intent": {
+          "description": "duas instâncias concorrentes, padrão intent, sem atraso",
+          "mode": "concurrent",
+          "pattern": "intent",
+          "crash": null,
+          "widen_ms": 0,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        "E-intent-widened": {
+          "description": "duas instâncias concorrentes, padrão intent, atraso de 300 ms entre leitura e efeito",
+          "mode": "concurrent",
+          "pattern": "intent",
+          "crash": null,
+          "widen_ms": 300,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "error",
+                  "outcome": null,
+                  "error": "Session failed after a storage error; close and reopen it"
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "error",
+                  "outcome": null,
+                  "error": "Session failed after a storage error; close and reopen it"
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "error",
+                  "outcome": null,
+                  "error": "Session failed after a storage error; close and reopen it"
+                }
+              ]
+            }
+          ]
+        },
+        "E-effect": {
+          "description": "duas instâncias concorrentes, padrão effect-first, sem atraso",
+          "mode": "concurrent",
+          "pattern": "effect",
+          "crash": null,
+          "widen_ms": 0,
+          "reps": [
+            {
+              "rep": 1,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 2,
+              "effects_executed": 6,
+              "effects_duplicated": 3,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            },
+            {
+              "rep": 3,
+              "effects_executed": 5,
+              "effects_duplicated": 2,
+              "effects_lost": [],
+              "memo_values_recovered": [],
+              "phase_starts_after_restart": 0,
+              "crash_points_reached": [],
+              "exit_codes": {
+                "setup": 0,
+                "instA": 0,
+                "instB": 0
+              },
+              "task_results": [
+                {
+                  "kind": "error",
+                  "outcome": null,
+                  "error": "Session failed after a storage error; close and reopen it"
+                },
+                {
+                  "kind": "settled",
+                  "outcome": {
+                    "status": "completed",
+                    "result": "units=3"
+                  },
+                  "error": null
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "snapshots": "raw/finecode/db-snapshots-after-crash.txt"
+    },
+    "metao.SQLiteMissionStore.replace (OCC)": {
+      "classification": "FALHOU",
+      "files": [
+        "src/metao/sqlite_store.py:507–524 (replace)",
+        "src/metao/mission_store.py:118 (InMemoryMissionStore.replace, mesma semântica)"
+      ],
+      "reps": [
+        {
+          "rep": 1,
+          "stale_base_revision": 1,
+          "stale_replace_accepted": true,
+          "db_final": {
+            "revision": 3,
+            "objective": "stale writer 2"
+          },
+          "verdict": "FAILED_SILENT_OVERWRITE"
+        },
+        {
+          "rep": 2,
+          "stale_base_revision": 1,
+          "stale_replace_accepted": true,
+          "db_final": {
+            "revision": 3,
+            "objective": "stale writer 2"
+          },
+          "verdict": "FAILED_SILENT_OVERWRITE"
+        },
+        {
+          "rep": 3,
+          "stale_base_revision": 1,
+          "stale_replace_accepted": true,
+          "db_final": {
+            "revision": 3,
+            "objective": "stale writer 2"
+          },
+          "verdict": "FAILED_SILENT_OVERWRITE"
+        }
+      ],
+      "strict_prototype_isolated": [
+        {
+          "rep": 1,
+          "fresh_update_accepted": true,
+          "stale_update_accepted": false,
+          "db_final": {
+            "revision": 2,
+            "objective": "rev2 proto"
+          }
+        },
+        {
+          "rep": 2,
+          "fresh_update_accepted": true,
+          "stale_update_accepted": false,
+          "db_final": {
+            "revision": 2,
+            "objective": "rev2 proto"
+          }
+        },
+        {
+          "rep": 3,
+          "fresh_update_accepted": true,
+          "stale_update_accepted": false,
+          "db_final": {
+            "revision": 2,
+            "objective": "rev2 proto"
+          }
+        }
+      ]
+    },
+    "metao.ledger fencing (SQLiteEventLedger.append + SQLiteExecutionHandleStore)": {
+      "classification": "FALHOU",
+      "files": [
+        "src/metao/sqlite_event_ledger.py:84–125 (append, sem token/worker), :44 (UNIQUE(mission_id, sequence))",
+        "src/metao/sqlite_execution_handle.py:112–157 (activate, ON CONFLICT sobrescreve), :210–230 (complete, sem execution_id)",
+        "src/metao/runtime.py:26–75 (FencingToken, Lease, reject_stale_worker — sem chamadas em src/)"
+      ],
+      "reps": [
+        {
+          "rep": 1,
+          "B_takeover_accepted": true,
+          "active_execution_after_takeover": "m-fence-exec-B",
+          "A_publish_stale_token_accepted": true,
+          "A_publish_sequence": 4,
+          "A_publish_used_unused_sequence": true,
+          "A_replace_stale_copy_accepted": true,
+          "A_complete_handle_accepted": true,
+          "A_bind_external_error": "ActiveExecutionNotFound",
+          "helper_reject_stale_worker_raises": true,
+          "final_mission": {
+            "revision": 3,
+            "objective": "stale write by A"
+          },
+          "final_handle_status": "COMPLETED",
+          "final_events": [
+            [
+              1,
+              "A"
+            ],
+            [
+              2,
+              "B"
+            ],
+            [
+              3,
+              "B"
+            ],
+            [
+              4,
+              "A"
+            ]
+          ]
+        },
+        {
+          "rep": 2,
+          "B_takeover_accepted": true,
+          "active_execution_after_takeover": "m-fence-exec-B",
+          "A_publish_stale_token_accepted": true,
+          "A_publish_sequence": 4,
+          "A_publish_used_unused_sequence": true,
+          "A_replace_stale_copy_accepted": true,
+          "A_complete_handle_accepted": true,
+          "A_bind_external_error": "ActiveExecutionNotFound",
+          "helper_reject_stale_worker_raises": true,
+          "final_mission": {
+            "revision": 3,
+            "objective": "stale write by A"
+          },
+          "final_handle_status": "COMPLETED",
+          "final_events": [
+            [
+              1,
+              "A"
+            ],
+            [
+              2,
+              "B"
+            ],
+            [
+              3,
+              "B"
+            ],
+            [
+              4,
+              "A"
+            ]
+          ]
+        },
+        {
+          "rep": 3,
+          "B_takeover_accepted": true,
+          "active_execution_after_takeover": "m-fence-exec-B",
+          "A_publish_stale_token_accepted": true,
+          "A_publish_sequence": 4,
+          "A_publish_used_unused_sequence": true,
+          "A_replace_stale_copy_accepted": true,
+          "A_complete_handle_accepted": true,
+          "A_bind_external_error": "ActiveExecutionNotFound",
+          "helper_reject_stale_worker_raises": true,
+          "final_mission": {
+            "revision": 3,
+            "objective": "stale write by A"
+          },
+          "final_handle_status": "COMPLETED",
+          "final_events": [
+            [
+              1,
+              "A"
+            ],
+            [
+              2,
+              "B"
+            ],
+            [
+              3,
+              "B"
+            ],
+            [
+              4,
+              "A"
+            ]
+          ]
+        }
+      ],
+      "fenced_prototype_isolated": [
+        {
+          "rep": 1,
+          "stale_A_accepted": false,
+          "current_B_accepted": true,
+          "events": [
+            {
+              "worker": "B"
+            }
+          ]
+        },
+        {
+          "rep": 2,
+          "stale_A_accepted": false,
+          "current_B_accepted": true,
+          "events": [
+            {
+              "worker": "B"
+            }
+          ]
+        },
+        {
+          "rep": 3,
+          "stale_A_accepted": false,
+          "current_B_accepted": true,
+          "events": [
+            {
+              "worker": "B"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "answers": {
+    "1_memo_reusable": "Sim, somente como registro durável de decisão/intenção por tarefa dentro de UMA instância Harness; garantia depende do padrão (at-most-once com intent-first; at-least-once com effect-first); exige chave idempotente no destino para exactly-once; não usar com duas instâncias sobre o mesmo DB.",
+    "2_metao_occ_replace": "Não. replace() aceita cópia obsoleta silenciosamente (3/3).",
+    "3_metao_blocks_stale_workers": "Não. Worker A obsoleto publicou evento (seq 4), substituiu missão e concluiu a execução de B (3/3).",
+    "4_ready_or_adapt": "memo: adaptar (contrato de chave/padrão e lock de instância). OCC replace: adaptar (cláusula de revisão). Fencing: adaptar (token persistido validado na mesma transação de append/replace/complete)."
+  }
+}
