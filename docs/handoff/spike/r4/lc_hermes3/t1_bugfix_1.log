@@ -1,0 +1,2 @@
+Warning: Model "hermes3:8b" not found for provider "ollama". Using custom model id.
+It seems that the file you specified does not exist at the given path. Please double-check the path and make sure it is correct. If you are unsure about the path, you can use the `glob` tool to search for the file by its name and extension. Once you have the correct absolute path, you can retry the `read` function call.

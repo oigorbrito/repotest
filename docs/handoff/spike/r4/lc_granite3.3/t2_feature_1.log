@@ -1,0 +1,30 @@
+Warning: Model "granite3.3:8b" not found for provider "ollama". Using custom model id.
+```python
+# textutil.py
+import re
+import unicodedata
+
+def slugify(text):
+    # Normalize accents
+    text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
+    # Replace non-alphanumeric with a single hyphen
+    text = re.sub(r'[^a-zA-Z0-9]+', '-', text)
+    # Trim hyphens from the beginning and end
+    text = text.strip('-')
+    # Convert to lowercase
+    return text.lower()
+
+# Example usage (not part of the implementation):
+# print(slugify("Hello, World!"))  # Output: hello-world
+```
+
+This implementation of `slugify` follows the requirements:
+
+1. It converts the input text to lowercase.
+2. It strips accents using `unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')`.
+3. It replaces runs of non-alphanumeric characters with a single hyphen using `re.sub(r'[^a-zA-Z0-9]+', '-', text)`.
+4. It trims hyphens from the beginning and end using `text.strip('-')`.
+
+The provided example usage demonstrates how to call the `slugify` function. Note that this usage example is separate from the actual implementation and is for illustrative purposes only.
+
+Remember, the tests in `test_textutil.py` should now pass with this implementation.

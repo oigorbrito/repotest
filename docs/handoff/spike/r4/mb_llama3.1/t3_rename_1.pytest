@@ -1,0 +1,12 @@
+
+==================================== ERRORS ====================================
+_______________________ ERROR collecting test_rename.py ________________________
+test_rename.py:2: in <module>
+    import pkg.core as core
+pkg/core.py:3: in <module>
+    calculate_total
+E   NameError: name 'calculate_total' is not defined
+=========================== short test summary info ============================
+ERROR test_rename.py - NameError: name 'calculate_total' is not defined
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.09s

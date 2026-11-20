@@ -1,0 +1,16 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________________________ test_summary_csv _______________________________
+
+    def test_summary_csv():
+>       assert os.path.exists("summary.csv"), "summary.csv missing"
+E       AssertionError: summary.csv missing
+E       assert False
+E        +  where False = <function exists at 0x7fbf5b786a20>('summary.csv')
+E        +    where <function exists at 0x7fbf5b786a20> = <module 'posixpath' (frozen)>.exists
+E        +      where <module 'posixpath' (frozen)> = os.path
+
+test_summary.py:3: AssertionError
+=========================== short test summary info ============================
+FAILED test_summary.py::test_summary_csv - AssertionError: summary.csv missing
+1 failed in 0.01s
