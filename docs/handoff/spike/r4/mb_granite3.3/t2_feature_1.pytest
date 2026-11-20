@@ -1,0 +1,49 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+__________________________________ test_basic __________________________________
+
+>   def test_basic(): assert slugify("Hello, World!") == "hello-world"
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert 'Hello, World!' == 'hello-world'
+E     
+E     - hello-world
+E     + Hello, World!
+
+test_textutil.py:3: AssertionError
+_________________________________ test_spaces __________________________________
+
+>   def test_spaces(): assert slugify("  Many   spaces here ") == "many-spaces-here"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert '  Many   spaces here ' == 'many-spaces-here'
+E     
+E     - many-spaces-here
+E     +   Many   spaces here
+
+test_textutil.py:4: AssertionError
+_________________________________ test_accents _________________________________
+
+>   def test_accents(): assert slugify("Ação Rápida") == "acao-rapida"
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert 'Ação Rápida' == 'acao-rapida'
+E     
+E     - acao-rapida
+E     + Ação Rápida
+
+test_textutil.py:5: AssertionError
+__________________________________ test_empty __________________________________
+
+>   def test_empty(): assert slugify("   ") == ""
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert '   ' == ''
+E     
+E     Strings contain only whitespace, escaping them using repr()
+E     - ''
+E     + '   '
+
+test_textutil.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED test_textutil.py::test_basic - AssertionError: assert 'Hello, World!' ...
+FAILED test_textutil.py::test_spaces - AssertionError: assert '  Many   space...
+FAILED test_textutil.py::test_accents - AssertionError: assert 'Ação Rápida' ...
+FAILED test_textutil.py::test_empty - AssertionError: assert '   ' == ''
+4 failed in 0.03s

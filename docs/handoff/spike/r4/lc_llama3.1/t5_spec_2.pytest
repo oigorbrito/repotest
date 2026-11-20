@@ -1,0 +1,25 @@
+.FF                                                                      [100%]
+=================================== FAILURES ===================================
+_________________________________ test_spaces __________________________________
+
+>   def test_spaces(): assert to_iso("  31/12/1999 ") == "1999-12-31"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert '1999 -12-  31' == '1999-12-31'
+E     
+E     - 1999-12-31
+E     + 1999 -12-  31
+E     ?     +    ++
+
+test_dates.py:5: AssertionError
+_________________________________ test_invalid _________________________________
+
+    def test_invalid():
+>       with pytest.raises(ValueError): to_iso("31/02/2024")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+test_dates.py:7: Failed
+=========================== short test summary info ============================
+FAILED test_dates.py::test_spaces - AssertionError: assert '1999 -12-  31' ==...
+FAILED test_dates.py::test_invalid - Failed: DID NOT RAISE ValueError
+2 failed, 1 passed in 0.01s

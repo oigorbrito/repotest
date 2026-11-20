@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+________________________ ERROR collecting test_stats.py ________________________
+ImportError while importing test module '/home/user/spike/work/r4_mingbird_t1_bugfix_2_lxPn/test_stats.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_stats.py:1: in <module>
+    from src.stats import mean, median
+E   ImportError: cannot import name 'mean' from 'src.stats' (/home/user/spike/work/r4_mingbird_t1_bugfix_2_lxPn/src/stats.py)
+=========================== short test summary info ============================
+ERROR test_stats.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.10s

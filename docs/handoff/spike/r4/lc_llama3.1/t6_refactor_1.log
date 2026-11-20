@@ -1,0 +1,2 @@
+Warning: Model "llama3.1:8b" not found for provider "ollama". Using custom model id.
+The file /absolute/path/calc.py does not exist. Please ensure the path is correct and the file is present in the specified location.

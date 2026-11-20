@@ -1,0 +1,13 @@
+harness,model,task,rep,exit,pass,legit,seconds,src_changed,tests_modified,tools
+mingbird,granite3.3:8b,t1_bugfix,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t1_bugfix,2,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t2_feature,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t2_feature,2,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t3_rename,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t3_rename,2,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t4_data,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t4_data,2,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t5_spec,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t5_spec,2,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t6_refactor,1,124,0,0,300,0,0,0
+mingbird,granite3.3:8b,t6_refactor,2,124,0,0,300,0,0,0

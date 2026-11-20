@@ -1,0 +1,21 @@
+Warning: Model "llama3.1:8b" not found for provider "ollama". Using custom model id.
+Here's the code for `test_summary.py`:
+
+```python
+import pandas as pd
+import numpy as np
+
+# your code here
+```
+
+And here's the code for `summary.csv`:
+
+```
+region	total
+North	123.45
+South	234.56
+East	345.67
+West	456.78
+```
+
+Note: The actual values in `summary.csv` will depend on the data in `sales.json`. The above is just an example.

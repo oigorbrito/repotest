@@ -1,0 +1,13 @@
+harness,model,task,rep,exit,pass,legit,seconds,src_changed,tests_modified,tools
+mingbird,llama3.1:8b,t1_bugfix,1,124,0,0,300,0,0,1
+mingbird,llama3.1:8b,t1_bugfix,2,124,0,0,300,0,0,6
+mingbird,llama3.1:8b,t2_feature,1,124,0,0,300,0,0,8
+mingbird,llama3.1:8b,t2_feature,2,124,0,0,300,1,0,4
+mingbird,llama3.1:8b,t3_rename,1,124,0,0,300,2,1,11
+mingbird,llama3.1:8b,t3_rename,2,124,0,0,300,2,1,11
+mingbird,llama3.1:8b,t4_data,1,124,0,0,300,0,0,6
+mingbird,llama3.1:8b,t4_data,2,124,0,0,300,0,0,7
+mingbird,llama3.1:8b,t5_spec,1,124,0,0,300,0,0,0
+mingbird,llama3.1:8b,t5_spec,2,124,0,0,301,1,0,4
+mingbird,llama3.1:8b,t6_refactor,1,0,0,0,209,0,0,1
+mingbird,llama3.1:8b,t6_refactor,2,124,0,0,300,0,0,14

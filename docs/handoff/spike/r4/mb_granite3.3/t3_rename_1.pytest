@@ -1,0 +1,22 @@
+FF.                                                                      [100%]
+=================================== FAILURES ===================================
+________________________________ test_new_name _________________________________
+
+    def test_new_name():
+>       assert core.calculate_total([{"price": 2}, {"price": 3}]) == 5
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pkg.core' has no attribute 'calculate_total'. Did you mean: 'compute_total'?
+
+test_rename.py:5: AttributeError
+________________________________ test_old_gone _________________________________
+
+    def test_old_gone():
+>       assert not hasattr(core, "compute_total")
+E       AssertionError: assert not True
+E        +  where True = hasattr(core, 'compute_total')
+
+test_rename.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED test_rename.py::test_new_name - AttributeError: module 'pkg.core' has ...
+FAILED test_rename.py::test_old_gone - AssertionError: assert not True
+2 failed, 1 passed in 0.02s

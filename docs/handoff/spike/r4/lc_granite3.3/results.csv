@@ -1,0 +1,13 @@
+harness,model,task,rep,exit,pass,legit,seconds,src_changed,tests_modified,tools
+littlecoder,granite3.3:8b,t1_bugfix,1,124,0,0,300,0,0,0
+littlecoder,granite3.3:8b,t1_bugfix,2,0,0,0,278,0,0,0
+littlecoder,granite3.3:8b,t2_feature,1,0,0,0,165,0,0,0
+littlecoder,granite3.3:8b,t2_feature,2,0,0,0,263,0,0,0
+littlecoder,granite3.3:8b,t3_rename,1,0,0,0,274,0,0,0
+littlecoder,granite3.3:8b,t3_rename,2,124,0,0,300,0,0,0
+littlecoder,granite3.3:8b,t4_data,1,124,0,0,300,0,0,0
+littlecoder,granite3.3:8b,t4_data,2,0,0,0,289,0,0,0
+littlecoder,granite3.3:8b,t5_spec,1,124,0,0,300,0,0,0
+littlecoder,granite3.3:8b,t5_spec,2,124,0,0,300,0,0,0
+littlecoder,granite3.3:8b,t6_refactor,1,0,0,0,214,0,0,0
+littlecoder,granite3.3:8b,t6_refactor,2,0,0,0,192,0,0,0

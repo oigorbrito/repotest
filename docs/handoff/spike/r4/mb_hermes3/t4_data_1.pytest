@@ -1,0 +1,19 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________________________ test_summary_csv _______________________________
+
+    def test_summary_csv():
+        assert os.path.exists("summary.csv"), "summary.csv missing"
+        rows = list(csv.DictReader(open("summary.csv", encoding="utf-8")))
+        got = {r["region"]: float(r["total"]) for r in rows}
+>       assert got == {"north": 13.0, "south": 4.0, "east": 7.0}
+E       AssertionError: assert {} == {'north': 13...., 'east': 7.0}
+E         
+E         Right contains 3 more items:
+E         {'east': 7.0, 'north': 13.0, 'south': 4.0}
+E         Use -v to get more diff
+
+test_summary.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED test_summary.py::test_summary_csv - AssertionError: assert {} == {'nor...
+1 failed in 0.01s

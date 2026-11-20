@@ -1,0 +1,2 @@
+Warning: Model "llama3.1:8b" not found for provider "ollama". Using custom model id.
+{"name": "write", "parameters": {"path": "/src/textutil.py", "content": "def slugify(text):\n    text = text.lower()\n    text = ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')\n    text = re.sub(r'[^\w]+', '-', text)\n    text = re.sub(r'-+', '-', text)\n    text = text.strip('-')\n    return text"}}
