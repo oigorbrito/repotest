@@ -1,0 +1,24 @@
+diff --git a/ollama_agent.py b/ollama_agent.py
+index a5485e1..5dd296f 100644
+--- a/ollama_agent.py
++++ b/ollama_agent.py
+@@ -1188,7 +1188,8 @@ class _StdioSession:
+         self.proc = subprocess.Popen(
+             [cfg["command"]] + list(cfg.get("args", [])),
+             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+-            stderr=subprocess.DEVNULL, env=env, creationflags=NOWIN)
++            stderr=subprocess.DEVNULL, env=env, creationflags=NOWIN,
++            start_new_session=(os.name != "nt"))  # own process group: killpg must not hit us
+         t = _TH.Thread(target=self._read_loop, daemon=True)
+         t.start()
+         r = self._request("initialize", {
+@@ -1419,7 +1420,8 @@ def _probe_stdio(cfg, timeout=10):
+         proc = subprocess.Popen([cfg["command"]] + list(cfg.get("args", [])),
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=subprocess.DEVNULL, env=env,
+-                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
++                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
++                                start_new_session=(os.name != "nt"))  # own process group
+         box = _q.Queue()
+         def _reader():
+             try:
