@@ -1,0 +1,1 @@
+Warning: Model "llama3.1:8b" not found for provider "ollama". Using custom model id.

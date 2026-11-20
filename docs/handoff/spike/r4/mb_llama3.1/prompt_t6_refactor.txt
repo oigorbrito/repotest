@@ -1,0 +1,1 @@
+calc.py has three copies of the same validation and formula. Refactor calc.py to remove the duplication without changing behavior, so test_calc.py passes.

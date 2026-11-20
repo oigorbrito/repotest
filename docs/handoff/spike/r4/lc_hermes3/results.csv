@@ -1,0 +1,13 @@
+harness,model,task,rep,exit,pass,legit,seconds,src_changed,tests_modified,tools
+littlecoder,hermes3:8b,t1_bugfix,1,0,0,0,122,0,0,1
+littlecoder,hermes3:8b,t1_bugfix,2,0,0,0,25,0,0,1
+littlecoder,hermes3:8b,t2_feature,1,0,0,0,61,0,0,1
+littlecoder,hermes3:8b,t2_feature,2,0,0,0,144,0,0,0
+littlecoder,hermes3:8b,t3_rename,1,124,0,0,300,0,0,15
+littlecoder,hermes3:8b,t3_rename,2,124,0,0,300,0,0,0
+littlecoder,hermes3:8b,t4_data,1,0,0,0,103,0,0,1
+littlecoder,hermes3:8b,t4_data,2,0,0,0,65,0,0,4
+littlecoder,hermes3:8b,t5_spec,1,124,0,0,300,0,0,21
+littlecoder,hermes3:8b,t5_spec,2,0,0,0,144,0,0,6
+littlecoder,hermes3:8b,t6_refactor,1,0,0,0,89,0,0,2
+littlecoder,hermes3:8b,t6_refactor,2,0,0,0,64,0,0,2

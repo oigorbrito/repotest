@@ -1,0 +1,30 @@
+
+==================================== ERRORS ====================================
+________________________ ERROR collecting test_dates.py ________________________
+/usr/local/lib/python3.13/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+/usr/local/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/usr/local/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+test_dates.py:3: in <module>
+    from dates import to_iso
+E     File "/home/user/spike/work/r4_mingbird_t5_spec_1_1DLZ/dates.py", line 1
+E       def to_iso(s):↵    d, m, y = s.split('/')↵    return f'{y}-{m}-{d}'
+E                     ^
+E   SyntaxError: invalid character '↵' (U+21B5)
+=========================== short test summary info ============================
+ERROR test_dates.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.11s

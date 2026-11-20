@@ -1,0 +1,1 @@
+Read sales.json and write summary.csv with columns region,total: total per region (float), rows sorted by region name ascending. Make test_summary.py pass.
