@@ -1,0 +1,17 @@
+{
+ "drawn_utc": "2026-11-18T21:40:43.360191+00:00",
+ "input": [
+  "pi-original",
+  "pi-rust"
+ ],
+ "algorithm": "random.Random(seed).shuffle(list) — Mersenne Twister (CPython)",
+ "python_version": "3.12.10",
+ "seed": 16561843088153416046,
+ "seed_generated_by_script": true,
+ "order": [
+  "pi-original",
+  "pi-rust"
+ ],
+ "execution_rule": "sequencial, um agente por vez; o segundo só inicia após o primeiro terminar",
+ "agents_started_by_this_script": false
+}

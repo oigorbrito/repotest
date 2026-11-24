@@ -1,0 +1,3 @@
+﻿OK check-a
+FALHOU check-b
+OK check-c

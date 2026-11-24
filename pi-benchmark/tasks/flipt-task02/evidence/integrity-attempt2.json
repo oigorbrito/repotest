@@ -1,0 +1,31 @@
+{
+  "production_files_modified_by_task_agent": false,
+  "source_head_after_baseline": "0eaf98f050d86247bfe9bd7e41178865cb585060",
+  "source_status_after_cleanup": "limpo (git status --porcelain vazio)",
+  "side_effects_during_baseline": [
+    {
+      "file": "source/go.work.sum",
+      "tracked": true,
+      "cause": "go mod download (+709/-3 linhas, hashes gerados pelo Go)",
+      "action": "restaurado com git checkout; diff salvo em evidence/go.work.sum.diff.txt e status em evidence/status-before-cleanup.txt"
+    },
+    {
+      "file": "source/internal/storage/fs/local/testdata/a.features.yml",
+      "tracked": false,
+      "cause": "criado pelo Test_SourceSubscribe, que falhou ao removê-lo (arquivo em uso)",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "action": "removido; hash salvo em evidence/side-effects.txt"
+    }
+  ],
+  "temporary_files_created_and_removed": [
+    "diretório temporário de mktemp contendo main.go de medição de relógio (duas execuções; removido em ambas)",
+    "tentativa de gravação de clock-resolution.txt em caminho relativo inválido (nenhum arquivo criado; regravado com caminho absoluto)"
+  ],
+  "files_preserved": [
+    "evidence/clone.log, evidence/environment.json, evidence/integrity.json (tentativa 1, intactos)",
+    "BASELINE_REPORT.md da tentativa 1 -> evidence/attempt1/BASELINE_REPORT.attempt1-BLOQUEADO.md (sha256 9071a45c02e17c99bf1b0db5b258a90638786ef1ff0e9ff551344a9aa313a310, verificado após cópia)"
+  ],
+  "commit_or_push_performed": false,
+  "variant_clone_kept_for_evidence": "source-lf-variant/ (diagnóstico; não é área de agente)"
+}

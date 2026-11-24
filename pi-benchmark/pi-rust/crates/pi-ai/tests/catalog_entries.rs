@@ -1,0 +1,227 @@
+//! Catalog entries that upstream `generate-models.ts` rules produce, checked in the bundled
+//! `models.json` (ported from upstream `supports-xhigh`, `cache-retention`, `max-thinking`,
+//! and `classifier-models` tests).
+
+use pi_ai::Model;
+use pi_ai::ThinkingLevel::{High, Low, Max, Medium, Minimal, Xhigh};
+use pi_ai::models::builtin_models;
+use pi_ai::simple_options::supported_thinking_levels;
+use serde_json::json;
+
+fn find(provider: &str, id: &str, kind: &str) -> &'static Model {
+    builtin_models()
+        .iter()
+        .find(|model| model.provider == provider && model.id == id && model.model_type.as_deref() == Some(kind))
+        .unwrap_or_else(|| panic!("{kind} {provider}/{id} is not in the bundled catalog"))
+}
+
+/// The provider value a thinking level maps to: `Some(None)` for a level the model rejects.
+fn level(model: &Model, name: &str) -> Option<Option<String>> {
+    model.thinking_level_map.as_ref()?.get(name).cloned()
+}
+
+fn mapped(value: &str) -> Option<Option<String>> {
+    Some(Some(value.to_string()))
+}
+
+#[test]
+fn gpt_6_1_terra_supports_off_but_not_minimal_with_official_metadata() {
+    for provider in ["openai", "azure", "openai-codex"] {
+        let terra = find(provider, "gpt-6.1-terra", "chat");
+        assert_eq!(level(terra, "off"), mapped("none"), "{provider}");
+        let minimal = if provider == "openai-codex" { mapped("low") } else { Some(None) };
+        assert_eq!(level(terra, "minimal"), minimal, "{provider}");
+        assert!(supported_thinking_levels(terra).contains(&Xhigh), "{provider}");
+    }
+    for (provider, context_window) in [("openai", 272_000), ("openai-codex", 500_000)] {
+        let terra = find(provider, "gpt-6.1-terra", "chat");
+        let cost = &terra.cost;
+        assert_eq!((cost.input, cost.output, cost.cache_read, cost.cache_write), (1.0, 5.0, 0.05, 1.25));
+        assert_eq!(terra.context_window, context_window, "{provider}");
+        assert_eq!(level(terra, "max"), mapped("max"), "{provider} sends max");
+    }
+    let openai = find("openai", "gpt-6.1-terra", "chat");
+    assert!(supported_thinking_levels(openai).contains(&Max));
+    assert_eq!(openai.prompt_cache, None, "no cache warming from the documented TTL alone");
+}
+
+#[test]
+fn gpt_6_2_rejects_off_and_minimal_with_official_metadata() {
+    let levels = [Low, Medium, High, Xhigh, Max];
+    let models = [("gpt-6.2-astra", (8.0, 40.0, 0.4, 10.0), 272_000), ("gpt-6.2-sol", (2.0, 10.0, 0.1, 2.5), 500_000)];
+    for (id, (input, output, cache_read, cache_write), codex_context_window) in models {
+        for provider in ["openai", "azure", "openai-codex"] {
+            let model = find(provider, id, "chat");
+            let expected =
+                if provider == "openai-codex" { [&[Minimal][..], &levels].concat() } else { levels.to_vec() };
+            assert_eq!(supported_thinking_levels(model), expected, "{provider}/{id}");
+            assert_eq!(level(model, "off"), Some(None), "{provider}/{id}");
+            let cost = &model.cost;
+            assert_eq!(
+                (cost.input, cost.output, cost.cache_read, cost.cache_write),
+                (input, output, cache_read, cache_write)
+            );
+            let tier = cost.tiers.first().unwrap_or_else(|| panic!("{provider}/{id} has a long-context tier"));
+            assert_eq!(
+                (tier.input_tokens_above, tier.input, tier.output, tier.cache_read, tier.cache_write),
+                (272_000, input * 2.0, output * 1.5, cache_read * 2.0, cache_write * 2.0),
+                "{provider}/{id}"
+            );
+            let context_window = match provider {
+                "openai-codex" => codex_context_window,
+                "azure" => 1_050_000,
+                _ => 272_000,
+            };
+            assert_eq!((model.context_window, model.max_tokens), (context_window, 128_000), "{provider}/{id}");
+        }
+        for provider in ["openai", "openai-codex"] {
+            let model = find(provider, id, "chat");
+            let compat = model.compat.as_ref().unwrap();
+            for flag in [
+                "supportsAdditionalTools",
+                "supportsMidConvoSystemMessages",
+                "supportsOpenAIGrammarTools",
+                "supportsToolSearch",
+            ] {
+                assert_eq!(compat[flag], json!(true), "{provider}/{id} {flag}");
+            }
+            assert_eq!(level(model, "max"), mapped("max"), "{provider}/{id} sends max");
+        }
+        let openai = find("openai", id, "chat");
+        assert_eq!(openai.compat.as_ref().unwrap()["supportsMidConvoEffort"], json!(true), "{id}");
+        assert_eq!(openai.prompt_cache, None, "{id}: no cache warming from the documented TTL alone");
+    }
+}
+
+#[test]
+fn azure_gpt_6_models_use_the_foundry_context_window_and_keep_the_openai_price_tier() {
+    for id in ["gpt-6-astra", "gpt-6-luna", "gpt-6-sol", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6.2-astra", "gpt-6.2-sol"]
+    {
+        assert_eq!(find("azure", id, "chat").context_window, 1_050_000, "{id}");
+    }
+    let openai = find("openai", "gpt-6-sol", "chat");
+    assert_eq!(openai.cost.tiers.first().map(|tier| tier.input_tokens_above), Some(272_000));
+    assert_eq!(find("azure", "gpt-6-sol", "chat").cost, openai.cost);
+}
+
+#[test]
+fn gpt_6_cyber_and_gpt_image_2_6_come_from_upstream_model_data() {
+    for provider in ["openai", "azure"] {
+        let cyber = find(provider, "gpt-6-cyber", "chat");
+        let cost = &cyber.cost;
+        assert_eq!((cost.input, cost.output, cost.cache_read, cost.cache_write), (20.0, 100.0, 2.0, 25.0));
+        assert_eq!(cyber.context_window, 1_050_000, "{provider}");
+    }
+    for id in ["openai/gpt-image-2.6-flare", "openai/gpt-image-2.6-sunburst"] {
+        assert_eq!(find("openrouter", id, "image").api, "openrouter-images", "{id}");
+    }
+    let terra = find("radius", "gpt-6.1-terra", "chat");
+    assert_eq!((terra.cost.input, level(terra, "off")), (1.0, mapped("none")));
+}
+
+#[test]
+fn kimi_k3_1_pro_models_use_kimi_k3_settings() {
+    for (provider, ids) in [
+        ("kimi-coding", ["k3.1-pro", "k3.1-pro-highspeed"]),
+        ("moonshotai", ["kimi-k3.1-pro", "kimi-k3.1-pro-highspeed"]),
+    ] {
+        for id in ids {
+            let model = find(provider, id, "chat");
+            let compat = model.compat.as_ref().unwrap();
+            assert_eq!(
+                (compat["thinkingFormat"].clone(), compat["supportsReasoningEffort"].clone()),
+                (json!("openai"), json!(true))
+            );
+            assert_eq!((level(model, "low"), level(model, "max")), (mapped("low"), mapped("max")), "{id}");
+            assert_eq!(model.cost.cache_write, 0.0, "{provider}/{id}");
+        }
+    }
+    // Kimi Coding reports Moonshot rates for K3.1 Pro and K3 rates for k3-256k.
+    let pro = &find("kimi-coding", "k3.1-pro", "chat").cost;
+    assert_eq!((pro.input, pro.output, pro.cache_read), (2.0, 10.0, 0.2));
+    let k3 = &find("kimi-coding", "k3-256k", "chat").cost;
+    assert_eq!((k3.input, k3.output, k3.cache_read), (3.0, 15.0, 0.3));
+}
+
+#[test]
+fn system_one_classifiers_set_their_image_form() {
+    let openrouter = find("openrouter", "typesafe/jev-1.14", "classifier");
+    assert_eq!(openrouter.api, "typesafe-system-one");
+    // Explicit, so images keep OpenRouter's form when the baseUrl is overridden.
+    assert_eq!(openrouter.compat, Some(json!({"imageInput": "state-image-urls", "sendImageOptInHeader": false})));
+    let typesafe = find("typesafe", "jev-latest", "classifier");
+    assert_eq!(typesafe.input, ["text", "image"]);
+    assert_eq!(typesafe.compat, Some(json!({"imageInput": "assets", "sendImageOptInHeader": true})));
+    let workers = [
+        ("@cf/cloudflare/clef", 0.24, 65_536, "images"),
+        ("@cf/cloudflare/clef-flash", 0.038, 24_576, "images"),
+        ("@cf/cloudflare/clef-omni", 0.15, 64_000, "images"),
+        ("typesafe/jev", 0.042, 32_000, "assets"),
+        ("typesafe/jev-1.14.0", 0.042, 32_000, "assets"),
+    ];
+    for (id, price, context_window, image_input) in workers {
+        let model = find("cloudflare-workers-ai", id, "classifier");
+        assert_eq!((model.cost.input, model.context_window), (price, context_window), "{id}");
+        assert_eq!(model.input, ["text", "image"], "{id}");
+        assert_eq!(model.compat, Some(json!({"imageInput": image_input})), "{id}");
+    }
+}
+
+#[test]
+fn claude_fable_5_2_uses_per_message_effort_like_fable_5_1() {
+    for id in ["claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-1", "claude-fable-5-2"] {
+        assert_eq!(level(find("anthropic", id, "chat"), "off"), Some(None), "{id}");
+    }
+    let direct = find("anthropic", "claude-fable-5-2", "chat");
+    let compat = direct.compat.as_ref().unwrap();
+    assert_eq!(compat["supportsMidConvoEffort"], json!(true));
+    assert_eq!(compat["supportsMidConvoSystemMessages"], json!(true));
+    assert_eq!((level(direct, "xhigh"), level(direct, "max")), (mapped("xhigh"), mapped("max")));
+    let cost = &direct.cost;
+    assert_eq!((cost.input, cost.output, cost.cache_read, cost.cache_write), (8.0, 40.0, 0.2, 10.0));
+    // Opus 4.8 cannot take per-message effort, so it is dropped from Fable 5.2's fallbacks.
+    let fallbacks: Vec<_> = compat["allowedFallbackModels"].as_array().unwrap().iter().map(|f| &f["model"]).collect();
+    assert_eq!(fallbacks, [&json!("claude-opus-5")]);
+    let openrouter = find("openrouter", "anthropic/claude-fable-5.2", "chat");
+    assert_eq!(openrouter.compat.as_ref().unwrap()["supportsMidConvoEffort"], json!(true));
+}
+
+#[test]
+fn claude_mythos_5_2_has_the_settings_of_fable_5_2() {
+    // Mythos 5.2 is Fable 5.2 for verified organizations; upstream has no entry (pi-rust extension).
+    let fable = find("anthropic", "claude-fable-5-2", "chat");
+    let mythos = find("anthropic", "claude-mythos-5-2", "chat");
+    let expected = Model { id: mythos.id.clone(), name: "Claude Mythos 5.2".into(), ..fable.clone() };
+    assert_eq!(*mythos, expected);
+}
+
+#[test]
+fn opencode_deepseek_v4_1_flash_does_not_support_long_cache_retention() {
+    let model = find("opencode", "deepseek-v4.1-flash", "chat");
+    assert_eq!(model.compat.as_ref().unwrap()["supportsLongCacheRetention"], json!(false));
+}
+
+#[test]
+fn opencode_models_use_protocol_specific_endpoints() {
+    for provider in ["opencode", "opencode-go"] {
+        let models: Vec<_> = builtin_models().iter().filter(|model| model.provider == provider).collect();
+        assert!(!models.is_empty(), "{provider} has bundled models");
+        let base =
+            if provider == "opencode" { "https://opencode.ai/inference" } else { "https://opencode.ai/inference/go" };
+        for model in models {
+            let suffix = match model.api.as_str() {
+                "openai-completions" | "openai-responses" => "/openai/v1",
+                "anthropic-messages" => "/anthropic",
+                "google-generative-ai" => "/google/v1beta",
+                "typesafe-system-one" => "/systemone/v1",
+                api => panic!("unexpected OpenCode API {api} for {provider}/{}", model.id),
+            };
+            assert_eq!(model.base_url, format!("{base}{suffix}"), "{provider}/{}", model.id);
+        }
+    }
+    for id in ["qwen3.7-plus", "qwen3.8-flash", "qwen3.8-max"] {
+        let model = find("opencode-go", id, "chat");
+        assert_eq!(model.api, "anthropic-messages", "{id}");
+        assert_eq!(model.base_url, "https://opencode.ai/inference/go/anthropic", "{id}");
+    }
+}

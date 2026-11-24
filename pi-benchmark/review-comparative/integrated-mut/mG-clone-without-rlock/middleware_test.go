@@ -1,0 +1,1875 @@
+// Copyright (c) 2015-present Jeevanandam M (jeeva@myjeeva.com), All rights reserved.
+// resty source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
+
+package resty
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"io"
+	"mime"
+	"mime/multipart"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"net/textproto"
+	"net/url"
+	"os"
+	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func Test_parseRequestURL(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		initClient  func(c *Client)
+		initRequest func(r *Request)
+		expectedURL string
+	}{
+		{
+			name: "apply client path parameters",
+			initClient: func(c *Client) {
+				c.SetPathParams(map[string]string{
+					"foo": "1",
+					"bar": "2/3",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/1/2%2F3",
+		},
+		{
+			name: "apply request path parameters",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "4",
+					"bar": "5/6",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/4/5%2F6",
+		},
+		{
+			name: "apply request and client path parameters",
+			initClient: func(c *Client) {
+				c.SetPathParams(map[string]string{
+					"foo": "1", // ignored, because of the request's "foo"
+					"bar": "2/3",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "4/5",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/4%2F5/2%2F3",
+		},
+		{
+			name: "apply client raw path parameters",
+			initClient: func(c *Client) {
+				c.SetPathRawParams(map[string]string{
+					"foo": "1/2",
+					"bar": "3",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/1/2/3",
+		},
+		{
+			name: "apply request raw path parameters",
+			initRequest: func(r *Request) {
+				r.SetPathRawParams(map[string]string{
+					"foo": "4",
+					"bar": "5/6",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/4/5/6",
+		},
+		{
+			name: "apply request and client raw path parameters",
+			initClient: func(c *Client) {
+				c.SetPathRawParams(map[string]string{
+					"foo": "1", // ignored, because of the request's "foo"
+					"bar": "2/3",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.SetPathRawParams(map[string]string{
+					"foo": "4/5",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/4/5/2/3",
+		},
+		{
+			name: "apply request path and raw path parameters",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "4/5",
+				}).SetPathRawParams(map[string]string{
+					"foo": "4/5", // it gets overwritten since same key name
+					"bar": "6/7",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/4/5/6/7",
+		},
+		{
+			name: "empty path parameter in URL",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"bar": "4",
+				})
+				r.URL = "https://example.com/{}/{bar}"
+			},
+			expectedURL: "https://example.com/%7B%7D/4",
+		},
+		{
+			name: "not closed path parameter in URL",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "4",
+				})
+				r.URL = "https://example.com/{foo}/{bar/1"
+			},
+			expectedURL: "https://example.com/4/%7Bbar/1",
+		},
+		{
+			name: "extra path parameter in URL",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "1",
+				})
+				r.URL = "https://example.com/{foo}/{bar}"
+			},
+			expectedURL: "https://example.com/1/%7Bbar%7D",
+		},
+		{
+			name: " path parameter with remainder",
+			initRequest: func(r *Request) {
+				r.SetPathParams(map[string]string{
+					"foo": "1",
+				})
+				r.URL = "https://example.com/{foo}/2"
+			},
+			expectedURL: "https://example.com/1/2",
+		},
+		{
+			name: "using base url with path param at index 0",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://example.com/prefix")
+			},
+			initRequest: func(r *Request) {
+				r.SetPathParam("first", "1").
+					SetPathParam("second", "2")
+				r.URL = "{first}/{second}"
+			},
+			expectedURL: "https://example.com/prefix/1/2",
+		},
+		{
+			name: "using BaseURL with absolute URL in request",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://foo.bar") // ignored
+			},
+			initRequest: func(r *Request) {
+				r.URL = "https://example.com/"
+			},
+			expectedURL: "https://example.com/",
+		},
+		{
+			name: "using BaseURL with relative path in request URL without leading slash",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://example.com")
+			},
+			initRequest: func(r *Request) {
+				r.URL = "foo/bar"
+			},
+			expectedURL: "https://example.com/foo/bar",
+		},
+		{
+			name: "using BaseURL with relative path in request URL with leading slash",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://example.com")
+			},
+			initRequest: func(r *Request) {
+				r.URL = "/foo/bar"
+			},
+			expectedURL: "https://example.com/foo/bar",
+		},
+		{
+			name: "using deprecated HostURL with relative path in request URL",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://example.com")
+			},
+			initRequest: func(r *Request) {
+				r.URL = "foo/bar"
+			},
+			expectedURL: "https://example.com/foo/bar",
+		},
+		{
+			name: "request URL without scheme",
+			initRequest: func(r *Request) {
+				r.URL = "example.com/foo/bar"
+			},
+			expectedURL: "/example.com/foo/bar",
+		},
+		{
+			name: "BaseURL without scheme",
+			initClient: func(c *Client) {
+				c.SetBaseURL("example.com")
+			},
+			initRequest: func(r *Request) {
+				r.URL = "foo/bar"
+			},
+			expectedURL: "example.com/foo/bar",
+		},
+		{
+			name: "using SetScheme and BaseURL without scheme",
+			initClient: func(c *Client) {
+				c.SetBaseURL("example.com").
+					SetScheme("https")
+			},
+			initRequest: func(r *Request) {
+				r.URL = "foo/bar"
+			},
+			expectedURL: "https://example.com/foo/bar",
+		},
+		{
+			name: "adding query parameters by client",
+			initClient: func(c *Client) {
+				c.SetQueryParams(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.URL = "https://example.com/"
+			},
+			expectedURL: "https://example.com/?foo=1&bar=2",
+		},
+		{
+			name: "adding query parameters by request",
+			initRequest: func(r *Request) {
+				r.SetQueryParams(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+				r.URL = "https://example.com/"
+			},
+			expectedURL: "https://example.com/?foo=1&bar=2",
+		},
+		{
+			name: "adding query parameters by client and request",
+			initClient: func(c *Client) {
+				c.SetQueryParams(map[string]string{
+					"foo": "1", // ignored, because of the "foo" parameter in request
+					"bar": "2",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.SetQueryParams(map[string]string{
+					"foo": "3",
+				})
+				r.URL = "https://example.com/"
+			},
+			expectedURL: "https://example.com/?foo=3&bar=2",
+		},
+		{
+			name: "adding query parameters by request to URL with existent",
+			initRequest: func(r *Request) {
+				r.SetQueryParams(map[string]string{
+					"bar": "2",
+				})
+				r.URL = "https://example.com/?foo=1"
+			},
+			expectedURL: "https://example.com/?foo=1&bar=2",
+		},
+		{
+			name: "adding query parameters by request with multiple values",
+			initRequest: func(r *Request) {
+				r.QueryParams.Add("foo", "1")
+				r.QueryParams.Add("foo", "2")
+				r.URL = "https://example.com/"
+			},
+			expectedURL: "https://example.com/?foo=1&foo=2",
+		},
+		{
+			name: "unescape query params",
+			initClient: func(c *Client) {
+				c.SetBaseURL("https://example.com/").
+					SetQueryParamsUnescape(true). // this line is just code coverage; I will restructure this test in v3 for the client and request the respective init method
+					SetQueryParam("fromclient", "hey unescape").
+					SetQueryParam("initone", "cáfe")
+			},
+			initRequest: func(r *Request) {
+				r.SetQueryParamsUnescape(true) // this line takes effect
+				r.SetQueryParams(
+					map[string]string{
+						"filter":   "one&two=three",
+						"fragment": "section#1",
+						"language": "C++",
+						"list":     "one;two",
+						"literal":  "%2F",
+						"progress": "100% complete",
+						"registry": "nacos://test:6801", // GH #797
+					},
+				)
+			},
+			expectedURL: "https://example.com/?filter=one%26two%3Dthree&fragment=section%231&fromclient=hey+unescape&initone=cáfe&language=C%2B%2B&list=one%3Btwo&literal=%252F&progress=100%25+complete&registry=nacos://test:6801",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			if tt.initClient != nil {
+				tt.initClient(c)
+			}
+
+			r := c.R()
+			if tt.initRequest != nil {
+				tt.initRequest(r)
+			}
+			if err := parseRequestURL(c, r); err != nil {
+				t.Errorf("parseRequestURL() error = %v", err)
+			}
+
+			// compare URLs without query parameters first
+			// then compare query parameters, because the order of the items in a map is not guarantied
+			expectedURL, _ := url.Parse(tt.expectedURL)
+			expectedQuery := expectedURL.Query()
+			expectedURL.RawQuery = ""
+			actualURL, _ := url.Parse(r.URL)
+			actualQuery := actualURL.Query()
+			actualURL.RawQuery = ""
+			if expectedURL.String() != actualURL.String() {
+				t.Errorf("r.URL = %q does not match expected %q", r.URL, tt.expectedURL)
+			}
+			if !reflect.DeepEqual(expectedQuery, actualQuery) {
+				t.Errorf("r.URL = %q does not match expected %q", r.URL, tt.expectedURL)
+			}
+		})
+	}
+}
+
+func Test_parseRequestBaseURLTrailingSlashRegression(t *testing.T) {
+	var gotURI string
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		gotURI = r.RequestURI
+		w.WriteHeader(http.StatusOK)
+	})
+	defer ts.Close()
+
+	tests := []struct {
+		baseURL string
+		reqPath string
+		wantURI string
+	}{
+		{ts.URL + "/api/", "", "/api/"},
+		{ts.URL + "/api/", "/resource", "/api/resource"},
+		{ts.URL + "/api", "/resource", "/api/resource"},
+		{ts.URL + "/", "", "/"},
+		{ts.URL, "/resource", "/resource"},
+	}
+	for _, tt := range tests {
+		c := dcnl().SetBaseURL(tt.baseURL)
+		_, err := c.R().Get(tt.reqPath)
+		if err != nil {
+			t.Fatalf("baseURL=%q path=%q: %v", tt.baseURL, tt.reqPath, err)
+		}
+		if gotURI != tt.wantURI {
+			t.Errorf("baseURL=%q path=%q: got URI %q, want %q", tt.baseURL, tt.reqPath, gotURI, tt.wantURI)
+		}
+	}
+}
+
+func Test_parseRequestHeader(t *testing.T) {
+	for _, tt := range []struct {
+		name           string
+		init           func(c *Client, r *Request)
+		expectedHeader http.Header
+	}{
+		{
+			name: "headers in request",
+			init: func(c *Client, r *Request) {
+				r.SetHeaders(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+			},
+			expectedHeader: http.Header{
+				http.CanonicalHeaderKey("foo"): []string{"1"},
+				http.CanonicalHeaderKey("bar"): []string{"2"},
+				hdrUserAgentKey:                []string{hdrUserAgentValue},
+			},
+		},
+		{
+			name: "headers in client",
+			init: func(c *Client, r *Request) {
+				c.SetHeaders(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+			},
+			expectedHeader: http.Header{
+				http.CanonicalHeaderKey("foo"): []string{"1"},
+				http.CanonicalHeaderKey("bar"): []string{"2"},
+				hdrUserAgentKey:                []string{hdrUserAgentValue},
+			},
+		},
+		{
+			name: "headers in client and request",
+			init: func(c *Client, r *Request) {
+				c.SetHeaders(map[string]string{
+					"foo": "1", // ignored, because of the same header in the request
+					"bar": "2",
+				})
+				r.SetHeaders(map[string]string{
+					"foo": "3",
+					"xyz": "4",
+				})
+			},
+			expectedHeader: http.Header{
+				http.CanonicalHeaderKey("foo"): []string{"3"},
+				http.CanonicalHeaderKey("bar"): []string{"2"},
+				http.CanonicalHeaderKey("xyz"): []string{"4"},
+				hdrUserAgentKey:                []string{hdrUserAgentValue},
+			},
+		},
+		{
+			name: "no headers",
+			init: func(c *Client, r *Request) {},
+			expectedHeader: http.Header{
+				hdrUserAgentKey: []string{hdrUserAgentValue},
+			},
+		},
+		{
+			name: "user agent",
+			init: func(c *Client, r *Request) {
+				c.SetHeader(hdrUserAgentKey, "foo bar")
+			},
+			expectedHeader: http.Header{
+				http.CanonicalHeaderKey(hdrUserAgentKey): []string{"foo bar"},
+			},
+		},
+		{
+			name: "json content type",
+			init: func(c *Client, r *Request) {
+				c.SetHeader(hdrContentTypeKey, "application/json")
+			},
+			expectedHeader: http.Header{
+				hdrContentTypeKey: []string{"application/json"},
+				hdrUserAgentKey:   []string{hdrUserAgentValue},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			r := c.R()
+			tt.init(c, r)
+
+			// add common expected headers from client into expectedHeader
+			tt.expectedHeader.Set(hdrAcceptEncodingKey, c.ContentDecompresserKeys())
+
+			parseRequestHeader(c, r)
+
+			if !reflect.DeepEqual(tt.expectedHeader, r.Header) {
+				t.Errorf("r.Header = %#+v does not match expected %#+v", r.Header, tt.expectedHeader)
+			}
+		})
+	}
+}
+
+func TestParseRequestBody(t *testing.T) {
+	for _, tt := range []struct {
+		name                  string
+		initClient            func(c *Client)
+		initRequest           func(r *Request)
+		expectedBodyBuf       []byte
+		expectedContentLength int64
+		expectedContentType   string
+		wantErr               bool
+	}{
+		{
+			name: "empty body",
+		},
+		{
+			name:                  "empty body with SetContentLength by request",
+			expectedContentLength: 0,
+		},
+		{
+			name: "string body",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody("foo")
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with GET method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodGet
+			},
+		},
+		{
+			name: "string body with GET method and AllowMethodGetPayload by client",
+			initClient: func(c *Client) {
+				c.SetMethodGetAllowPayload(true)
+			},
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodGet
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with GET method and AllowMethodGetPayload by request",
+			initRequest: func(r *Request) {
+				r.SetMethodGetAllowPayload(true)
+				r.SetBody("foo")
+				r.Method = http.MethodGet
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with HEAD method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodHead
+			},
+		},
+		{
+			name: "string body with OPTIONS method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodOptions
+			},
+		},
+		{
+			name: "string body with POST method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodPost
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with PATCH method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodPatch
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with PUT method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodPut
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with DELETE method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodDelete
+			},
+			expectedBodyBuf:     nil,
+			expectedContentType: "",
+		},
+		{
+			name: "string body with DELETE method with AllowMethodDeletePayload by request",
+			initRequest: func(r *Request) {
+				r.SetMethodDeleteAllowPayload(true)
+				r.SetBody("foo")
+				r.Method = http.MethodDelete
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "string body with CONNECT method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodConnect
+			},
+			expectedBodyBuf:     nil,
+			expectedContentType: "",
+		},
+		{
+			name: "string body with TRACE method",
+			initRequest: func(r *Request) {
+				r.SetBody("foo")
+				r.Method = http.MethodTrace
+			},
+			expectedBodyBuf:     nil,
+			expectedContentType: "",
+		},
+		{
+			name: "byte body with method post",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody([]byte("foo"))
+			},
+			expectedBodyBuf:       []byte("foo"),
+			expectedContentType:   plainTextType,
+			expectedContentLength: 3,
+		},
+		{
+			name: "io.Reader body, no bodyBuf with method put",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPut).
+					SetBody(bytes.NewBufferString("foo"))
+			},
+			expectedContentType: jsonContentType,
+		},
+		{
+			name: "form data by request with method post",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetFormData(map[string]string{
+						"foo": "1",
+						"bar": "2",
+					})
+			},
+			expectedBodyBuf:       []byte("foo=1&bar=2"),
+			expectedContentType:   formContentType,
+			expectedContentLength: 11,
+		},
+		{
+			name: "form data by client with method patch",
+			initClient: func(c *Client) {
+				c.SetFormData(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPatch)
+			},
+			expectedBodyBuf:       []byte("foo=1&bar=2"),
+			expectedContentType:   formContentType,
+			expectedContentLength: 11,
+		},
+		{
+			name: "form data by client and request",
+			initClient: func(c *Client) {
+				c.SetFormData(map[string]string{
+					"foo": "1",
+					"bar": "2",
+				})
+			},
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPatch).
+					SetFormData(map[string]string{
+						"foo": "3",
+						"baz": "4",
+					})
+			},
+			expectedBodyBuf:       []byte("foo=3&bar=2&baz=4"),
+			expectedContentType:   formContentType,
+			expectedContentLength: 17,
+		},
+		{
+			name: "json from struct",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPut)
+				r.SetBody(struct {
+					Foo string `json:"foo"`
+					Bar string `json:"bar"`
+				}{
+					Foo: "1",
+					Bar: "2",
+				})
+			},
+			expectedBodyBuf:       append([]byte(`{"foo":"1","bar":"2"}`), '\n'),
+			expectedContentType:   jsonContentType,
+			expectedContentLength: 22,
+		},
+		{
+			name: "json from slice",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody([]string{"foo", "bar"})
+			},
+			expectedBodyBuf:       append([]byte(`["foo","bar"]`), '\n'),
+			expectedContentType:   jsonContentType,
+			expectedContentLength: 14,
+		},
+		{
+			name: "json from map",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody(map[string]any{
+						"foo": "1",
+						"bar": []int{1, 2, 3},
+						"baz": map[string]string{
+							"qux": "4",
+						},
+						"xyz": nil,
+					})
+			},
+			expectedBodyBuf:       append([]byte(`{"bar":[1,2,3],"baz":{"qux":"4"},"foo":"1","xyz":null}`), '\n'),
+			expectedContentType:   jsonContentType,
+			expectedContentLength: 55,
+		},
+		{
+			name: "json from map",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPut).
+					SetBody(map[string]any{
+						"foo": "1",
+						"bar": []int{1, 2, 3},
+						"baz": map[string]string{
+							"qux": "4",
+						},
+						"xyz": nil,
+					})
+			},
+			expectedBodyBuf:       append([]byte(`{"bar":[1,2,3],"baz":{"qux":"4"},"foo":"1","xyz":null}`), '\n'),
+			expectedContentType:   jsonContentType,
+			expectedContentLength: 55,
+		},
+		{
+			name: "json from map",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody(map[string]any{
+						"foo": "1",
+						"bar": []int{1, 2, 3},
+						"baz": map[string]string{
+							"qux": "4",
+						},
+						"xyz": nil,
+					})
+			},
+			expectedBodyBuf:       append([]byte(`{"bar":[1,2,3],"baz":{"qux":"4"},"foo":"1","xyz":null}`), '\n'),
+			expectedContentType:   jsonContentType,
+			expectedContentLength: 55,
+		},
+		{
+			name: "xml from struct",
+			initRequest: func(r *Request) {
+				type FooBar struct {
+					Foo string `xml:"foo"`
+					Bar string `xml:"bar"`
+				}
+				r.SetMethod(MethodPatch).
+					SetBody(FooBar{
+						Foo: "1",
+						Bar: "2",
+					}).
+					SetHeader(hdrContentTypeKey, "text/xml")
+			},
+			expectedBodyBuf:       []byte(`<FooBar><foo>1</foo><bar>2</bar></FooBar>`),
+			expectedContentType:   "text/xml",
+			expectedContentLength: 41,
+		},
+		{
+			name: "unsupported type",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPost).
+					SetBody(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "unsupported xml",
+			initRequest: func(r *Request) {
+				r.SetMethod(MethodPut).
+					SetBody(struct {
+						Foo string `xml:"foo"`
+						Bar string `xml:"bar"`
+					}{
+						Foo: "1",
+						Bar: "2",
+					}).
+					SetHeader(hdrContentTypeKey, "text/xml")
+			},
+			wantErr: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			if tt.initClient != nil {
+				tt.initClient(c)
+			}
+
+			r := c.R()
+			if tt.initRequest != nil {
+				tt.initRequest(r)
+			}
+
+			if err := parseRequestBody(c, r); err != nil {
+				if tt.wantErr {
+					return
+				}
+				t.Errorf("parseRequestBody() error = %v", err)
+			} else if tt.wantErr {
+				t.Errorf("wanted error, but got nil")
+			}
+			// obtain value, since this is only parse request body method test
+			if r.bodyBuf != nil {
+				r.contentLength = int64(r.bodyBuf.Len())
+			}
+			switch {
+			case r.bodyBuf == nil && tt.expectedBodyBuf != nil:
+				t.Errorf("bodyBuf is nil, but expected: %s", string(tt.expectedBodyBuf))
+			case r.bodyBuf != nil && tt.expectedBodyBuf == nil:
+				t.Errorf("bodyBuf is not nil, but expected nil: %s", r.bodyBuf.String())
+			case r.bodyBuf != nil && tt.expectedBodyBuf != nil:
+				var actual, expected any = r.bodyBuf.Bytes(), tt.expectedBodyBuf
+				if r.isFormData {
+					var err error
+					actual, err = url.ParseQuery(r.bodyBuf.String())
+					if err != nil {
+						t.Errorf("ParseQuery(r.bodyBuf) error = %v", err)
+					}
+					expected, err = url.ParseQuery(string(tt.expectedBodyBuf))
+					if err != nil {
+						t.Errorf("ParseQuery(tt.expectedBodyBuf) error = %v", err)
+					}
+				} else if r.isMultiPart {
+					_, params, err := mime.ParseMediaType(r.Header.Get(hdrContentTypeKey))
+					if err != nil {
+						t.Errorf("ParseMediaType(hdrContentTypeKey) error = %v", err)
+					}
+					boundary, ok := params["boundary"]
+					if !ok {
+						t.Errorf("boundary not found in Content-Type header")
+					}
+					reader := multipart.NewReader(r.bodyBuf, boundary)
+					body := make(map[string]any)
+					for part, perr := reader.NextPart(); perr != io.EOF; part, perr = reader.NextPart() {
+						if perr != nil {
+							t.Errorf("NextPart() error = %v", perr)
+						}
+						name := part.FormName()
+						if name == "" {
+							name = part.FileName()
+						}
+						data, err := io.ReadAll(part)
+						if err != nil {
+							t.Errorf("ReadAll(part) error = %v", err)
+						}
+						body[name] = string(data)
+					}
+					actual = body
+					expected = nil
+					if err := json.Unmarshal(tt.expectedBodyBuf, &expected); err != nil {
+						t.Errorf("json.Unmarshal(tt.expectedBodyBuf) error = %v", err)
+					}
+					t.Logf(`in case of an error, the expected body should be set as json for object: %#+v`, actual)
+				}
+				if !reflect.DeepEqual(actual, expected) {
+					t.Errorf("bodyBuf = %q does not match expected %q", r.bodyBuf.String(), string(tt.expectedBodyBuf))
+				}
+			}
+			if tt.expectedContentLength != r.contentLength {
+				t.Errorf("Content length value = %v does not match expected %v", r.contentLength, tt.expectedContentLength)
+			}
+			if ct := r.Header.Get(hdrContentTypeKey); !((tt.expectedContentType == "" && ct != "") || strings.Contains(ct, tt.expectedContentType)) {
+				t.Errorf("Content-Type header = %q does not match expected %q", r.Header.Get(hdrContentTypeKey), tt.expectedContentType)
+			}
+		})
+	}
+}
+
+func TestMiddlewareSaveToFileErrorCases(t *testing.T) {
+	c := dcnl()
+	tempDir := t.TempDir()
+
+	errDirMsg := "test dir error"
+	mkdirAll = func(_ string, _ os.FileMode) error {
+		return errors.New(errDirMsg)
+	}
+	errFileMsg := "test file error"
+	createFile = func(_ string) (*os.File, error) {
+		return nil, errors.New(errFileMsg)
+	}
+	t.Cleanup(func() {
+		mkdirAll = os.MkdirAll
+		createFile = os.Create
+	})
+
+	// dir create error
+	req1 := c.R()
+	req1.SetResponseSaveFileName(filepath.Join(tempDir, "new-res-dir", "sample.txt"))
+	err1 := MiddlewareResponseSaveToFile(c, &Response{Request: req1})
+	assertEqual(t, errDirMsg, err1.Error())
+
+	// file create error
+	req2 := c.R()
+	req2.SetResponseSaveFileName(filepath.Join(tempDir, "sample.txt"))
+	err2 := MiddlewareResponseSaveToFile(c, &Response{Request: req2})
+	assertEqual(t, errFileMsg, err2.Error())
+}
+
+func TestMiddlewareSaveToFileCopyError(t *testing.T) {
+	c := dcnl()
+	tempDir := t.TempDir()
+
+	errCopyMsg := "test copy error"
+	ioCopy = func(dst io.Writer, src io.Reader) (written int64, err error) {
+		return 0, errors.New(errCopyMsg)
+	}
+	t.Cleanup(func() {
+		ioCopy = io.Copy
+	})
+
+	// copy error
+	req1 := c.R()
+	req1.SetResponseSaveFileName(filepath.Join(tempDir, "new-res-dir", "sample.txt"))
+	err1 := MiddlewareResponseSaveToFile(c, &Response{Request: req1, Body: io.NopCloser(bytes.NewBufferString("Test context"))})
+	assertEqual(t, errCopyMsg, err1.Error())
+}
+
+func TestMiddlewareSaveToFile_ContentDisposition(t *testing.T) {
+	tempDir := t.TempDir()
+
+	t.Run("path traversal", func(t *testing.T) {
+		c := dcnl().SetResponseSaveDirectory(tempDir)
+		req := c.R().
+			SetResponseSaveToFile(true)
+		req.URL = "https://example.com/download"
+
+		res := &Response{
+			Request: req,
+			Body:    io.NopCloser(bytes.NewBufferString("test")),
+			RawResponse: &http.Response{Header: http.Header{
+				hdrContentDisposition: []string{`attachment; filename="../../../../tmp/pwned.txt"`},
+			}},
+		}
+
+		err := MiddlewareResponseSaveToFile(c, res)
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "invalid Content-Disposition filename"))
+	})
+
+	t.Run("rejects path outside base directory", func(t *testing.T) {
+		outsideFile := filepath.Join(tempDir, "..", "outside.txt")
+
+		c := dcnl().SetResponseSaveDirectory(tempDir)
+		req := c.R().
+			SetResponseSaveFileName("../outside.txt")
+		req.URL = "https://example.com/download"
+
+		res := &Response{
+			Request: req,
+			Body:    io.NopCloser(bytes.NewBufferString("test")),
+		}
+
+		err := MiddlewareResponseSaveToFile(c, res)
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "outside response save directory"))
+
+		_, statErr := os.Stat(outsideFile)
+		assertTrue(t, os.IsNotExist(statErr))
+	})
+
+	t.Run("windows abs path", func(t *testing.T) {
+		c := dcnl().SetResponseSaveDirectory(tempDir)
+		req := c.R().
+			SetResponseSaveToFile(true)
+		req.URL = "https://example.com/download"
+
+		res := &Response{
+			Request: req,
+			Body:    io.NopCloser(bytes.NewBufferString("test")),
+			RawResponse: &http.Response{Header: http.Header{
+				hdrContentDisposition: []string{`attachment; filename="C:\\temp\\pwned.txt"`},
+			}},
+		}
+
+		err := MiddlewareResponseSaveToFile(c, res)
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "absolute path is not allowed"))
+	})
+
+	t.Run("allow explicit absolute path with base directory", func(t *testing.T) {
+		absoluteFile := filepath.Join(tempDir, "absolute-target.txt")
+
+		c := dcnl().SetResponseSaveDirectory(filepath.Join(tempDir, "base-dir"))
+		req := c.R().
+			SetResponseSaveFileName(absoluteFile)
+		req.URL = "https://example.com/download"
+
+		res := &Response{
+			Request: req,
+			Body:    io.NopCloser(bytes.NewBufferString("test")),
+		}
+
+		err := MiddlewareResponseSaveToFile(c, res)
+		assertNil(t, err)
+
+		content, readErr := os.ReadFile(absoluteFile)
+		assertNil(t, readErr)
+		assertEqual(t, "test", string(content))
+	})
+
+	t.Run("method edge cases", func(t *testing.T) {
+		// sanitizeResponseSaveFileNameFromHeader
+		r, err := sanitizeResponseSaveFileNameFromHeader("")
+		assertNil(t, err)
+		assertEqual(t, "", r)
+
+		r, err = sanitizeResponseSaveFileNameFromHeader("../../../tmp/pwned.txt")
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "parent directory traversal is not allowed"))
+		assertEqual(t, "", r)
+
+		r, err = sanitizeResponseSaveFileNameFromHeader("..\\..\\..\\windows\\system32\\cmd.exe")
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "parent directory traversal is not allowed"))
+		assertEqual(t, "", r)
+
+		r, err = sanitizeResponseSaveFileNameFromHeader("tmp/welcome/.")
+		assertNotNil(t, err)
+		assertTrue(t, strings.Contains(err.Error(), "invalid Content-Disposition filename"))
+		assertEqual(t, "", r)
+
+		// isWindowsAbsPath
+		r2 := isWindowsAbsPath(`0:/temp/file.txt`)
+		assertFalse(t, r2)
+	})
+
+}
+
+func TestIsPathWithinBaseDirectory(t *testing.T) {
+	baseDir := t.TempDir()
+
+	tests := []struct {
+		name     string
+		target   string
+		expected bool
+	}{
+		{
+			name:     "same directory",
+			target:   baseDir,
+			expected: true,
+		},
+		{
+			name:     "child path",
+			target:   filepath.Join(baseDir, "downloads", "file.txt"),
+			expected: true,
+		},
+		{
+			name:     "parent directory",
+			target:   filepath.Dir(baseDir),
+			expected: false,
+		},
+		{
+			name:     "outside using traversal",
+			target:   filepath.Join(baseDir, "..", "outside", "file.txt"),
+			expected: false,
+		},
+		{
+			name:     "unrelated relative path",
+			target:   filepath.Join("usr", "local", "subdir", "file.txt"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := isPathWithinBaseDirectory(baseDir, tt.target)
+			assertEqual(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestRequestURL_GH797(t *testing.T) {
+	ts := createGetServer(t)
+	defer ts.Close()
+	c := dcnl().
+		SetBaseURL(ts.URL).
+		SetQueryParamsUnescape(true). // this line is just code coverage; I will restructure this test in v3 for the client and request the respective init method
+		SetQueryParam("fromclient", "hey unescape").
+		SetQueryParam("initone", "cáfe")
+	resp, err := c.R().
+		SetQueryParamsUnescape(true). // this line takes effect
+		SetQueryParams(
+			map[string]string{
+				"registry": "nacos://test:6801", // GH #797
+			},
+		).
+		Get("/unescape-query-params")
+	assertError(t, err)
+	assertEqual(t, "query params looks good", resp.String())
+}
+
+func TestRequestURLUnescapePreservesQueryValues(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		assertEqual(t, "one&two=three", query.Get("filter"))
+		assertEqual(t, "section#1", query.Get("fragment"))
+		assertEqual(t, "C++", query.Get("language"))
+		assertEqual(t, "one;two", query.Get("list"))
+		assertEqual(t, "100% complete", query.Get("progress"))
+		assertEqual(t, "%2F", query.Get("literal"))
+		assertEqual(t, "enabled", query.Get("filter&state"))
+		assertEqual(t, "hello world", query.Get("space"))
+		assertEqual(t, "start\x00\x1f\x7fend", query.Get("control"))
+		assertEqual(t, "nacos://test:6801", query.Get("registry"))
+		assertEqual(t, "cáfe", query.Get("unicode"))
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer ts.Close()
+
+	resp, err := New().SetBaseURL(ts.URL).SetQueryParamsUnescape(true).R().
+		SetQueryParams(map[string]string{
+			"filter":       "one&two=three",
+			"fragment":     "section#1",
+			"language":     "C++",
+			"list":         "one;two",
+			"literal":      "%2F",
+			"progress":     "100% complete",
+			"filter&state": "enabled",
+			"registry":     "nacos://test:6801",
+			"space":        "hello world",
+			"control":      "start\x00\x1f\x7fend",
+			"unicode":      "cáfe",
+		}).Get("/")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	assertEqual(t, http.StatusNoContent, resp.StatusCode())
+}
+
+func Test_unescapeRawQueryParams(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		query    string
+		expected string
+	}{
+		{
+			name:     "query key without value",
+			query:    "flag",
+			expected: "flag",
+		},
+		{
+			name:     "invalid query key escape",
+			query:    "bad%zz=value",
+			expected: "bad%zz=value",
+		},
+		{
+			name:     "invalid query value escape",
+			query:    "key=bad%zz",
+			expected: "key=bad%zz",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assertEqual(t, tt.expected, unescapeRawQueryParams(tt.query))
+		})
+	}
+}
+
+func TestMiddleware_multipartWriteFormData(t *testing.T) {
+	c := dcnl()
+
+	oldFunc := multipartWriteFormData
+	errMsg := "test write form data error"
+	multipartWriteFormData = func(*multipart.Writer, *Request) error {
+		return errors.New(errMsg)
+	}
+	t.Cleanup(func() {
+		multipartWriteFormData = oldFunc
+	})
+
+	req := &Request{
+		mu:          new(sync.Mutex),
+		Header:      http.Header{},
+		isMultiPart: true,
+		multipartFields: []*MultipartField{
+			{
+				Name:   "field1",
+				Values: []string{"field1value1", "field1value2"},
+			},
+		},
+	}
+	err := handleMultipart(c, req)
+	assertNil(t, err)
+
+	err = <-req.multipartErrChan
+	assertNotNil(t, err)
+	assertEqual(t, errMsg, err.Error())
+}
+
+func TestMiddleware_multipartWriteField(t *testing.T) {
+	c := dcnl()
+
+	oldFunc := multipartWriteField
+	errMsg := "test write field error"
+	multipartWriteField = func(w *multipart.Writer, name, value string) error {
+		return errors.New(errMsg)
+	}
+	t.Cleanup(func() {
+		multipartWriteField = oldFunc
+	})
+
+	req := &Request{
+		mu:          new(sync.Mutex),
+		Header:      http.Header{},
+		isMultiPart: true,
+		multipartFields: []*MultipartField{
+			{
+				Name:   "field1",
+				Values: []string{"field1value1", "field1value2"},
+			},
+		},
+	}
+	err := handleMultipart(c, req)
+	assertNil(t, err)
+
+	err = <-req.multipartErrChan
+	assertNotNil(t, err)
+	assertEqual(t, errMsg, err.Error())
+}
+
+func TestMiddleware_multipartCreatePart(t *testing.T) {
+	c := dcnl()
+
+	oldFunc := multipartCreatePart
+	errMsg := "test create part error"
+	multipartCreatePart = func(w *multipart.Writer, h textproto.MIMEHeader) (io.Writer, error) {
+		return nil, errors.New(errMsg)
+	}
+	t.Cleanup(func() {
+		multipartCreatePart = oldFunc
+	})
+
+	jsonStr1 := `{"input": {"name": "Uploaded document 1", "_filename" : ["file1.txt"]}}`
+	req := &Request{
+		mu:          new(sync.Mutex),
+		Header:      http.Header{},
+		isMultiPart: true,
+		multipartFields: []*MultipartField{
+			{
+				Name:        "uploadManifest1",
+				FileName:    "upload-file-1.json",
+				ContentType: "application/json",
+				Reader:      bytes.NewBufferString(jsonStr1),
+			},
+		},
+	}
+	err := handleMultipart(c, req)
+	assertNil(t, err)
+
+	err = <-req.multipartErrChan
+	assertNotNil(t, err)
+	assertEqual(t, errMsg, err.Error())
+}
+
+func TestMiddleware_multipartCreatePart_WriteError(t *testing.T) {
+	c := dcnl()
+
+	oldFunc := multipartCreatePart
+	multipartCreatePart = func(w *multipart.Writer, h textproto.MIMEHeader) (io.Writer, error) {
+		return &mpWriterError{}, nil
+	}
+	t.Cleanup(func() {
+		multipartCreatePart = oldFunc
+	})
+
+	jsonStr1 := `{"input": {"name": "Uploaded document 1", "_filename" : ["file1.txt"]}}`
+	req := &Request{
+		mu:          new(sync.Mutex),
+		Header:      http.Header{},
+		isMultiPart: true,
+		multipartFields: []*MultipartField{
+			{
+				Name:        "uploadManifest1",
+				FileName:    "upload-file-1.json",
+				ContentType: "application/json",
+				Reader:      bytes.NewBufferString(jsonStr1),
+				tempBuf:     []byte("test data"),
+			},
+		},
+	}
+	err := handleMultipart(c, req)
+	assertNil(t, err)
+
+	err = <-req.multipartErrChan
+	assertNotNil(t, err)
+	assertEqual(t, "multipart write error", err.Error())
+}
+
+func TestMiddleware_multipartPipeWriterCloseError(t *testing.T) {
+	c := dcnl()
+
+	oldPipeWriterClose := multipartPipeWriterClose
+	errMsg := "test pipe writer close error"
+	multipartPipeWriterClose = func(w *io.PipeWriter) error {
+		_ = w.Close()
+		return errors.New(errMsg)
+	}
+	t.Cleanup(func() {
+		multipartPipeWriterClose = oldPipeWriterClose
+	})
+
+	req := &Request{
+		mu:          new(sync.Mutex),
+		Header:      http.Header{},
+		isMultiPart: true,
+		multipartFields: []*MultipartField{
+			{
+				Name:   "field1",
+				Values: []string{"field1value1", "field1value2"},
+			},
+		},
+	}
+
+	err := handleMultipart(c, req)
+	assertNil(t, err)
+
+	// Drain pipe reader so multipart writer close does not block.
+	done := make(chan struct{})
+	go func() {
+		_, _ = io.Copy(io.Discard, req.Body.(io.Reader))
+		close(done)
+	}()
+
+	err = <-req.multipartErrChan
+	assertNotNil(t, err)
+	assertEqual(t, errMsg, err.Error())
+
+	<-done
+}
+
+func TestMiddlewareCoverage(t *testing.T) {
+	c := dcnl()
+
+	req1 := c.R()
+	req1.URL = "//invalid-url  .local"
+	err1 := createRawRequest(c, req1)
+	assertTrue(t, strings.Contains(err1.Error(), "invalid character"), "invalid URL error expected")
+}
+
+func TestMultipartEarlyResponseRace(t *testing.T) {
+	client := NewWithClient(&http.Client{
+		Transport: earlyResponseTransport{},
+	})
+
+	for range 200 {
+		_, _ = client.R().
+			SetMultipartFields(&MultipartField{
+				Name:        "audio",
+				FileName:    "audio.wav",
+				ContentType: "audio/wav",
+				Reader:      bytes.NewReader(make([]byte, 1<<20)),
+			}).
+			Post("http://resty.test/upload")
+	}
+}
+
+type earlyResponseTransport struct{}
+
+func (earlyResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// net/http allows a RoundTripper to consume and close the request body
+	// asynchronously after RoundTrip returns.
+	go func() {
+		_, _ = io.Copy(io.Discard, req.Body)
+		_ = req.Body.Close()
+	}()
+
+	return &http.Response{
+		StatusCode: http.StatusUnprocessableEntity,
+		Status:     "422 Unprocessable Entity",
+		Header:     make(http.Header),
+		Body:       io.NopCloser(strings.NewReader("rejected")),
+		Request:    req,
+	}, nil
+}
+
+type blockingReadCloser struct {
+	started chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func newBlockingReadCloser() *blockingReadCloser {
+	return &blockingReadCloser{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+}
+
+func (r *blockingReadCloser) Read([]byte) (int, error) {
+	select {
+	case <-r.started:
+	default:
+		close(r.started)
+	}
+
+	<-r.release
+
+	return 0, io.EOF
+}
+
+func (r *blockingReadCloser) Close() error {
+	r.once.Do(func() {
+		close(r.release)
+	})
+
+	return nil
+}
+
+func TestMultipartReturnsAfterEarlyResponse(t *testing.T) {
+	// RoundTrip returns before the request body is fully written, leaving the
+	// multipart producer blocked inside Reader.Read. stopMultipart must cancel
+	// production and close closable field readers so execute does not hang on
+	// multipartErrChan (see #1186).
+	reader := newBlockingReadCloser()
+	client := NewWithClient(&http.Client{
+		Transport: earlyResponseTransport{},
+	})
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.R().
+			SetMultipartFields(&MultipartField{
+				Name:        "audio",
+				FileName:    "audio.wav",
+				ContentType: "audio/wav",
+				Reader:      reader,
+			}).
+			Post("http://resty.test/upload")
+		done <- err
+	}()
+
+	select {
+	case <-done:
+		// returned after early response without caller unblocking the reader
+	case <-time.After(2 * time.Second):
+		_ = reader.Close()
+		<-done
+		t.Fatal("multipart request did not return after the transport responded")
+	}
+}
+
+func TestStopMultipartNilReceiver(t *testing.T) {
+	// nil receiver must be a no-op and must not panic.
+	var r *Request
+	r.stopMultipart()
+
+	// A request with no cancel func / pipe writer / fields must also be safe.
+	(&Request{}).stopMultipart()
+}
+
+// Client-level values were assigned into the request with v[:], so the request
+// shared the client's backing array. Two requests then grew into the same spare
+// slot and silently overwrote each other's value.
+func TestClientValuesAreNotAliasedIntoRequests(t *testing.T) {
+	c := dcnl()
+	defer c.Close()
+
+	// Set then two Adds leaves len 3 in a cap 4 array: one spare slot, which is
+	// where a request's own Add would write.
+	// Client has no multi-value setters and its accessors return snapshots, so
+	// build the fixture on the underlying maps.
+	c.SetHeader("X-Multi", "one")
+	c.header.Add("X-Multi", "two")
+	c.header.Add("X-Multi", "three")
+	c.SetQueryParam("tag", "a")
+	c.queryParams.Add("tag", "b")
+	c.queryParams.Add("tag", "c")
+
+	newRequest := func(path, marker string) *Request {
+		r := c.R()
+		r.URL = path
+		assertNil(t, parseRequestURL(c, r))
+		parseRequestHeader(c, r)
+		r.Header.Add("X-Multi", marker)
+		r.QueryParams.Add("tag", marker)
+		return r
+	}
+
+	first := newRequest("/first", "first")
+	second := newRequest("/second", "second")
+
+	// each request must keep its own marker
+	assertEqual(t, "first", first.Header["X-Multi"][3])
+	assertEqual(t, "second", second.Header["X-Multi"][3])
+	assertEqual(t, "first", first.QueryParams["tag"][3])
+	assertEqual(t, "second", second.QueryParams["tag"][3])
+
+	// and the client itself must be untouched
+	assertEqual(t, 3, len(c.Header()["X-Multi"]))
+	assertEqual(t, 3, len(c.QueryParams()["tag"]))
+}
+
+// MiddlewareResponseAutoParse used to return without reading or closing the body
+// when a content-type decoder matched but the caller registered no Result (2xx)
+// or ResultError (4xx/5xx). The connection was then never returned to the
+// keep-alive pool, so every such request opened a fresh one.
+func TestAutoParseReleasesBodyWithoutResult(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		contentType string
+		body        string
+		statusCode  int
+		setResult   bool
+		setErr      bool
+	}{
+		{"json 200 without result", "application/json", `{"a":1}`, http.StatusOK, false, false},
+		{"json 200 with result", "application/json", `{"a":1}`, http.StatusOK, true, false},
+		{"json 500 without result error", "application/json", `{"a":1}`, http.StatusInternalServerError, false, false},
+		{"xml 200 without result", "application/xml", `<r><a>1</a></r>`, http.StatusOK, false, false},
+		{"no decoder for content type", "text/plain", `hello`, http.StatusOK, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var conns int32
+			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set(hdrContentTypeKey, tc.contentType)
+				w.WriteHeader(tc.statusCode)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			ts.Config.ConnState = func(_ net.Conn, s http.ConnState) {
+				if s == http.StateNew {
+					atomic.AddInt32(&conns, 1)
+				}
+			}
+			ts.Start()
+			defer ts.Close()
+
+			c := dcnl().SetBaseURL(ts.URL)
+			defer c.Close()
+
+			for i := 0; i < 5; i++ {
+				req := c.R()
+				if tc.setResult {
+					req.SetResult(&map[string]any{})
+				}
+				if tc.setErr {
+					req.SetResultError(&map[string]any{})
+				}
+				res, err := req.Get("/")
+				assertError(t, err)
+				assertEqual(t, tc.statusCode, res.StatusCode())
+				if !tc.setResult && !tc.setErr {
+					// nothing decoded it, so the body must still reach the caller
+					assertEqual(t, tc.body, res.String())
+				}
+			}
+
+			// one connection, reused for all five requests
+			assertEqual(t, int32(1), atomic.LoadInt32(&conns))
+		})
+	}
+}
+
+// A save-to-file response body belongs to MiddlewareResponseSaveToFile, so
+// AutoParse must not buffer it even though a decoder matches its content type.
+func TestAutoParseDoesNotBufferSaveToFileBody(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(hdrContentTypeKey, "application/json")
+		_, _ = w.Write([]byte(`{"a":1}`))
+	}))
+	defer ts.Close()
+
+	outputFile := filepath.Join(getTestDataPath(), "auto-parse-save.json")
+	defer cleanupFiles(outputFile)
+
+	c := dcnl().SetBaseURL(ts.URL)
+	defer c.Close()
+
+	res, err := c.R().SetResponseSaveFileName(outputFile).Get("/")
+	assertError(t, err)
+	assertEqual(t, http.StatusOK, res.StatusCode())
+	assertEqual(t, false, res.IsRead)
+
+	b, err := os.ReadFile(outputFile)
+	assertError(t, err)
+	assertEqual(t, `{"a":1}`, string(b))
+}
+
+func TestCalculateMultipartContentLength(t *testing.T) {
+	c := dcnl()
+	defer c.Close()
+
+	t.Run("seekable reader with content", func(t *testing.T) {
+		reader := strings.NewReader("hello world")
+		_, err := reader.Seek(6, io.SeekStart)
+		assertNil(t, err)
+		r := c.R()
+		r.SetFileReader("file", "test.txt", reader)
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 0)
+		assertEqual(t, int64(5), r.multipartFields[0].FileSize)
+		position, err := reader.Seek(0, io.SeekCurrent)
+		assertNil(t, err)
+		assertEqual(t, int64(6), position)
+	})
+
+	t.Run("seekable reader empty", func(t *testing.T) {
+		r := c.R()
+		r.SetFileReader("file", "empty.txt", strings.NewReader(""))
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 0)
+	})
+
+	t.Run("unseekable reader without size and with sniffed tempBuf", func(t *testing.T) {
+		r := c.R()
+		unseekable := struct{ io.Reader }{strings.NewReader("sample payload data")}
+		r.SetFileReader("file", "test.txt", unseekable)
+		// Simulate MIME sniffing populating tempBuf
+		r.multipartFields[0].tempBuf = []byte("sample")
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertFalse(t, ok)
+		assertEqual(t, int64(0), cl)
+	})
+
+	t.Run("unseekable reader without size and empty tempBuf", func(t *testing.T) {
+		r := c.R()
+		unseekable := struct{ io.Reader }{strings.NewReader("sample payload data")}
+		r.SetMultipartField("file", "test.txt", "text/plain", unseekable)
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertFalse(t, ok)
+		assertEqual(t, int64(0), cl)
+	})
+
+	t.Run("unseekable reader with explicit positive FileSize", func(t *testing.T) {
+		r := c.R()
+		unseekable := struct{ io.Reader }{strings.NewReader("sample payload data")}
+		r.SetMultipartFields(&MultipartField{
+			Name:     "file",
+			FileName: "test.txt",
+			Reader:   unseekable,
+			FileSize: 19,
+		})
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 19)
+	})
+
+	t.Run("unseekable reader with negative FileSize", func(t *testing.T) {
+		r := c.R()
+		unseekable := struct{ io.Reader }{strings.NewReader("sample payload data")}
+		r.SetMultipartFields(&MultipartField{
+			Name:     "file",
+			FileName: "test.txt",
+			Reader:   unseekable,
+			FileSize: -1,
+		})
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertFalse(t, ok)
+		assertEqual(t, int64(0), cl)
+	})
+
+	t.Run("file on disk", func(t *testing.T) {
+		basePath := getTestDataPath()
+		filePath := filepath.Join(basePath, "text-file.txt")
+		r := c.R()
+		r.SetFile("file", filePath)
+		assertNil(t, r.multipartFields[0].openFile())
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 0)
+	})
+
+	t.Run("mixed fields with one unseekable unknown size", func(t *testing.T) {
+		r := c.R()
+		r.SetFileReader("seekable", "seekable.txt", strings.NewReader("valid content"))
+		unseekable := struct{ io.Reader }{strings.NewReader("unseekable content")}
+		r.SetFileReader("unseekable", "unseekable.txt", unseekable)
+		r.multipartFields[1].tempBuf = []byte("unseekable")
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertFalse(t, ok)
+		assertEqual(t, int64(0), cl)
+	})
+
+	t.Run("invalid boundary returns false", func(t *testing.T) {
+		r := c.R()
+		r.SetFileReader("file", "test.txt", strings.NewReader("sample payload data"))
+		cl, ok := calculateMultipartContentLength("invalid\nboundary", r)
+		assertFalse(t, ok)
+		assertEqual(t, int64(0), cl)
+	})
+
+	t.Run("mixed FormData with regular fields and file markers", func(t *testing.T) {
+		r := c.R()
+		r.SetFormData(map[string]string{
+			"username": "john_doe",
+			"category": "documents",
+		})
+		basePath := getTestDataPath()
+		filePath := filepath.Join(basePath, "text-file.txt")
+		r.SetFiles(map[string]string{
+			"upload1": filePath,
+		})
+		assertNil(t, r.multipartFields[0].openFile())
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 0)
+	})
+
+	t.Run("multipart fields containing values", func(t *testing.T) {
+		r := c.R()
+		r.SetMultipartFields(
+			&MultipartField{
+				Name:   "tags",
+				Values: []string{"tag1", "tag2"},
+			},
+			&MultipartField{
+				Name:     "doc",
+				FileName: "sample.txt",
+				Reader:   strings.NewReader("sample content"),
+			},
+		)
+		cl, ok := calculateMultipartContentLength("test-boundary", r)
+		assertTrue(t, ok)
+		assertTrue(t, cl > 0)
+	})
+}
+
+func TestMultipartStreamedReaderContentLengthFallback(t *testing.T) {
+	for _, tc := range []struct {
+		name                string
+		payloadSize         int
+		explicitContentType string
+		explicitFileSize    int64
+		unseekable          bool
+		expectChunked       bool
+		expectContentLength bool
+	}{
+		{
+			name:                "unseekable reader 600 bytes with mime sniffing falls back to chunked",
+			payloadSize:         600,
+			unseekable:          true,
+			expectChunked:       true,
+			expectContentLength: false,
+		},
+		{
+			name:                "unseekable reader 5 bytes with mime sniffing falls back to chunked",
+			payloadSize:         5,
+			unseekable:          true,
+			expectChunked:       true,
+			expectContentLength: false,
+		},
+		{
+			name:                "unseekable reader with explicit content type falls back to chunked",
+			payloadSize:         600,
+			explicitContentType: "text/plain",
+			unseekable:          true,
+			expectChunked:       true,
+			expectContentLength: false,
+		},
+		{
+			name:                "unseekable reader with explicit FileSize calculates Content-Length",
+			payloadSize:         600,
+			explicitFileSize:    600,
+			unseekable:          true,
+			expectChunked:       false,
+			expectContentLength: true,
+		},
+		{
+			name:                "seekable reader calculates Content-Length",
+			payloadSize:         600,
+			unseekable:          false,
+			expectChunked:       false,
+			expectContentLength: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var receivedContentLength int64
+			var isChunked bool
+			var receivedBody bytes.Buffer
+
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				receivedContentLength = r.ContentLength
+				isChunked = slices.Contains(r.TransferEncoding, "chunked")
+
+				mr, err := r.MultipartReader()
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				part, err := mr.NextPart()
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				if _, err = io.Copy(&receivedBody, part); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("ok"))
+			}))
+			defer ts.Close()
+
+			c := dcnl()
+			defer c.Close()
+
+			payload := strings.Repeat("A", tc.payloadSize)
+			var reader io.Reader = strings.NewReader(payload)
+			if tc.unseekable {
+				reader = struct{ io.Reader }{reader}
+			}
+
+			req := c.R().
+				SetMultipartBoundary("resty-test-boundary").
+				SetMultipartContentLength(true)
+
+			if tc.explicitFileSize > 0 {
+				req.SetMultipartFields(&MultipartField{
+					Name:        "file",
+					FileName:    "tiny.txt",
+					ContentType: tc.explicitContentType,
+					Reader:      reader,
+					FileSize:    tc.explicitFileSize,
+				})
+			} else if tc.explicitContentType != "" {
+				req.SetMultipartField("file", "tiny.txt", tc.explicitContentType, reader)
+			} else {
+				req.SetFileReader("file", "tiny.txt", reader)
+			}
+
+			resp, err := req.Post(ts.URL)
+			assertNil(t, err)
+			assertEqual(t, http.StatusOK, resp.StatusCode())
+			assertEqual(t, payload, receivedBody.String())
+			assertEqual(t, tc.expectChunked, isChunked)
+			assertEqual(t, tc.expectContentLength, resp.Request.isContentLengthSet)
+
+			if tc.expectContentLength {
+				assertTrue(t, receivedContentLength > int64(tc.payloadSize))
+				assertEqual(t, resp.Request.RawRequest.ContentLength, receivedContentLength)
+			} else {
+				assertEqual(t, int64(-1), receivedContentLength)
+			}
+		})
+	}
+}

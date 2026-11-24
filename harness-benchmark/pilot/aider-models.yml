@@ -1,0 +1,1 @@
+- {name: anthropic/claude-haiku-5-5, use_temperature: false}

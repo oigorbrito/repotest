@@ -1,0 +1,38 @@
+pi 0.12.16 (x86_64-pc-windows-msvc)
+  executable        D:\projetos\pi-benchmark\tasks\flipt-task02\evidence\preparation\pi-rust-build\release\pi.exe (release install)
+  on PATH           C:\Users\igorb\.pi\agent\bin\pi.CMD (runs as `pi`)
+                    C:\Users\igorb\AppData\Roaming\npm\pi.CMD
+                    C:\Users\igorb\AppData\Local\Programs\pi\pi.EXE
+
+Config
+  config dir        C:\Users\igorb\.pi\agent
+  settings          C:\Users\igorb\.pi\agent\settings.json (ok)
+  project settings  D:\projetos\pi-benchmark\tasks\flipt-task02\agents\pi-rust\flipt\.pi\settings.json (not found)
+  models            C:\Users\igorb\.pi\agent\models.json (ok)
+  auth              C:\Users\igorb\.pi\agent\auth.json (ok)
+
+Credentials
+  anthropic         OAuth from OAuth
+  cloudflare-ai-gatewayAPI key from stored credential
+  deepseek          API key from stored credential
+  ollama            API key from configured API key
+  openai-codex      OAuth from OAuth
+  openrouter        OAuth from OAuth
+  radius            OAuth from OAuth
+
+MCP servers
+  radius            http https://radius.pi.dev (global)
+
+Terminal
+  TERM              xterm-256color
+  TERM_PROGRAM      (unset)
+  colors            truecolor
+  images            none
+  hyperlinks        yes
+  keyboard protocol negotiated at startup (not queried here)
+  interactive       no
+
+Warnings
+  - C:\Users\igorb\.pi\agent\bin\pi.CMD is the pi on PATH; D:\projetos\pi-benchmark\tasks\flipt-task02\evidence\preparation\pi-rust-build\release\pi.exe is not on PATH
+
+No problems found.

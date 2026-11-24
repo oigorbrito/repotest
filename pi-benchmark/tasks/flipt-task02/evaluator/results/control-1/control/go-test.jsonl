@@ -1,0 +1,241 @@
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-output","Output":"# go.flipt.io/flipt/internal/storage/sql\n"}
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-output","Output":"internal\\storage\\sql\\errors.go:44:19: undefined: sqlite3.Error\n"}
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-output","Output":"internal\\storage\\sql\\errors.go:47:27: undefined: sqlite3.ErrConstraint\n"}
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-output","Output":"internal\\storage\\sql\\errors.go:49:17: undefined: sqlite3.ErrConstraintForeignKey\n"}
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-output","Output":"internal\\storage\\sql\\errors.go:51:17: undefined: sqlite3.ErrConstraintUnique\n"}
+{"ImportPath":"go.flipt.io/flipt/internal/storage/sql","Action":"build-fail"}
+{"Time":"2026-11-18T18:38:59.9172508-03:00","Action":"start","Package":"go.flipt.io/flipt/cmd/flipt"}
+{"Time":"2026-11-18T18:38:59.9237332-03:00","Action":"output","Package":"go.flipt.io/flipt/cmd/flipt","Output":"FAIL\tgo.flipt.io/flipt/cmd/flipt [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:38:59.9237332-03:00","Action":"fail","Package":"go.flipt.io/flipt/cmd/flipt","Elapsed":0.031,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:03.5816315-03:00","Action":"start","Package":"go.flipt.io/flipt/config"}
+{"Time":"2026-11-18T18:39:03.6624914-03:00","Action":"start","Package":"go.flipt.io/flipt/config/migrations"}
+{"Time":"2026-11-18T18:39:03.6624914-03:00","Action":"output","Package":"go.flipt.io/flipt/config/migrations","Output":"?   \tgo.flipt.io/flipt/config/migrations\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:03.6624914-03:00","Action":"skip","Package":"go.flipt.io/flipt/config/migrations","Elapsed":0}
+{"Time":"2026-11-18T18:39:03.6624914-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cache"}
+{"Time":"2026-11-18T18:39:03.6630222-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache","Output":"?   \tgo.flipt.io/flipt/internal/cache\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:03.6630222-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/cache","Elapsed":0.001}
+{"Time":"2026-11-18T18:39:03.6630222-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cache/memory"}
+{"Time":"2026-11-18T18:39:03.9278351-03:00","Action":"run","Package":"go.flipt.io/flipt/internal/cache/memory","Test":"TestNewCache"}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/memory","Test":"TestNewCache","Output":"=== RUN   TestNewCache\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/memory","Test":"TestNewCache","Output":"--- PASS: TestNewCache (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/cache/memory","Test":"TestNewCache","Elapsed":0}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/memory","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/memory","Output":"ok  \tgo.flipt.io/flipt/internal/cache/memory\t0.338s\n"}
+{"Time":"2026-11-18T18:39:04.0014571-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/cache/memory","Elapsed":0.338}
+{"Time":"2026-11-18T18:39:03.9754509-03:00","Action":"output","Package":"go.flipt.io/flipt/config","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:04.069048-03:00","Action":"output","Package":"go.flipt.io/flipt/config","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:04.0700655-03:00","Action":"output","Package":"go.flipt.io/flipt/config","Output":"ok  \tgo.flipt.io/flipt/config\t0.485s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:04.0700655-03:00","Action":"pass","Package":"go.flipt.io/flipt/config","Elapsed":0.488}
+{"Time":"2026-11-18T18:39:09.4463475-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cache/redis"}
+{"Time":"2026-11-18T18:39:09.4507273-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cleanup"}
+{"Time":"2026-11-18T18:39:09.4770129-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cmd"}
+{"Time":"2026-11-18T18:39:09.4770129-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cmd","Output":"FAIL\tgo.flipt.io/flipt/internal/cmd [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.4770129-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/cmd","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:09.4781139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/config"}
+{"Time":"2026-11-18T18:39:09.50217-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/containers"}
+{"Time":"2026-11-18T18:39:09.50217-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/containers","Output":"?   \tgo.flipt.io/flipt/internal/containers\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:09.50217-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/containers","Elapsed":0}
+{"Time":"2026-11-18T18:39:09.50217-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/cue"}
+{"Time":"2026-11-18T18:39:09.5347036-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/ext"}
+{"Time":"2026-11-18T18:39:09.5816422-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/gateway"}
+{"Time":"2026-11-18T18:39:09.5816422-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/gateway","Output":"?   \tgo.flipt.io/flipt/internal/gateway\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:09.5816422-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/gateway","Elapsed":0}
+{"Time":"2026-11-18T18:39:09.5816422-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/gitfs"}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/info"}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/info","Output":"?   \tgo.flipt.io/flipt/internal/info\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/info","Elapsed":0}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/metrics"}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/metrics","Output":"?   \tgo.flipt.io/flipt/internal/metrics\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/metrics","Elapsed":0}
+{"Time":"2026-11-18T18:39:09.6175624-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/release"}
+{"Time":"2026-11-18T18:39:09.6819579-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/redis","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:09.6819579-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/redis","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.6868151-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cache/redis","Output":"ok  \tgo.flipt.io/flipt/internal/cache/redis\t0.240s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:09.6873406-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/cache/redis","Elapsed":0.241}
+{"Time":"2026-11-18T18:39:09.6939187-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/s3fs"}
+{"Time":"2026-11-18T18:39:09.7825277-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cleanup","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:09.7825277-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cleanup","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.7869189-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cleanup","Output":"ok  \tgo.flipt.io/flipt/internal/cleanup\t0.336s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:09.7869189-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/cleanup","Elapsed":0.336}
+{"Time":"2026-11-18T18:39:09.7912923-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server"}
+{"Time":"2026-11-18T18:39:09.8260458-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/config","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:09.8265983-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/config","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.8311648-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/config","Output":"ok  \tgo.flipt.io/flipt/internal/config\t0.353s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:09.8311648-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/config","Elapsed":0.353}
+{"Time":"2026-11-18T18:39:09.8337906-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/audit"}
+{"Time":"2026-11-18T18:39:09.8427993-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cue","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:09.8427993-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cue","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.8469861-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/cue","Output":"ok  \tgo.flipt.io/flipt/internal/cue\t0.345s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:09.8469861-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/cue","Elapsed":0.345}
+{"Time":"2026-11-18T18:39:09.8507626-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/audit/logfile"}
+{"Time":"2026-11-18T18:39:09.8507626-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/audit/logfile","Output":"?   \tgo.flipt.io/flipt/internal/server/audit/logfile\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:09.8507626-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/audit/logfile","Elapsed":0}
+{"Time":"2026-11-18T18:39:09.8507626-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth"}
+{"Time":"2026-11-18T18:39:09.8733905-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/ext","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:09.8733905-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/ext","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:09.8850313-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/ext","Output":"ok  \tgo.flipt.io/flipt/internal/ext\t0.350s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:09.8850313-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/ext","Elapsed":0.35}
+{"Time":"2026-11-18T18:39:09.8894915-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes"}
+{"Time":"2026-11-18T18:39:10.0489592-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.0489592-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.051626-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.051626-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.0532257-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server","Output":"ok  \tgo.flipt.io/flipt/internal/server\t0.262s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.0532257-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server","Elapsed":0.262}
+{"Time":"2026-11-18T18:39:10.056062-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth","Output":"ok  \tgo.flipt.io/flipt/internal/server/auth\t0.205s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.056062-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/auth","Elapsed":0.205}
+{"Time":"2026-11-18T18:39:10.0585265-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes/testing"}
+{"Time":"2026-11-18T18:39:10.0591156-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes/testing","Output":"?   \tgo.flipt.io/flipt/internal/server/auth/method/kubernetes/testing\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:10.0591156-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes/testing","Elapsed":0.001}
+{"Time":"2026-11-18T18:39:10.0591156-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc"}
+{"Time":"2026-11-18T18:39:10.061582-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc/testing"}
+{"Time":"2026-11-18T18:39:10.061582-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc/testing","Output":"?   \tgo.flipt.io/flipt/internal/server/auth/method/oidc/testing\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:10.061582-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc/testing","Elapsed":0}
+{"Time":"2026-11-18T18:39:10.061582-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/method/token"}
+{"Time":"2026-11-18T18:39:10.0860094-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/audit","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.0860094-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/audit","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.0860094-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.0860094-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.0971954-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes","Output":"ok  \tgo.flipt.io/flipt/internal/server/auth/method/kubernetes\t0.207s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.0971954-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/auth/method/kubernetes","Elapsed":0.208}
+{"Time":"2026-11-18T18:39:10.0999296-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/audit","Output":"ok  \tgo.flipt.io/flipt/internal/server/audit\t0.266s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.0999296-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/audit","Elapsed":0.266}
+{"Time":"2026-11-18T18:39:10.1060958-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/auth/public"}
+{"Time":"2026-11-18T18:39:10.1060958-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/public","Output":"?   \tgo.flipt.io/flipt/internal/server/auth/public\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:10.1060958-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/auth/public","Elapsed":0}
+{"Time":"2026-11-18T18:39:10.1060958-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/evaluation"}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/metadata"}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/metadata","Output":"?   \tgo.flipt.io/flipt/internal/server/metadata\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/metadata","Elapsed":0}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/metrics"}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/metrics","Output":"?   \tgo.flipt.io/flipt/internal/server/metrics\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:10.1068894-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/metrics","Elapsed":0}
+{"Time":"2026-11-18T18:39:10.2661065-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/token","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.2666388-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/token","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.2804268-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/token","Output":"ok  \tgo.flipt.io/flipt/internal/server/auth/method/token\t0.219s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.2804268-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/auth/method/token","Elapsed":0.219}
+{"Time":"2026-11-18T18:39:10.3491661-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.3491661-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.361087-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc","Output":"ok  \tgo.flipt.io/flipt/internal/server/auth/method/oidc\t0.302s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.361087-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/auth/method/oidc","Elapsed":0.302}
+{"Time":"2026-11-18T18:39:10.4199583-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/evaluation","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.4199583-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/evaluation","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.4262673-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/evaluation","Output":"ok  \tgo.flipt.io/flipt/internal/server/evaluation\t0.320s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.4262673-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/evaluation","Elapsed":0.32}
+{"Time":"2026-11-18T18:39:10.6995991-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/s3fs","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.6995991-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/s3fs","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.7029735-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/s3fs","Output":"ok  \tgo.flipt.io/flipt/internal/s3fs\t1.009s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.7029735-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/s3fs","Elapsed":1.009}
+{"Time":"2026-11-18T18:39:10.8684505-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/release","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:10.8684505-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/release","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:10.8778574-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/release","Output":"ok  \tgo.flipt.io/flipt/internal/release\t1.260s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:10.8778574-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/release","Elapsed":1.26}
+{"Time":"2026-11-18T18:39:11.1815709-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/middleware/grpc"}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/server/otel"}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/otel","Output":"?   \tgo.flipt.io/flipt/internal/server/otel\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/server/otel","Elapsed":0}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage"}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage","Output":"?   \tgo.flipt.io/flipt/internal/storage\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:11.2329705-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/storage","Elapsed":0}
+{"Time":"2026-11-18T18:39:11.3390166-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/gitfs","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:11.3390166-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/gitfs","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:11.3451692-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/gitfs","Output":"ok  \tgo.flipt.io/flipt/internal/gitfs\t1.764s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:11.3451692-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/gitfs","Elapsed":1.764}
+{"Time":"2026-11-18T18:39:11.4445492-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/auth"}
+{"Time":"2026-11-18T18:39:11.4672973-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/middleware/grpc","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:11.4672973-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/middleware/grpc","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:11.4741142-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/server/middleware/grpc","Output":"ok  \tgo.flipt.io/flipt/internal/server/middleware/grpc\t0.293s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:11.4741142-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/server/middleware/grpc","Elapsed":0.293}
+{"Time":"2026-11-18T18:39:11.6919616-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/auth/cache"}
+{"Time":"2026-11-18T18:39:11.7015201-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:11.7015201-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:11.7126675-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth","Output":"ok  \tgo.flipt.io/flipt/internal/storage/auth\t0.268s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:11.7126675-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/auth","Elapsed":0.268}
+{"Time":"2026-11-18T18:39:12.0987882-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/cache","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:12.0993376-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/cache","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:12.1080636-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/cache","Output":"ok  \tgo.flipt.io/flipt/internal/storage/auth/cache\t0.416s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:12.1080636-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/auth/cache","Elapsed":0.416}
+{"Time":"2026-11-18T18:39:12.6542104-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/auth/memory"}
+{"Time":"2026-11-18T18:39:12.7413734-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/auth/sql"}
+{"Time":"2026-11-18T18:39:12.7413734-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/sql","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/auth/sql [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:12.7413734-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/auth/sql","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:12.7422695-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/auth/testing"}
+{"Time":"2026-11-18T18:39:12.7422695-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/testing","Output":"?   \tgo.flipt.io/flipt/internal/storage/auth/testing\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:12.7422695-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/storage/auth/testing","Elapsed":0}
+{"Time":"2026-11-18T18:39:12.8455773-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/cache"}
+{"Time":"2026-11-18T18:39:13.0158006-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/memory","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:13.0158006-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/memory","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.0238377-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/auth/memory","Output":"ok  \tgo.flipt.io/flipt/internal/storage/auth/memory\t0.370s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:13.0238377-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/auth/memory","Elapsed":0.37}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"run","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestSetHandleMarshalError"}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestSetHandleMarshalError","Output":"=== RUN   TestSetHandleMarshalError\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestSetHandleMarshalError","Output":"    logger.go:130: 2026-11-18T18:39:13.094-0300\tERROR\tmarshalling for storage cache\t{\"error\": \"json: unsupported type: chan int\"}\n"}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestSetHandleMarshalError","Output":"--- PASS: TestSetHandleMarshalError (0.03s)\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestSetHandleMarshalError","Elapsed":0.03}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"run","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestGetEvaluationRules"}
+{"Time":"2026-11-18T18:39:13.1276712-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestGetEvaluationRules","Output":"=== RUN   TestGetEvaluationRules\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.1287201-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestGetEvaluationRules","Output":"--- PASS: TestGetEvaluationRules (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.1287201-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/cache","Test":"TestGetEvaluationRules","Elapsed":0}
+{"Time":"2026-11-18T18:39:13.1287201-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.1376985-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/cache","Output":"ok  \tgo.flipt.io/flipt/internal/storage/cache\t0.292s\n"}
+{"Time":"2026-11-18T18:39:13.1376985-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/cache","Elapsed":0.293}
+{"Time":"2026-11-18T18:39:13.7340341-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/fs"}
+{"Time":"2026-11-18T18:39:13.7360432-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/fs/git"}
+{"Time":"2026-11-18T18:39:13.7360432-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/fs/local"}
+{"Time":"2026-11-18T18:39:13.7360432-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/fs/s3"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/oplock"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock","Output":"?   \tgo.flipt.io/flipt/internal/storage/oplock\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/storage/oplock","Elapsed":0}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/oplock/memory"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/oplock/sql"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock/sql","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/oplock/sql [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7370511-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/oplock/sql","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7380731-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/oplock/testing"}
+{"Time":"2026-11-18T18:39:13.7380731-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock/testing","Output":"?   \tgo.flipt.io/flipt/internal/storage/oplock/testing\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:13.7380731-03:00","Action":"skip","Package":"go.flipt.io/flipt/internal/storage/oplock/testing","Elapsed":0}
+{"Time":"2026-11-18T18:39:13.7385795-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7385795-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7385795-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql/common"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql/common","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql/common [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql/common","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql/mysql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql/mysql","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql/mysql [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql/mysql","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql/postgres"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql/postgres","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql/postgres [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql/postgres","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql/sqlite"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql/sqlite","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql/sqlite [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql/sqlite","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/storage/sql/testing"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/sql/testing","Output":"FAIL\tgo.flipt.io/flipt/internal/storage/sql/testing [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.7446139-03:00","Action":"fail","Package":"go.flipt.io/flipt/internal/storage/sql/testing","Elapsed":0,"FailedBuild":"go.flipt.io/flipt/internal/storage/sql"}
+{"Time":"2026-11-18T18:39:13.9094431-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:13.9094431-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.9175122-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs","Output":"ok  \tgo.flipt.io/flipt/internal/storage/fs\t0.183s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:13.9175122-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/fs","Elapsed":0.183}
+{"Time":"2026-11-18T18:39:13.9201681-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/git","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:13.9201681-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/git","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.9242095-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/git","Output":"ok  \tgo.flipt.io/flipt/internal/storage/fs/git\t0.188s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:13.9242095-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/fs/git","Elapsed":0.188}
+{"Time":"2026-11-18T18:39:13.9933283-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/s3","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:13.9933283-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/s3","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:13.9968213-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/s3","Output":"ok  \tgo.flipt.io/flipt/internal/storage/fs/s3\t0.261s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:13.9968213-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/fs/s3","Elapsed":0.261}
+{"Time":"2026-11-18T18:39:14.504375-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/local","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:14.5048992-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/local","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:14.5075482-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/fs/local","Output":"ok  \tgo.flipt.io/flipt/internal/storage/fs/local\t0.772s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:14.5075482-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/fs/local","Elapsed":0.772}
+{"Time":"2026-11-18T18:39:14.5144675-03:00","Action":"start","Package":"go.flipt.io/flipt/internal/telemetry"}
+{"Time":"2026-11-18T18:39:14.5144675-03:00","Action":"start","Package":"go.flipt.io/flipt/ui"}
+{"Time":"2026-11-18T18:39:14.5149959-03:00","Action":"output","Package":"go.flipt.io/flipt/ui","Output":"?   \tgo.flipt.io/flipt/ui\t[no test files]\n"}
+{"Time":"2026-11-18T18:39:14.5149959-03:00","Action":"skip","Package":"go.flipt.io/flipt/ui","Elapsed":0.001}
+{"Time":"2026-11-18T18:39:14.6842341-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock/memory","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:14.6847677-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock/memory","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:14.6869047-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/storage/oplock/memory","Output":"ok  \tgo.flipt.io/flipt/internal/storage/oplock/memory\t0.950s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:14.6869047-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/storage/oplock/memory","Elapsed":0.95}
+{"Time":"2026-11-18T18:39:14.6976258-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/telemetry","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-18T18:39:14.6976258-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/telemetry","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-18T18:39:14.7007093-03:00","Action":"output","Package":"go.flipt.io/flipt/internal/telemetry","Output":"ok  \tgo.flipt.io/flipt/internal/telemetry\t0.186s [no tests to run]\n"}
+{"Time":"2026-11-18T18:39:14.7007093-03:00","Action":"pass","Package":"go.flipt.io/flipt/internal/telemetry","Elapsed":0.186}

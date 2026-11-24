@@ -1,0 +1,2 @@
+    --- FAIL: TestTraceInfo/enable_trace_on_invalid_request,_issue_#1016
+--- FAIL: TestTraceInfo

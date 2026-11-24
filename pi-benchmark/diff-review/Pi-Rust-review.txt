@@ -1,0 +1,10 @@
+﻿REPOSITORY: Pi-Rust
+PATH: D:\projetos\pi-benchmark\resty-3rust
+
+=== HEAD ===
+
+=== STATUS ===
+
+=== TRACKED DIFF ===
+
+=== UNTRACKED FILES ===

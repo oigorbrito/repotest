@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-18T17:01:51.8646031-03:00",
+  "workspace": "D:\\projetos\\pi-benchmark",
+  "free_bytes_d": 93581025280,
+  "git": "git version 2.56.0.windows.2",
+  "go": "go version go1.27.0 windows/amd64",
+  "docker": "Docker version 29.9.3, build 5457199",
+  "windows_system_info": "Get-CimInstance Win32_OperatingSystem denied (Access denied 1)",
+  "parent_git_repo": "fatal: not a git repository (or any of the parent directories): .git"
+}

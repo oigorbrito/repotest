@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "os": "Windows",
+    "python": "3.12.10",
+    "node": "26.10.0"
+  },
+  "evidence_rule": "Focused upstream execution is not integration evidence or a comparative benchmark.",
+  "sources": [
+    {
+      "id": "smag-local",
+      "url": "https://github.com/oigorbrito/smag",
+      "revision": "5b73e034668904d3cc5871e9940e4bdbdc95b4f7",
+      "dirty": true,
+      "note": "8 modified governance files; original worktree preserved. Current origin was changed to smag-rex by user request and does not identify the source of this tree.",
+      "evidence": {
+        "scope": "7 focused Node test files in prior inspection",
+        "passed": 39,
+        "failed": 1,
+        "reason": "runtime-rebuild assertion still expects pre-Aider error wording"
+      }
+    },
+    {
+      "id": "smag-rex",
+      "url": "https://github.com/oigorbrito/smag-rex",
+      "revision": "c7b2d6a4a20350a6e7d520e2ee540a096242e070",
+      "evidence": {
+        "state": "CODE_INSPECTED",
+        "tests": "NOT_EXECUTED_IN_THIS_REVIEW"
+      },
+      "paths": [
+        "src/smag_rex/governance.py",
+        "src/smag_rex/acceptance.py",
+        "src/smag_rex/execution.py"
+      ]
+    },
+    {
+      "id": "finecore",
+      "url": "https://github.com/oigorbrito/FineCore",
+      "revision": "d2011bc752842c66fc508d65c03c011c959cc8df",
+      "evidence": {
+        "state": "CODE_INSPECTED",
+        "integration": "NOT_EXECUTED"
+      },
+      "paths": [
+        "crates/harness-core/src/agent_loop.rs",
+        "crates/harness-core/src/extension.rs",
+        "crates/sdk/src/run.rs",
+        "crates/sdk/src/session/execution.rs",
+        "crates/cli/src/headless.rs"
+      ]
+    },
+    {
+      "id": "pathlayer",
+      "url": "https://github.com/PathlayerLabs/pathlayer",
+      "revision": "e93b8d2026b2c625185ff1448b98daee50067b4a",
+      "declared_license": "Apache-2.0",
+      "command": "python -m pytest -o addopts='' -q tests/test_loop.py tests/test_no_progress.py tests/test_retry.py",
+      "evidence": {
+        "state": "EXECUTED_FOCUSED",
+        "passed": 144,
+        "failed": 0,
+        "note": "Repository default coverage addopts disabled for this focused behavioral run; not a coverage gate."
+      }
+    },
+    {
+      "id": "agent-efficiency",
+      "url": "https://github.com/agent-efficiency/agent-efficiency",
+      "revision": "bd531d5652ce413f5985e00330c1eb17a0a843e4",
+      "declared_license": "MIT",
+      "command": "PYTHONPATH=plugins/agent-efficiency/src python -m unittest discover -s tests -p test_verification.py",
+      "evidence": {
+        "state": "EXECUTED_FOCUSED_WITH_ERRORS",
+        "tests": 23,
+        "errors": 22,
+        "note": "Most errors: os.fchmod unavailable on Windows; also Windows permission error removing Git objects. No Windows qualification."
+      }
+    },
+    {
+      "id": "agent-loop-guard",
+      "url": "https://github.com/RIMUMURUDEV/agent-loop-guard",
+      "revision": "595f9042be5692492db5b5555be556652aba95f2",
+      "declared_license": "Apache-2.0",
+      "command": "python -m pytest -q tests/unit/test_loop_detector.py tests/unit/test_mcp_policy.py",
+      "evidence": {
+        "state": "EXECUTED_FOCUSED",
+        "passed": 8,
+        "failed": 0
+      }
+    }
+  ]
+}

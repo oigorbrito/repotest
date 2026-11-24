@@ -1,0 +1,430 @@
+//! Loading, merging, and saving settings (upstream `core/settings-manager.ts`). Project
+//! settings override global ones, nested objects merge, arrays replace. Writes change only
+//! the touched keys of the locked file, so unknown keys and other processes' edits survive.
+
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
+
+use serde_json::{Map, Value};
+
+use super::js;
+use super::schema::{Settings, parse_settings};
+use super::storage::{FileSettingsStorage, InMemorySettingsStorage, SettingsScope, SettingsStorage};
+use super::tools::merge_default_tools;
+
+/// Options for [`SettingsManager::create`].
+#[derive(Clone, Copy, Debug)]
+pub struct SettingsOptions {
+    /// Untrusted projects contribute no project settings and cannot be written.
+    pub project_trusted: bool,
+}
+
+impl Default for SettingsOptions {
+    fn default() -> Self {
+        Self { project_trusted: true }
+    }
+}
+
+/// A settings file that could not be read or written, or a key that does not match the schema.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SettingsError {
+    pub scope: SettingsScope,
+    pub path: Option<PathBuf>,
+    pub message: String,
+}
+
+impl SettingsError {
+    /// Warning text in upstream form (`collectSettingsDiagnostics`).
+    pub fn diagnostic(&self) -> String {
+        match &self.path {
+            Some(path) => format!("Invalid settings file {}: {}", path.display(), self.message),
+            None => format!("Invalid {} settings: {}", self.scope.as_str(), self.message),
+        }
+    }
+}
+
+#[derive(Default)]
+pub(super) struct State {
+    pub global: Map<String, Value>,
+    pub project: Map<String, Value>,
+    pub overrides: Map<String, Value>,
+    pub merged: Settings,
+    pub global_typed: Settings,
+    pub project_typed: Settings,
+    pub project_trusted: bool,
+    pub global_load_failed: bool,
+    pub project_load_failed: bool,
+    pub errors: Vec<SettingsError>,
+    /// Keys that do not match the schema, a pi-rust startup diagnostic upstream does not report.
+    pub schema_warnings: Vec<SettingsError>,
+    /// Present for SDK managers, which write through a queue as upstream does.
+    pub sdk: Option<super::deferred::Deferred>,
+}
+
+/// Global and project settings with typed accessors. Shared by reference; methods take `&self`.
+pub struct SettingsManager {
+    pub(super) storage: Arc<dyn SettingsStorage>,
+    pub(super) state: RwLock<State>,
+}
+
+fn deep_merge(base: &mut Map<String, Value>, overrides: &Map<String, Value>) {
+    for (key, value) in overrides {
+        match (base.get_mut(key), value) {
+            (Some(Value::Object(existing)), Value::Object(update)) => deep_merge(existing, update),
+            _ => {
+                base.insert(key.clone(), value.clone());
+            }
+        }
+    }
+}
+
+fn string_list(value: Option<&Value>) -> Option<Vec<String>> {
+    value?.as_array().map(|items| items.iter().filter_map(|item| item.as_str().map(String::from)).collect())
+}
+
+/// Merge two layers as upstream `deepMergeSettings` does, including `defaultTools` deltas.
+pub(super) fn merge_layers(base: &Map<String, Value>, overrides: &Map<String, Value>) -> Map<String, Value> {
+    let mut merged = base.clone();
+    deep_merge(&mut merged, overrides);
+    let tools = merge_default_tools(
+        string_list(base.get("defaultTools")).as_deref(),
+        string_list(overrides.get("defaultTools")).as_deref(),
+    );
+    if let Some(tools) = tools.filter(|_| overrides.get("defaultTools").is_none_or(Value::is_array)) {
+        merged.insert("defaultTools".into(), Value::from(tools));
+    }
+    merged
+}
+
+/// Upstream `migrateSettings`: legacy keys move to their current names, keeping the key order.
+pub(super) fn migrate(settings: &mut Map<String, Value>) {
+    if settings.contains_key("queueMode") && !settings.contains_key("steeringMode") {
+        let mode = settings.get("queueMode").cloned().unwrap_or(Value::Null);
+        settings.insert("steeringMode".into(), mode);
+        settings.shift_remove("queueMode");
+    }
+    if let (false, Some(Value::Bool(websockets))) =
+        (settings.contains_key("transport"), settings.get("websockets").cloned())
+    {
+        settings.insert("transport".into(), Value::from(if websockets { "websocket" } else { "sse" }));
+        settings.shift_remove("websockets");
+    }
+    if let Some(skills) = js::object(settings.get("skills")).cloned() {
+        let unset = js::defined(settings.get("enableSkillCommands")).is_none();
+        if let Some(enable) = js::defined(skills.get("enableSkillCommands")).filter(|_| unset) {
+            settings.insert("enableSkillCommands".into(), enable.clone());
+        }
+        match skills.get("customDirectories") {
+            Some(Value::Array(directories)) if !directories.is_empty() => {
+                settings.insert("skills".into(), Value::Array(directories.clone()));
+            }
+            _ => {
+                settings.shift_remove("skills");
+            }
+        }
+    }
+    let retry_object = js::object(settings.get("retry")).is_some();
+    if let Some(Value::Object(retry)) = settings.get_mut("retry").filter(|_| retry_object) {
+        let provider = retry.get("provider").filter(|provider| js::is_object_like(Some(provider))).cloned();
+        let delay = retry.get("maxDelayMs").filter(|delay| js::as_number(delay).is_some()).cloned();
+        let unset = js::nullish(js::object(provider.as_ref()).and_then(|provider| provider.get("maxRetryDelayMs")));
+        if let Some(delay) = delay.filter(|_| unset) {
+            let mut next = js::spread(provider.as_ref());
+            next.insert("maxRetryDelayMs".into(), delay);
+            retry.insert("provider".into(), Value::Object(next));
+        }
+        retry.shift_remove("maxDelayMs");
+    }
+}
+
+/// Parse settings text: a byte order mark is ignored and legacy keys migrate.
+pub(super) fn parse_text(text: &str) -> Result<Map<String, Value>, String> {
+    let text = text.trim_start_matches('\u{feff}');
+    match serde_json::from_str::<Value>(text).map_err(|error| error.to_string())? {
+        Value::Object(mut map) => {
+            migrate(&mut map);
+            Ok(map)
+        }
+        _ => Err("expected a JSON object".into()),
+    }
+}
+
+fn set_key(map: &mut Map<String, Value>, key: &str, value: Option<Value>) {
+    match value {
+        Some(value) => {
+            map.insert(key.to_string(), value);
+        }
+        None => {
+            map.shift_remove(key);
+        }
+    }
+}
+
+impl SettingsManager {
+    /// Settings of `<agent dir>/settings.json` and `<cwd>/.pi/settings.json`.
+    pub fn create(cwd: &Path, agent_dir: &Path, options: SettingsOptions) -> Self {
+        Self::from_storage(Arc::new(FileSettingsStorage::new(cwd, agent_dir)), options)
+    }
+
+    pub fn from_storage(storage: Arc<dyn SettingsStorage>, options: SettingsOptions) -> Self {
+        let state = State { project_trusted: options.project_trusted, ..State::default() };
+        let manager = Self { storage, state: RwLock::new(state) };
+        manager.load(SettingsScope::Global);
+        manager.load(SettingsScope::Project);
+        manager.recompute();
+        manager
+    }
+
+    /// In-memory settings with `settings` as the global layer.
+    pub fn in_memory(settings: Value) -> Self {
+        let storage = InMemorySettingsStorage::default();
+        let text = serde_json::to_string_pretty(&settings).unwrap_or_else(|_| "{}".into());
+        let _ = storage.with_lock(SettingsScope::Global, &mut |_| Ok(Some(text.clone())));
+        Self::from_storage(Arc::new(storage), SettingsOptions::default())
+    }
+
+    fn read_scope(&self, scope: SettingsScope) -> Result<Map<String, Value>, String> {
+        let mut content = None;
+        self.storage.with_lock(scope, &mut |current| {
+            content = current.map(String::from);
+            Ok(None)
+        })?;
+        match content.filter(|text| !text.trim().is_empty()) {
+            Some(text) => parse_text(&text),
+            None => Ok(Map::new()),
+        }
+    }
+
+    fn record(state: &mut State, scope: SettingsScope, path: Option<PathBuf>, message: String) {
+        state.errors.push(SettingsError { scope, path, message });
+    }
+
+    /// Load one scope. A failed load keeps the earlier contents and blocks writes to it.
+    fn load(&self, scope: SettingsScope) {
+        let trusted = self.state().project_trusted;
+        let result = if scope == SettingsScope::Project && !trusted { Ok(Map::new()) } else { self.read_scope(scope) };
+        let path = self.storage.path(scope);
+        let mut state = self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let failed = match result {
+            Ok(map) => {
+                for (key, message) in parse_settings(&map).1 {
+                    let message = format!("\"{key}\": {message}");
+                    state.schema_warnings.push(SettingsError { scope, path: path.clone(), message });
+                }
+                match scope {
+                    SettingsScope::Global => state.global = map,
+                    SettingsScope::Project => state.project = map,
+                }
+                false
+            }
+            Err(message) => {
+                Self::record(&mut state, scope, path, message);
+                true
+            }
+        };
+        match scope {
+            SettingsScope::Global => state.global_load_failed = failed,
+            SettingsScope::Project => state.project_load_failed = failed,
+        }
+    }
+
+    pub(super) fn recompute(&self) {
+        let mut state = self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if state.sdk.is_some() {
+            return super::deferred::recompute(&mut state);
+        }
+        let merged = merge_layers(&merge_layers(&state.global, &state.project), &state.overrides);
+        state.merged = parse_settings(&merged).0;
+        state.global_typed = parse_settings(&state.global).0;
+        state.project_typed = parse_settings(&state.project).0;
+    }
+
+    pub(super) fn state(&self) -> RwLockReadGuard<'_, State> {
+        self.state.read().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// Re-read both files. An SDK manager with JavaScript storage is reloaded by JavaScript.
+    pub fn reload(&self) {
+        if self.state().sdk.is_some() {
+            return self.sdk_reload(None);
+        }
+        self.load(SettingsScope::Global);
+        self.load(SettingsScope::Project);
+        self.recompute();
+    }
+
+    /// Effective settings: global, then project, then runtime overrides.
+    pub fn settings(&self) -> Settings {
+        self.state().merged.clone()
+    }
+
+    pub fn global_settings(&self) -> Settings {
+        self.state().global_typed.clone()
+    }
+
+    pub fn project_settings(&self) -> Settings {
+        self.state().project_typed.clone()
+    }
+
+    pub fn is_project_trusted(&self) -> bool {
+        self.state().project_trusted
+    }
+
+    /// Changing trust reloads the project layer (or clears it).
+    pub fn set_project_trusted(&self, trusted: bool) {
+        if self.state().sdk.is_some() {
+            return self.sdk_set_trusted(trusted, None);
+        }
+        if self.is_project_trusted() == trusted {
+            return;
+        }
+        self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner()).project_trusted = trusted;
+        self.load(SettingsScope::Project);
+        self.recompute();
+    }
+
+    /// Overlay settings for this process only, for example `--use-theme`.
+    pub fn apply_overrides(&self, overrides: Value) {
+        if self.state().sdk.is_some() {
+            return self.sdk_apply_overrides(overrides.as_object().unwrap_or(&Map::new()));
+        }
+        if let Value::Object(overrides) = overrides {
+            let mut state = self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+            let combined = merge_layers(&state.overrides, &overrides);
+            state.overrides = combined;
+        }
+        self.recompute();
+    }
+
+    /// Storage and JSON problems since the last call, as upstream `drainErrors`.
+    pub fn drain_errors(&self) -> Vec<SettingsError> {
+        self.sdk_drain_errors().into_iter().map(|(error, _)| error).collect()
+    }
+
+    /// Startup diagnostics: [`Self::drain_errors`], then the keys that do not match the schema.
+    pub fn drain_diagnostics(&self) -> Vec<SettingsError> {
+        let mut diagnostics = self.drain_errors();
+        diagnostics.append(&mut self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner()).schema_warnings);
+        diagnostics
+    }
+
+    /// Writes are synchronous; kept for parity with upstream callers.
+    pub fn flush(&self) {}
+
+    /// Change and mark keys in one scope. An SDK manager queues the write; other managers write
+    /// synchronously. A file that failed to load is never overwritten.
+    pub(super) fn write(
+        &self,
+        scope: SettingsScope,
+        field: &str,
+        nested: Option<&str>,
+        edit: impl Fn(&mut Map<String, Value>),
+    ) -> Result<(), String> {
+        {
+            let mut state = self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+            if scope == SettingsScope::Project && !state.project_trusted {
+                return Err(super::deferred::UNTRUSTED.into());
+            }
+            match scope {
+                SettingsScope::Global => edit(&mut state.global),
+                SettingsScope::Project => edit(&mut state.project),
+            }
+            if state.sdk.is_some() {
+                let path: Vec<&str> = std::iter::once(field).chain(nested).collect();
+                super::sdk_alias::replaced(&mut state, scope, &path);
+                super::deferred::mark(&mut state, scope, field, nested);
+                super::deferred::save(&mut state, scope, true);
+                return Ok(());
+            }
+        }
+        self.recompute();
+        let failed = {
+            let state = self.state();
+            if scope == SettingsScope::Global { state.global_load_failed } else { state.project_load_failed }
+        };
+        if failed {
+            return Ok(());
+        }
+        let result = self.storage.with_lock(scope, &mut |current| {
+            let mut file = match current.filter(|text| !text.trim().is_empty()) {
+                Some(text) => parse_text(text)?,
+                None => Map::new(),
+            };
+            edit(&mut file);
+            serde_json::to_string_pretty(&file).map(Some).map_err(|error| error.to_string())
+        });
+        if let Err(message) = &result {
+            let path = self.storage.path(scope);
+            let mut state = self.state.write().unwrap_or_else(|poisoned| poisoned.into_inner());
+            Self::record(&mut state, scope, path, message.clone());
+        }
+        result
+    }
+
+    /// Set (or with `None`, remove) a top-level global key.
+    pub fn set_global_value(&self, key: &str, value: Option<Value>) {
+        let _ = self.write(SettingsScope::Global, key, None, |map| set_key(map, key, value.clone()));
+    }
+
+    /// Set (or remove) `key.nested` in global settings, keeping the other nested keys.
+    pub fn set_global_nested(&self, key: &str, nested: &str, value: Option<Value>) {
+        let _ = self.write(SettingsScope::Global, key, Some(nested), |map| {
+            let entry = map.entry(key.to_string()).or_insert_with(|| Value::Object(Map::new()));
+            if !entry.is_object() {
+                *entry = Value::Object(Map::new());
+            }
+            if let Value::Object(object) = entry {
+                set_key(object, nested, value.clone());
+            }
+        });
+    }
+
+    /// Set (or remove) `key.nested.field` in global settings, keeping sibling keys. Objects
+    /// that a removal leaves empty are removed too.
+    pub fn set_global_nested2(&self, key: &str, nested: &str, field: &str, value: Option<Value>) {
+        let _ = self.write(SettingsScope::Global, key, Some(nested), |map| {
+            let removing = value.is_none();
+            let outer = map.entry(key.to_string()).or_insert_with(|| Value::Object(Map::new()));
+            if !outer.is_object() {
+                *outer = Value::Object(Map::new());
+            }
+            let Value::Object(outer) = outer else { return };
+            let inner = outer.entry(nested.to_string()).or_insert_with(|| Value::Object(Map::new()));
+            if !inner.is_object() {
+                *inner = Value::Object(Map::new());
+            }
+            let inner_empty = match inner {
+                Value::Object(inner) => {
+                    set_key(inner, field, value.clone());
+                    inner.is_empty()
+                }
+                _ => false,
+            };
+            if removing && inner_empty {
+                outer.shift_remove(nested);
+            }
+            if removing && outer.is_empty() {
+                map.shift_remove(key);
+            }
+        });
+    }
+
+    /// Set (or remove) a top-level project key. Fails for untrusted projects.
+    pub fn set_project_value(&self, key: &str, value: Option<Value>) -> Result<(), String> {
+        self.write(SettingsScope::Project, key, None, |map| set_key(map, key, value.clone()))
+    }
+
+    /// Set (or remove) the top-level `namespace` of an extension in `scope`, keeping the other
+    /// keys. Keys of pi's own settings are refused; project writes need a trusted project.
+    pub fn set_extension_namespace(
+        &self,
+        scope: SettingsScope,
+        namespace: &str,
+        value: Option<Value>,
+    ) -> Result<(), String> {
+        if namespace.is_empty() || super::schema::PI_SETTINGS_KEYS.contains(&namespace) {
+            return Err(format!("\"{namespace}\" is not an extension settings namespace"));
+        }
+        self.write(scope, namespace, None, |map| set_key(map, namespace, value.clone()))
+    }
+}

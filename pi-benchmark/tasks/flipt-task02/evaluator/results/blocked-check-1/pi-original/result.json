@@ -1,0 +1,10 @@
+{
+ "run_id": "blocked-check-1",
+ "agent": "pi-original",
+ "control": false,
+ "base_commit": "0eaf98f050d86247bfe9bd7e41178865cb585060",
+ "started_utc": "2026-11-18T21:39:21.949774+00:00",
+ "status": "BLOCKED",
+ "reason": "test_patch_missing: evaluator/private/test.patch não disponível (não autorizado)",
+ "finished_utc": "2026-11-18T21:39:21.949774+00:00"
+}

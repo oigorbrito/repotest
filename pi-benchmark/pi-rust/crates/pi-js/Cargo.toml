@@ -1,0 +1,140 @@
+[package]
+name = "pi-js"
+description = "Embedded QuickJS runtime with TypeScript loading and Node compatibility for pi extensions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+autotests = false
+
+[dependencies]
+base64.workspace = true
+futures.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+ring.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-rustls.workspace = true
+webpki-roots.workspace = true
+aes = "0.9.3"
+aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc"] }
+cbc = "0.2.1"
+ccm = { version = "0.6.1", default-features = false, features = ["alloc"] }
+cfb-mode = "0.9.1"
+crc32fast = "1.5.2"
+crypto-bigint = { version = "0.7.5", default-features = false, features = ["alloc"] }
+ctr = "0.10.1"
+des = "0.9.0"
+dsa = { version = "0.7.0", default-features = false, features = ["hazmat"] }
+ecb = "0.2.1"
+brotli = "8.0.2"
+ed448-goldilocks = { version = "=0.14.0-pre.15", default-features = false, features = ["signing", "std"] }
+flate2 = { version = "1.1.10", default-features = false, features = ["zlib-rs"] }
+getrandom = { version = "0.4.3", features = ["sys_rng"] }
+k256 = { version = "0.14.0", default-features = false, features = ["ecdsa", "ecdh", "std"] }
+md-5 = "0.10.6"
+notify = "8.2.0"
+num-bigint = "0.5.1"
+num-traits = "0.2.19"
+ocb3 = { version = "0.2.0", default-features = false, features = ["alloc"] }
+ofb = "0.7.1"
+oxc_allocator = "0.153.0"
+oxc_ast = "0.153.0"
+oxc_ast_visit = "0.153.0"
+oxc_codegen = "0.153.0"
+oxc_diagnostics = "0.153.0"
+oxc_parser = "0.153.0"
+oxc_semantic = "0.153.0"
+oxc_sourcemap = "9.0.0"
+oxc_span = "0.153.0"
+oxc_transformer = "0.153.0"
+p256 = { version = "0.14.0", default-features = false, features = ["ecdsa", "ecdh", "std"] }
+p384 = { version = "0.14.0", default-features = false, features = ["ecdsa", "ecdh", "std"] }
+p521 = { version = "0.14.0", default-features = false, features = ["ecdsa", "ecdh", "std"] }
+pkcs8 = { version = "0.11.0", default-features = false, features = ["encryption", "3des"] }
+rsa = { version = "0.9.10", default-features = false, features = ["std", "u64_digit", "sha2", "hazmat"] }
+sha1 = "0.10.6"
+socket2 = { version = "0.6.5", features = ["all"] }
+unicode-segmentation = "1.12"
+url = "2.5.8"
+webpki-root-certs = "1"
+x25519-dalek = { version = "3.0.0", features = ["static_secrets"] }
+zstd = { version = "0.13.3", default-features = false }
+x448 = { version = "=0.14.0-pre.12", default-features = false }
+hickory-resolver = { version = "0.25.2", default-features = false, features = ["tokio", "system-config"] }
+h2 = "0.4"
+http = "1"
+httparse = "1.10.1"
+bytes = "1"
+rusqlite = { version = "0.40", features = ["bundled", "backup", "column_decltype", "column_metadata", "functions", "window"] }
+wasmi = { version = "0.46.0", default-features = false, features = ["std", "simd"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.190"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+    "Wdk_System_SystemInformation",
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Console",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+] }
+
+# rquickjs-sys ships pregenerated bindings for every release target except armv7 musl.
+[target.'cfg(not(all(target_arch = "arm", target_env = "musl")))'.dependencies]
+rquickjs = { version = "0.14.0", default-features = false, features = ["std", "loader"] }
+
+[target.'cfg(all(target_arch = "arm", target_env = "musl"))'.dependencies]
+rquickjs = { version = "0.14.0", default-features = false, features = ["std", "loader", "bindgen"] }
+
+
+# Same lints as the workspace, except `unsafe_code` is `deny` instead of `forbid`: modules that
+# need FFI allow it locally: system calls (`node/sys.rs`, `node/os_cpus.rs`, `node/fs_meta.rs`,
+# `node/child_stdio.rs`, `node/dgram_ssm.rs`), SharedArrayBuffer memory (`node/shared.rs`), SQLite
+# functions and iterators (`node/sqlite_fn.rs`, `node/sqlite_iter.rs`), and wasm memory (`node/wasm_objects.rs`).
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+
+# The integration tests build as one binary; tests/main.rs declares each file as a module.
+[[test]]
+name = "integration"
+path = "tests/main.rs"
+
+# Forked children run this test binary, so it needs its own main.
+[[test]]
+name = "node_fork"
+harness = false
+
+[[test]]
+name = "node_cluster"
+harness = false
+
+[[test]]
+name = "node_ipc_missing_handle"
+harness = false
+
+[[test]]
+name = "node_ipc_recovery"
+harness = false
+
+[[test]]
+name = "node_ipc_windows_diag"
+harness = false
+
+[[test]]
+name = "node_ipc_cloexec"
+harness = false

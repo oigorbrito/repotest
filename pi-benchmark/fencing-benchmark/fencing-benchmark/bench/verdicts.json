@@ -1,0 +1,22 @@
+{
+  "statepact-redis": {
+    "verdict": "APROVADA COM LIMITAÇÕES",
+    "verdict_basis": "Sem violação em D2, C4, CONC, REST, FAIL, FAILOVER (100/100 cada). Limitações: escritor expirado aceito sem sucessor (100/100); janela de replicação assíncrona não excluída."
+  },
+  "zk-redis-lua": {
+    "verdict": "REPROVADA",
+    "verdict_basis": "Janela de aquisição: escrita obsoleta aceita depois que a concessão do ZooKeeper já é visível e antes do registro do fence no Redis (100/100). Demais cenários sem violação. Implementação própria, a partir da especificação."
+  },
+  "etcd-pg": {
+    "verdict": "APROVADA COM LIMITAÇÕES",
+    "verdict_basis": "Aquisição serializada com o commit (0/100 violações na corrida; a ablação v1 mostra 100/100 e valida o teste). Limitações: escritor expirado aceito sem sucessor (100/100); failover do PostgreSQL não testado. Implementação própria, a partir da especificação."
+  },
+  "statepact-pg": {
+    "verdict": "REPROVADA",
+    "verdict_basis": "Corrida confirmada no caminho backend.acquire_lease() direto: a concessão do sucessor é commitada enquanto o commit do antigo está bloqueado, e a escrita antiga é aceita depois (100/100). O caminho TransactionManager.lease() não apresenta a corrida (0/100), porque ensure_resource() pega o lock de commit. Limitação: escritor expirado aceito sem sucessor (100/100)."
+  },
+  "_gate": {
+    "mh_change_recommended": false,
+    "reason": "No candidate passes without limitations, the candidates that pass with limitations are not yet shown to beat mh's current mechanism, and that mechanism was not part of this benchmark."
+  }
+}

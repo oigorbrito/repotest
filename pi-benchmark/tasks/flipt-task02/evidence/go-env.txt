@@ -1,0 +1,9 @@
+windows
+amd64
+go1.27.0
+auto
+https://proxy.golang.org,direct
+C:\Users\igorb\go\pkg\mod
+
+0
+gcc

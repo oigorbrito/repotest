@@ -1,0 +1,20 @@
+diff --git a/go.work.sum b/go.work.sum
+index 3ddc623a..80917352 100644
+--- a/go.work.sum
++++ b/go.work.sum
+@@ -9,32 +9,39 @@ cloud.google.com/go v0.110.2/go.mod h1:k04UEeEtb6ZBRTv3dZz4CeJC3jKGxyhl0sAiVVqux
+ cloud.google.com/go v0.110.4/go.mod h1:+EYjdK8e5RME/VY/qLCAtuyALQ9q67dvuum8i+H5xsI=
+ cloud.google.com/go/accessapproval v1.6.0 h1:x0cEHro/JFPd7eS4BlEWNTMecIj2HdXjOVB5BtvwER0=
+ cloud.google.com/go/accessapproval v1.6.0/go.mod h1:R0EiYnwV5fsRFiKZkPHr6mwyk2wxUJ30nL4j2pcFY2E=
++cloud.google.com/go/accessapproval v1.7.1 h1:/5YjNhR6lzCvmJZAnByYkfEgWjfAKwYP6nkuTk6nKFE=
+ cloud.google.com/go/accessapproval v1.7.1/go.mod h1:JYczztsHRMK7NTXb6Xw+dwbs/WnOJxbo/2mTI+Kgg68=
+ cloud.google.com/go/accesscontextmanager v1.6.0 h1:r7DpDlWkCMtH/w+gu6Yq//EeYgNWSUbR1+n8ZYr4YWk=
+ cloud.google.com/go/accesscontextmanager v1.6.0/go.mod h1:8XCvZWfYw3K/ji0iVnp+6pu7huxoQTLmxAbVjbloTtM=
+ cloud.google.com/go/accesscontextmanager v1.7.0 h1:MG60JgnEoawHJrbWw0jGdv6HLNSf6gQvYRiXpuzqgEA=
+ cloud.google.com/go/accesscontextmanager v1.7.0/go.mod h1:CEGLewx8dwa33aDAZQujl7Dx+uYhS0eay198wB/VumQ=
++cloud.google.com/go/accesscontextmanager v1.8.1 h1:WIAt9lW9AXtqw/bnvrEUaE8VG/7bAAeMzRCBGMkc4+w=
+ cloud.google.com/go/accesscontextmanager v1.8.1/go.mod h1:JFJHfvuaTC+++1iL1coPiG1eu5D24db2wXCDWDjIrxo=
+ cloud.google.com/go/aiplatform v1.35.0 h1:8frB0cIswlhVnYnGrMr+JjZaNC7DHZahvoGHpU9n+RY=
+ cloud.google.com/go/aiplatform v1.35.0/go.mod h1:7MFT/vCaOyZT/4IIFfxH4ErVg/4ku6lKv3w0+tFTgXQ=
+ cloud.google.com/go/aiplatform v1.37.0 h1:zTw+suCVchgZyO+k847wjzdVjWmrAuehxdvcZvJwfGg=
+ cloud.google.com/go/aiplatform v1.37.0/go.mod h1:IU2Cv29Lv9oCn/9LkFiiuKfwrRTq+QQMbW+hPCxJGZw=

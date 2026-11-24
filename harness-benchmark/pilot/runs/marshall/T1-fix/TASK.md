@@ -1,0 +1,1 @@
+﻿Corrija src\Get-Average.ps1. A função Get-Average deve retornar 0 quando a lista de valores estiver vazia, sem lançar erro. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

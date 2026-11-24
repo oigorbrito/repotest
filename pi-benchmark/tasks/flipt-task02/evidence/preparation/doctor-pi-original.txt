@@ -1,0 +1,16 @@
+"doctor" doesn't match anything in this repo. I searched for it and found no `doctor` command, target, or docs. `cmd/flipt` only has `export`, `import`, `server`, and `validate`.
+
+Here's the environment and repo state I could check:
+
+- **Repo:** clean working tree, HEAD at `0eaf98f chore: upgrade dagger to 0.8.2 (#2009)`
+- **Go:** 1.27.0 (windows/amd64)
+- **Node:** v26.10.0
+- **Docker:** 29.9.3
+- **make:** not installed (there's no Makefile anyway; the build uses `magefile.go`)
+
+Did you mean one of these?
+1. A health check of the Flipt install or environment (e.g. `flipt validate` on a config, or checking that the build works with `go build ./...` or `go vet`)
+2. A diagnosis of a specific error you're seeing
+3. A doctor-style command or feature you want me to add to the codebase
+
+Tell me which, and paste any error output if there is one.

@@ -1,0 +1,23 @@
+# Build artifacts
+target/
+bin/
+obj/
+*.exe
+*.dll
+*.rlib
+*.pdb
+*.so
+*.dylib
+
+# Dependencies
+node_modules/
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Logs & temp
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,855 @@
+{
+  "provenance": {
+    "generated_utc": "2026-11-19T13:21:15+00:00",
+    "host": {
+      "os": "Ubuntu 24.04.5 LTS",
+      "kernel": "6.18.44-fc-v653",
+      "cpus": 4,
+      "mem_total_mb": "16087"
+    },
+    "versions": {
+      "statepact": "0.1.2 (PyPI sdist+wheel; no git commit exists for this package)",
+      "statepact_sdist_sha256": "c36f00e517750c970cb565dda84b3ceadf270261edf76dd77fc5e01b957ecf9c",
+      "statepact_wheel_sha256": "1794ac8d9dad33a3e0d8a9978e052e56590a2d501b3019a2af69f43105699b0d",
+      "redis-server": "7.0.15",
+      "zookeeper": "3.9.1 (Ubuntu zookeeperd 3.9.1-1build2)",
+      "etcd": "3.4.30",
+      "postgresql": "psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "python": "3.13.18",
+      "kazoo": "2.11.0",
+      "redis-py": "8.1.0",
+      "psycopg": "3.3.9",
+      "asyncpg": "0.32.0"
+    },
+    "source_repos": {
+      "mh": {
+        "path": "/home/user/mh",
+        "head": "188c8884ca7fce86c503d211920376d430c1d497",
+        "modified": "0"
+      },
+      "rusky": {
+        "path": "/home/user/rusky",
+        "head": "d4ba89892ea0ab61cddebfca895d945ae856411c"
+      }
+    },
+    "benchmark_files_sha256": {
+      "bench/analyze.py": "4f2de6df7d70935f437188e237f19d95f1c9d5d5e5b54fb361d49d8278b0136f",
+      "bench/backends.py": "e201df19c14346942a6ccad5db899dfb19aa9e196c866efe629ec2855da5fde4",
+      "bench/harness.py": "8d14635b20d1b9c912c16458cd52a8c07643bdb8cc24f025ef1dbad135ea74a2",
+      "bench/proc.py": "534cc388f2fea3a6dabca28658b518f7597cc97e8fa1694242f7f75ee9c1bf06",
+      "bench/worker.py": "f6a8bda530a430fff1906525880b369b3dd9f843a3afde71455396d32f07f059",
+      "scripts/run_all.sh": "9d82a9477dbde89f3e0fba3e16fef21874a412525096646d1fac0538c066461a",
+      "scripts/start_services.sh": "c3a9dd82ae6dae17c19666bf86bdbeee446bd5daced726bac194399f777c2a44",
+      "scripts/svc.py": "6ccc6b3943cc12e5af2db6b1da9dae022b090301a5ae598358b99bd25b762af1"
+    },
+    "lease_ttl_seconds": 2.0
+  },
+  "implementations": {
+    "statepact-redis": {
+      "label": "1. StatePact Redis",
+      "scenarios": {
+        "D2": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "control_detected": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "C4": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "EXP_BEFORE": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "expired_write_accepted": 100,
+          "a_accepted_during_adoption": 0,
+          "passed": 0,
+          "verdict_rule": "writer resumed after expiry, no successor: must be rejected (limitation if accepted)",
+          "pass_rate": 0.0
+        },
+        "EXP_AFTER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "CONC": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "stale_final": 0,
+          "b_acquired": 100,
+          "a_accepted_during_adoption": 81,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_final, monotonic_violation, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "REST": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "value_lost": 0,
+          "a_accepted_during_adoption": 0,
+          "restart_ms_p50": 156.5,
+          "restart_ms_p95": 160.1,
+          "first_read_after_restart_ms_p50": 259.5,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: monotonic_violation, value_lost, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "FAIL": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "duplicate_effect": 0,
+          "lost_write": 0,
+          "a_accepted_during_adoption": 0,
+          "retry_replayed": 80,
+          "downtime_ms_p50": 258.6,
+          "downtime_ms_p95": 263.0,
+          "downtime_ms_p99": 282.1,
+          "downtime_ms_max": 282.1,
+          "first_attempt_outcomes": {
+            "infra_error": 30,
+            "ok": 70
+          },
+          "retry_outcomes": {
+            "ok": 100
+          },
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: duplicate_effect, lost_write",
+          "pass_rate": 1.0
+        },
+        "NEG": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 100,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 100,
+          "control_detected": 100,
+          "a_accepted_during_adoption": 0,
+          "control_detected_rate": 1.0,
+          "passed": 100,
+          "verdict_rule": "control: a stale write must be detected (accepted and final value == stale value)",
+          "pass_rate": 1.0
+        },
+        "FAILOVER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "final_is_new_owner_false": 0,
+          "token_regression": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: token_regression, stale_accepted, valid_rejected",
+          "pass_rate": 1.0
+        }
+      },
+      "race": {
+        "ATOMIC": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "note": "single EVAL: no interleaving point between grant and fence registration"
+        }
+      },
+      "failover": {
+        "runs": 100,
+        "valid": 100,
+        "invalid": 0,
+        "invalid_reasons": [],
+        "stale_accepted": 0,
+        "valid_rejected": 0,
+        "final_is_new_owner_false": 0,
+        "token_regression": 0,
+        "a_accepted_during_adoption": 0,
+        "passed": 100,
+        "verdict_rule": "all hard criteria for the scenario hold: token_regression, stale_accepted, valid_rejected",
+        "pass_rate": 1.0
+      },
+      "perf": {
+        "cycles": 1000,
+        "failed_cycles": 0,
+        "commit_rejected_or_not_ok": 0,
+        "acquire_server_ms": {
+          "p50": 0.595,
+          "p95": 0.949,
+          "p99": 1.265,
+          "mean": 0.668
+        },
+        "commit_server_ms": {
+          "p50": 1.16,
+          "p95": 1.803,
+          "p99": 2.161,
+          "mean": 1.258
+        },
+        "acquire_roundtrip_ms": {
+          "p50": 0.761,
+          "p95": 1.22,
+          "p99": 1.481,
+          "mean": 0.846
+        },
+        "commit_roundtrip_ms": {
+          "p50": 1.345,
+          "p95": 2.074,
+          "p99": 2.419,
+          "mean": 1.452
+        },
+        "release_roundtrip_ms": {
+          "p50": 0.536,
+          "p95": 0.834,
+          "p99": 1.121,
+          "mean": 0.577
+        }
+      },
+      "verdict": "APROVADA COM LIMITAÇÕES",
+      "verdict_basis": "Sem violação em D2, C4, CONC, REST, FAIL, FAILOVER (100/100 cada). Limitações: escritor expirado aceito sem sucessor (100/100); janela de replicação assíncrona não excluída."
+    },
+    "zk-redis-lua": {
+      "label": "2. ZooKeeper + Redis Lua",
+      "scenarios": {
+        "D2": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "control_detected": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "C4": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "EXP_BEFORE": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "expired_write_accepted": 100,
+          "a_accepted_during_adoption": 0,
+          "passed": 0,
+          "verdict_rule": "writer resumed after expiry, no successor: must be rejected (limitation if accepted)",
+          "pass_rate": 0.0
+        },
+        "EXP_AFTER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "CONC": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "stale_final": 0,
+          "b_acquired": 100,
+          "a_accepted_during_adoption": 100,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_final, monotonic_violation, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "REST": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "value_lost": 0,
+          "a_accepted_during_adoption": 0,
+          "restart_ms_p50": 558.3,
+          "restart_ms_p95": 616.0,
+          "first_read_after_restart_ms_p50": 559.5,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: monotonic_violation, value_lost, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "FAIL": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "duplicate_effect": 0,
+          "lost_write": 0,
+          "a_accepted_during_adoption": 0,
+          "retry_replayed": 100,
+          "downtime_ms_p50": 158.3,
+          "downtime_ms_p95": 4108.0,
+          "downtime_ms_p99": 5007.5,
+          "downtime_ms_max": 5007.5,
+          "first_attempt_outcomes": {
+            "ok": 91,
+            "infra_error": 9
+          },
+          "retry_outcomes": {
+            "ok": 100
+          },
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: duplicate_effect, lost_write",
+          "pass_rate": 1.0
+        },
+        "NEG": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 100,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 100,
+          "control_detected": 100,
+          "a_accepted_during_adoption": 0,
+          "control_detected_rate": 1.0,
+          "passed": 100,
+          "verdict_rule": "control: a stale write must be detected (accepted and final value == stale value)",
+          "pass_rate": 1.0
+        },
+        "FAILOVER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 1,
+          "valid_rejected": 1,
+          "final_is_new_owner_false": 1,
+          "token_regression": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 99,
+          "verdict_rule": "all hard criteria for the scenario hold: token_regression, stale_accepted, valid_rejected",
+          "pass_rate": 0.99
+        }
+      },
+      "race": {
+        "WINDOW": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "b_granted_before_a_commit": 100,
+          "stale_accepted_in_window": 100,
+          "b_register_ok": 100
+        }
+      },
+      "failover": {
+        "runs": 100,
+        "valid": 99,
+        "invalid": 1,
+        "invalid_reasons": [
+          "successor could not acquire the lease within 25 s (no takeover occurred)"
+        ],
+        "stale_accepted": 0,
+        "valid_rejected": 0,
+        "final_is_new_owner_false": 0,
+        "token_regression": 0,
+        "a_accepted_during_adoption": 0,
+        "passed": 99,
+        "verdict_rule": "all hard criteria for the scenario hold: token_regression, stale_accepted, valid_rejected",
+        "pass_rate": 1.0
+      },
+      "perf": {
+        "cycles": 1000,
+        "failed_cycles": 0,
+        "commit_rejected_or_not_ok": 0,
+        "acquire_server_ms": {
+          "p50": 2.132,
+          "p95": 2.96,
+          "p99": 4.266,
+          "mean": 2.218
+        },
+        "commit_server_ms": {
+          "p50": 0.402,
+          "p95": 0.6,
+          "p99": 0.859,
+          "mean": 0.441
+        },
+        "acquire_roundtrip_ms": {
+          "p50": 2.321,
+          "p95": 3.17,
+          "p99": 4.648,
+          "mean": 2.421
+        },
+        "commit_roundtrip_ms": {
+          "p50": 0.598,
+          "p95": 0.874,
+          "p99": 1.49,
+          "mean": 0.645
+        },
+        "release_roundtrip_ms": {
+          "p50": 0.882,
+          "p95": 1.235,
+          "p99": 1.726,
+          "mean": 0.914
+        }
+      },
+      "verdict": "REPROVADA",
+      "verdict_basis": "Janela de aquisição: escrita obsoleta aceita depois que a concessão do ZooKeeper já é visível e antes do registro do fence no Redis (100/100). Demais cenários sem violação. Implementação própria, a partir da especificação."
+    },
+    "etcd-pg": {
+      "label": "3. etcd + PostgreSQL",
+      "scenarios": {
+        "D2": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "control_detected": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "C4": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "EXP_BEFORE": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "expired_write_accepted": 100,
+          "a_accepted_during_adoption": 0,
+          "passed": 0,
+          "verdict_rule": "writer resumed after expiry, no successor: must be rejected (limitation if accepted)",
+          "pass_rate": 0.0
+        },
+        "EXP_AFTER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "CONC": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "stale_final": 0,
+          "b_acquired": 100,
+          "a_accepted_during_adoption": 100,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_final, monotonic_violation, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "REST": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "value_lost": 0,
+          "a_accepted_during_adoption": 0,
+          "restart_ms_p50": 1721.7,
+          "restart_ms_p95": 2127.5,
+          "first_read_after_restart_ms_p50": 1828.0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: monotonic_violation, value_lost, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "FAIL": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "duplicate_effect": 0,
+          "lost_write": 0,
+          "a_accepted_during_adoption": 0,
+          "retry_replayed": 98,
+          "downtime_ms_p50": 259.8,
+          "downtime_ms_p95": 262.6,
+          "downtime_ms_p99": 277.5,
+          "downtime_ms_max": 277.5,
+          "first_attempt_outcomes": {
+            "ok": 98,
+            "infra_error": 2
+          },
+          "retry_outcomes": {
+            "ok": 100
+          },
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: duplicate_effect, lost_write",
+          "pass_rate": 1.0
+        },
+        "NEG": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 100,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 100,
+          "control_detected": 100,
+          "a_accepted_during_adoption": 0,
+          "control_detected_rate": 1.0,
+          "passed": 100,
+          "verdict_rule": "control: a stale write must be detected (accepted and final value == stale value)",
+          "pass_rate": 1.0
+        }
+      },
+      "race": {
+        "PG_LOCK": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "a_blocked_in_commit": 100,
+          "b_grant_completed_while_a_in_commit": 0,
+          "b_blocked_behind_a": 100,
+          "stale_accepted_after_successor_granted": 0
+        }
+      },
+      "failover": null,
+      "perf": {
+        "cycles": 1000,
+        "failed_cycles": 0,
+        "commit_rejected_or_not_ok": 0,
+        "acquire_server_ms": {
+          "p50": 3.278,
+          "p95": 4.416,
+          "p99": 5.264,
+          "mean": 3.414
+        },
+        "commit_server_ms": {
+          "p50": 0.822,
+          "p95": 1.158,
+          "p99": 1.425,
+          "mean": 0.857
+        },
+        "acquire_roundtrip_ms": {
+          "p50": 3.492,
+          "p95": 4.657,
+          "p99": 5.549,
+          "mean": 3.632
+        },
+        "commit_roundtrip_ms": {
+          "p50": 1.032,
+          "p95": 1.421,
+          "p99": 1.758,
+          "mean": 1.072
+        },
+        "release_roundtrip_ms": {
+          "p50": 1.764,
+          "p95": 2.297,
+          "p99": 3.864,
+          "mean": 1.852
+        }
+      },
+      "verdict": "APROVADA COM LIMITAÇÕES",
+      "verdict_basis": "Aquisição serializada com o commit (0/100 violações na corrida; a ablação v1 mostra 100/100 e valida o teste). Limitações: escritor expirado aceito sem sucessor (100/100); failover do PostgreSQL não testado. Implementação própria, a partir da especificação."
+    },
+    "statepact-pg": {
+      "label": "4. StatePact PostgreSQL",
+      "scenarios": {
+        "D2": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "control_detected": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "C4": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, valid_rejected, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "EXP_BEFORE": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "expired_write_accepted": 100,
+          "a_accepted_during_adoption": 0,
+          "passed": 0,
+          "verdict_rule": "writer resumed after expiry, no successor: must be rejected (limitation if accepted)",
+          "pass_rate": 0.0
+        },
+        "EXP_AFTER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "a_accepted_during_adoption": 0,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_accepted, monotonic_violation",
+          "pass_rate": 1.0
+        },
+        "CONC": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "stale_final": 0,
+          "b_acquired": 100,
+          "a_accepted_during_adoption": 81,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: stale_final, monotonic_violation, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "REST": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 0,
+          "value_lost": 0,
+          "a_accepted_during_adoption": 0,
+          "restart_ms_p50": 152.4,
+          "restart_ms_p95": 155.4,
+          "first_read_after_restart_ms_p50": 159.9,
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: monotonic_violation, value_lost, valid_rejected",
+          "pass_rate": 1.0
+        },
+        "FAIL": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "final_is_new_owner_false": 0,
+          "duplicate_effect": 0,
+          "lost_write": 0,
+          "a_accepted_during_adoption": 0,
+          "retry_replayed": 13,
+          "downtime_ms_p50": 161.3,
+          "downtime_ms_p95": 266.4,
+          "downtime_ms_p99": 276.0,
+          "downtime_ms_max": 276.0,
+          "first_attempt_outcomes": {
+            "infra_error": 91,
+            "ok": 9
+          },
+          "retry_outcomes": {
+            "ok": 100
+          },
+          "passed": 100,
+          "verdict_rule": "all hard criteria for the scenario hold: duplicate_effect, lost_write",
+          "pass_rate": 1.0
+        },
+        "NEG": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "invalid_reasons": [],
+          "stale_accepted": 100,
+          "valid_rejected": 0,
+          "monotonic_violation": 0,
+          "final_is_new_owner_false": 100,
+          "control_detected": 100,
+          "a_accepted_during_adoption": 0,
+          "control_detected_rate": 1.0,
+          "passed": 100,
+          "verdict_rule": "control: a stale write must be detected (accepted and final value == stale value)",
+          "pass_rate": 1.0
+        }
+      },
+      "race": {
+        "DIRECT": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "a_blocked_in_commit": 100,
+          "b_grant_completed_while_a_in_commit": 100,
+          "b_blocked_behind_a": 0,
+          "stale_accepted_after_successor_granted": 100
+        },
+        "MANAGER": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "a_blocked_in_commit": 100,
+          "b_grant_completed_while_a_in_commit": 0,
+          "b_blocked_behind_a": 100,
+          "stale_accepted_after_successor_granted": 0
+        }
+      },
+      "failover": null,
+      "perf": {
+        "cycles": 1000,
+        "failed_cycles": 0,
+        "commit_rejected_or_not_ok": 0,
+        "acquire_server_ms": {
+          "p50": 1.356,
+          "p95": 2.048,
+          "p99": 2.547,
+          "mean": 1.449
+        },
+        "commit_server_ms": {
+          "p50": 2.687,
+          "p95": 3.934,
+          "p99": 4.908,
+          "mean": 2.907
+        },
+        "acquire_roundtrip_ms": {
+          "p50": 1.522,
+          "p95": 2.265,
+          "p99": 2.86,
+          "mean": 1.631
+        },
+        "commit_roundtrip_ms": {
+          "p50": 2.894,
+          "p95": 4.242,
+          "p99": 5.349,
+          "mean": 3.112
+        },
+        "release_roundtrip_ms": {
+          "p50": 0.653,
+          "p95": 1.044,
+          "p99": 2.714,
+          "mean": 0.737
+        }
+      },
+      "verdict": "REPROVADA",
+      "verdict_basis": "Corrida confirmada no caminho backend.acquire_lease() direto: a concessão do sucessor é commitada enquanto o commit do antigo está bloqueado, e a escrita antiga é aceita depois (100/100). O caminho TransactionManager.lease() não apresenta a corrida (0/100), porque ensure_resource() pega o lock de commit. Limitação: escritor expirado aceito sem sucessor (100/100)."
+    },
+    "etcd-pg-v1": {
+      "label": "ablation: etcd-pg-v1 (race only, not a candidate)",
+      "scenarios": {},
+      "race": {
+        "PG_LOCK_V1_ABLATION": {
+          "runs": 100,
+          "valid": 100,
+          "invalid": 0,
+          "a_blocked_in_commit": 100,
+          "b_granted_before_a_commit": 100,
+          "stale_accepted_in_window": 100,
+          "b_register_ok": 100
+        }
+      },
+      "failover": null,
+      "perf": null
+    }
+  },
+  "gate": {
+    "mh_change_recommended": false,
+    "reason": "No candidate passes without limitations, the candidates that pass with limitations are not yet shown to beat mh's current mechanism, and that mechanism was not part of this benchmark."
+  }
+}

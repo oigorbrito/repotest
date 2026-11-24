@@ -1,0 +1,1 @@
+﻿Implemente Get-Median em src\Get-Median.ps1. Recebe -Values (números) e retorna a mediana: para quantidade ímpar, o valor do meio; para quantidade par, a média dos dois valores do meio. Lista vazia retorna $null. Não altere a entrada. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

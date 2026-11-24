@@ -1,0 +1,161 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -39,6 +39,7 @@
+     srcs = [
+         "benchmark_test.go",
+         "cert_watcher_test.go",
++        "client_hooks_concurrency_test.go",
+         "client_test.go",
+         "context_test.go",
+         "curl_test.go",
+--- a/circuit_breaker.go
++++ b/circuit_breaker.go
+@@ -391,9 +391,11 @@
+ 
+ // RunOnTriggerHooks method executes all registered trigger hooks with the given request and error.
+ func (cb *circuitBreakerBase) RunOnTriggerHooks(req *Request, err error) {
++	// hooks run without holding cb.lock, so they may register further hooks
+ 	cb.lock.RLock()
+-	defer cb.lock.RUnlock()
+-	for _, h := range cb.triggerHooks {
++	hooks := cb.triggerHooks
++	cb.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -409,9 +411,11 @@
+ 
+ // RunOnStateChangeHooks method executes all registered state change hooks with the given old and new states.
+ func (cb *circuitBreakerBase) RunOnStateChangeHooks(oldState, newState CircuitBreakerState) {
++	// hooks run without holding cb.lock, so they may register further hooks
+ 	cb.lock.RLock()
+-	defer cb.lock.RUnlock()
+-	for _, h := range cb.stateChangeHooks {
++	hooks := cb.stateChangeHooks
++	cb.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(oldState, newState)
+ 	}
+ }
+--- a/client.go
++++ b/client.go
+@@ -931,9 +931,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnError hooks; deadlock will happen.
+ func (c *Client) OnError(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -946,9 +943,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnSuccess hooks; deadlock will happen.
+ func (c *Client) OnSuccess(hooks ...SuccessHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -961,9 +955,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnInvalid hooks; deadlock will happen.
+ func (c *Client) OnInvalid(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -979,9 +970,6 @@
+ //
+ // If an [Client.OnSuccess], [Client.OnError], or [Client.OnInvalid] callback panics,
+ // then exactly one rule can be violated.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnPanic hooks; deadlock will happen.
+ func (c *Client) OnPanic(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -2432,6 +2420,15 @@
+ 	cc.header = c.header.Clone()
+ 	cc.pathParams = maps.Clone(c.pathParams)
+ 
++	// hook lists are appended to under each client's own lock; they must not
++	// share a backing array with the parent
++	cc.errorHooks = slices.Clone(c.errorHooks)
++	cc.invalidHooks = slices.Clone(c.invalidHooks)
++	cc.panicHooks = slices.Clone(c.panicHooks)
++	cc.successHooks = slices.Clone(c.successHooks)
++	cc.closeHooks = slices.Clone(c.closeHooks)
++	cc.retryHooks = slices.Clone(c.retryHooks)
++
+ 	if c.credentials != nil {
+ 		cc.credentials = c.credentials.Clone()
+ 	}
+@@ -2668,18 +2665,23 @@
+ // Helper to run errorHooks hooks.
+ // It wraps the error in a [ResponseError] if the resp is not nil
+ // so hooks can access it.
++//
++// Hooks run without holding c.lock, so they may call Client getters and setters.
++// Hook slices are only ever appended to, and elements below the snapshot length
++// are never rewritten, so reading the snapshot after unlocking is race-free.
+ func (c *Client) onErrorHooks(req *Request, res *Response, err error) {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
++	errorHooks, successHooks := c.errorHooks, c.successHooks
++	c.lock.RUnlock()
+ 	if err != nil {
+ 		if res != nil { // wrap with ResponseError
+ 			err = &ResponseError{Response: res, Err: err}
+ 		}
+-		for _, h := range c.errorHooks {
++		for _, h := range errorHooks {
+ 			h(req, err)
+ 		}
+ 	} else {
+-		for _, h := range c.successHooks {
++		for _, h := range successHooks {
+ 			h(c, res)
+ 		}
+ 	}
+@@ -2688,8 +2690,9 @@
+ // Helper to run panicHooks hooks.
+ func (c *Client) onPanicHooks(req *Request, err error) {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.panicHooks {
++	hooks := c.panicHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -2697,8 +2700,9 @@
+ // Helper to run invalidHooks hooks.
+ func (c *Client) onInvalidHooks(req *Request, err error) {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.invalidHooks {
++	hooks := c.invalidHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -2706,8 +2710,9 @@
+ // Helper to run closeHooks hooks.
+ func (c *Client) onCloseHooks() {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.closeHooks {
++	hooks := c.closeHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h()
+ 	}
+ }

@@ -1,0 +1,54 @@
+
+// Concurrent registration and dispatch on the same client (adapted from the Rust
+// suite's C3). Every registration must survive (no lost update) and no dispatch may
+// block. Race freedom is only verified when the package runs under -race.
+func TestClientHookConcurrentRegistrationAndDispatch(t *testing.T) {
+	const registrars = 8
+	const perRegistrar = 10
+
+	for _, tc := range hookCases() {
+		if !tc.repeatable {
+			continue
+		}
+		t.Run(tc.name, func(t *testing.T) {
+			c := dcnl()
+			base := registeredHooks(c, tc.name)
+
+			var wg sync.WaitGroup
+			wg.Add(registrars)
+			for i := 0; i < registrars; i++ {
+				go func() {
+					defer wg.Done()
+					for j := 0; j < perRegistrar; j++ {
+						tc.register(c, func() {})
+					}
+				}()
+			}
+			for i := 0; i < perRegistrar; i++ {
+				mustReturn(t, "hook dispatch during concurrent registration", func() { tc.trigger(c) })
+			}
+			wg.Wait()
+
+			assertEqual(t, base+registrars*perRegistrar, registeredHooks(c, tc.name), "registrations were lost")
+		})
+	}
+}
+
+// registeredHooks reports how many hooks of the given family are stored on c.
+func registeredHooks(c *Client, kind string) int {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	switch kind {
+	case "OnError":
+		return len(c.errorHooks)
+	case "OnSuccess":
+		return len(c.successHooks)
+	case "OnInvalid":
+		return len(c.invalidHooks)
+	case "OnPanic":
+		return len(c.panicHooks)
+	case "OnClose":
+		return len(c.closeHooks)
+	}
+	panic("unknown hook kind " + kind)
+}

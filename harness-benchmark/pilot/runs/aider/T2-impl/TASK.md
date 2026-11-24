@@ -1,0 +1,1 @@
+﻿Implemente a função Format-Duration em src\Format-Duration.ps1. Ela recebe -Seconds (inteiro) e retorna texto no formato 'Hh MMm SSs': horas sem limite, minutos e segundos sempre com dois dígitos. Exemplos: 3723 -> '1h 02m 03s'; 59 -> '0h 00m 59s'; 36000 -> '10h 00m 00s'. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

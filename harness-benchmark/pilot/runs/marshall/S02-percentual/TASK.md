@@ -1,0 +1,1 @@
+﻿Corrija src\Get-Percent.ps1. Get-Percent -Part -Total deve retornar o percentual com 1 casa decimal (ex.: 1 de 3 -> 33.3; 2 de 3 -> 66.7). Se -Total for 0, retorna 0. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

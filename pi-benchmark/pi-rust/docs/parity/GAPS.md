@@ -1,0 +1,150 @@
+# Open parity gaps
+
+Last reviewed 2026-10-27 against upstream `main` at `531340f10` (2026-10-27). The daily [parity report](README.md#daily-gap-check) finds new gaps. This file keeps the gaps that need a decision or a plan. Remove an entry in the PR that closes the gap.
+
+## Upstream commits not yet ported
+
+The ledger was reviewed through `35dfa7573` (2026-10-30) against pi-rust `2f1da357` on 2026-11-02. Of 163 upstream package commits after `531340f10`, 13 are ported, 89 have an explicit allowlist reason, and 61 remain open. The synced commit stays at `531340f10`.
+
+The open set includes 58 runtime or behavior-test commits, plus CLI help text (`2a46c4208`) and two documentation commits tied to unported behavior (`bec1e0f5a`, `3ac64a074`). It includes the three draft-tracker regression cases in `a92283056`; existing Rust tests do not cover them all. The first open commit is the Bedrock fix `842c73170`.
+
+The allowlist separates upstream-only design notes, docs and examples from catalog state already present in Rust. Closing a design note does not close its related runtime commit. The conditional upstream Node oracle remains unrun. PR #191 added the OpenCode endpoint test expectations; `177e2ad7e` is allowlisted as catalog state. Neither is a full parity claim.
+
+## Deferred work
+
+- **One copy of the partial message per streamed delta.** Since upstream `f715a15c1`, `pi_ai::streaming_json` parses tool-call arguments once per delta. Each `AssistantMessageEvent` still has a full copy of the partial message. Thus a very large tool call costs more per delta as it grows. A change that removes that copy also changes the public event API.
+- **`HarnessOptions.models` as a function** (upstream `7ec1f648e`). This item is not planned. Settings are already a function here, and a `Models` implementation can change its catalog at runtime. The commit is older than the synced commit, so the report does not list it.
+
+## chord2 differences
+
+These are the intentional differences between pi-chord's `host2` and upstream chord:
+
+- Hosts get facets from a `FacetLoader`, because upstream's Node module loader (`loader.ts`) cannot be ported. Thus `7d75a0e3e` does not apply. In that commit, the loader registers every facet root before it imports one. The children of a cluster reload load the named modules through their own `FacetLoader`.
+- Factories are synchronous, and `Subscribable::subscribe` cannot fail. A listener's `select` or its resource fails instead.
+- `Declare::on_select` takes a key for the identity of `select`. Upstream compares the source text of the function. A reload keeps the subscription while the resource and the key stay the same.
+- `Host::host_object` returns the host's own reference to a `lifetime: "host"` object. Upstream tests read the private `hostObjects`.
+- Upstream `4a5d37291` moved `OutputBuffer` and `Progress` into `@earendil-works/chord/output`. pi-rust keeps them in pi-durable (`harness/output.rs` and `harness/progress.rs`).
+- `Change::append_text` (upstream `appendText`) records an append op and does not compare the strings. But the new string is still a copy. A JSON string is an immutable shared `Arc<str>`, so each append costs O(length) instead of O(text). It takes the path of the object that holds the key, because a Rust draft is a `&mut Json` and not a proxy.
+- Durable calls `observe_commits()` observers inside Storage's `adopt`, immediately after the Session's own observers. Upstream (`8b0caefc2`) runs them one microtask later. Rust has no microtask queue, and a spawned task can run after the waits that the commit resolves. A telemetry `add_event` or metric cannot fail in Rust, so there is no `host_error` report for `"telemetry"`.
+- Tests: fake timers are real short timers. `Weak` sentinels replace `FinalizationRegistry` with a forced garbage collection (GC). The review test "a commit that still fails midway" is not ported. That test patches the `startTasks` of an object, and Rust code cannot do that.
+- The tutorial test (upstream `test/tutorial.test.ts`) is in `chord2_tutorial.rs` and `chord2_tutorial_reload.rs`, with one test for each section. Its drift check compares `docs/tutorial.md` with the TypeScript examples in the test. That check is not ported, because pi-rust has no TypeScript copy of the examples.
+
+## Upstream commits that do not apply
+
+These commits are older than the synced commit, so the report no longer lists them.
+
+- `ea25697e9` managed install markers with a byte order mark (BOM). `pi update --self` replaces the release binary in place (update/install.rs). There is no managed-install.json marker.
+- `16f5f0af4` IndexedDbStorage: a browser storage backend. pi-rust has no browser build.
+- `c661bc574` drops the shared MCP types block from durable code mode. pi-codemode never had it, so the port of `8bb180bec` already renders the section without it.
+- `4c25119f5` replicates durable storages as a commit log, and `cae9fd28a` reverts it. The pair is a net zero change.
+- `2685de7a1`, `66c2fa3d7`, and `936e5f40a` update or drop npm dependencies. pi-rust has no npm dependencies.
+- `476a303c1` drops an `npm ci` override for managed installs. `pi update --self` downloads release archives and does not use npm.
+- `c8ec752cf` skips `fd` and `rg` downloads on unsupported architectures. pi-rust never downloads them, because `grep` and `find` use the `ignore` crate.
+- `531340f10` deletes root npm shim files of the TypeScript ai package. pi-rust has no npm package layout.
+- The V8 string retention parts of `f715a15c1` (chord `ownedSlice`, bounded error excerpts) do not apply, because Rust strings own their bytes. The rest of the commit is ported.
+
+## Extension runtime (pi-js)
+
+IPC handle retries use a flat wrapper instead of Node's nested `net.Native` wrapper. Internal listeners receive descriptors with only `close()`, stray acknowledgements are ignored, and failed retries release their copies and queues. A cluster connection queued to a worker that disconnects is not reclaimed. These limits are listed in `crates/pi-js/src/unsupported.rs`.
+
+`crates/pi-js/src/unsupported.rs` is the full list. Open items that need a decision:
+
+- **TLS `pfx`** needs a PKCS#12 parser, which is a new dependency. Ask before adding one.
+- **TLS before 1.2** cannot work. rustls supports only TLS 1.2 and 1.3.
+- **Byte-identical zlib output**: zlib-rs output can have different bytes from Node's zlib output. `memLevel` and `strategy` have no effect.
+- **V8-only features** depend on V8 internals that QuickJS does not have. These features are heap snapshots with nodes, `v8.queryObjects`, `inspector.open`, and full `async_hooks` coverage of timers, promises, and I/O.
+
+The Node backend (`extensionRuntime: "node"`, see [Node backend](../agents/node-compat.md#node-backend)) closes these items when it is selected. On the default QuickJS backend they stay open.
+
+- `child_process.fork` and spawning `process.execPath` start a real Node process.
+- `process.dlopen` and native `.node` addons load.
+- V8-only modules and features work: `v8` heap snapshots and `queryObjects`, `inspector.open`, and full `async_hooks` coverage.
+
+## Extension module exports
+
+Section 8 of the parity report compares the runtime exports of each module in upstream `virtual-modules.ts` with the bundled module. Run `cargo xtask parity --upstream <checkout>` to get the current list. On 2026-10-31 the report found no missing exports.
+
+These exports are present, but they throw `ERR_PI_UNSUPPORTED`:
+
+- `@earendil-works/pi-ai/compat`: `setBedrockProviderModule`. Amazon Bedrock streams in Rust, so there is no Node Bedrock module to inject.
+- `@earendil-works/pi-coding-agent`, run modes and CLI: `InteractiveMode`, `RpcClient`, `main`, `runPrintMode`, `runRpcMode`, `resolveCliModel`, `resolveModelScopeWithDiagnostics`, `readStoredCredential`.
+- `@earendil-works/pi-coding-agent`, sessions and extensions: `AgentSession` and `AgentSessionRuntime` as constructors, `createAgentSessionFromServices`, `createAgentSessionRuntime`, `createAgentSessionServices`, `ExtensionRunner`, `createExtensionRuntime`, `discoverAndLoadExtensions`, `createCodemodeExtension`, `createMcpExtension`, `createToolSearchExtension`, `DefaultPackageManager`.
+
+Other limits of the exports that work:
+
+- `createAgentSession` makes a child session. It supports `cwd`, `agentDir`, `model`, `thinkingLevel`, `scopedModels`, tool names, `excludeTools`, `noTools`, `systemPrompt`, `resourceLoader`, and the `SessionManager`, `SettingsManager`, and `ModelRuntime` wrappers. These options throw `ERR_PI_UNSUPPORTED`: `customTools`, `sessionStartEvent`, a `modelRuntime` that is not from `ModelRuntime.create`, third-party session or settings managers, a custom `ResourceLoader` that is not a `DefaultResourceLoader` with skills, prompts, context files, or extensions, and `systemPrompt` together with a `DefaultResourceLoader`. A child session with a `DefaultResourceLoader` shares the loader and binds the extensions of its last `reload()`; without one, it loads no extensions. It uses the native runtime of its `modelRuntime`, or the runtime and auth of the host without one. The providers and virtual models of the loader's file extensions and factories register in that runtime when the session is created, not at `reload()`, and are removed when it is disposed. An invalid option throws before the session takes the reload.
+- SDK child sessions support `streamingBehavior`, queue controls, session-long event subscriptions, and model and thinking controls. Model and thinking changes persist only with `{persist: true}`. Sixteen members and the `customTools` and `sessionStartEvent` options remain unsupported; see [SDK child session controls](sdk-child-session.md) for the member list and state/tool limits.
+- Without a `DefaultResourceLoader`, `SDK.extensionsResult.runtime` throws `ERR_PI_UNSUPPORTED`.
+- `ProjectTrustStore` uses upstream path, read, and write code with a private synchronous lock port. Unix and Windows QuickJS and Node fixtures cover its store, error, lock, and exit behavior. Signal cleanup, graceful-fs changes, and lock-map sharing with other host code remain open.
+- `SessionManager.appendUsage` stores the usage JSON as given, `null` included, and returns a copy of the stored entry read back from Rust. Upstream returns the object it appended, so changes to the returned object do not reach the session, and for an `undefined` usage the copy has no `usage` key where the upstream object has one set to `undefined`.
+- `SettingsManager` has the 139 upstream members, `fromStorage` with a custom storage, and the write queue that `flush` and `reload` wait for. Rust holds the layers that a child session shares (`host/sdk_settings.js`, `settings/sdk_*.rs`). Errors carry V8's `JSON.parse` text. Getters that return a stored object return it live, so a change to it changes the settings. The package also exports `InMemorySettingsStorage`. These differences remain:
+  - A number that JSON allows but a double cannot hold, such as `1e400`, is a load error. Upstream reads it as `Infinity`. The same holds for a lone surrogate escape and for nesting deeper than 128 levels.
+  - A child session queues its settings writes at once, and the drain callback writes them through the queue of the extension. A native child `reload` first writes the queued snapshots of a file or in-memory storage; with a custom storage it keeps the current layers, as Rust cannot call the storage.
+  - An object inside a getter's new result object, such as `getRetrySettings().maxRetries` when settings hold an object there, is a copy.
+  - Changes made from Rust to an aliased object reach a cached JavaScript object only after the next getter call.
+- `DefaultResourceLoader` loads skills, prompt templates, themes, context files, and system prompts in Rust (`extensions/ops_sdk_resources.rs`), including `packages` settings, `extendResources`, project trust, and the theme color mode of the `terminal.trueColor` setting. Each override runs in upstream order, and the getters return the stored arrays and objects. These differences remain:
+  - A settings manager that is not a pi-rust `SettingsManager`, `builtin: true` factories, and package sources in `additionalExtensionPaths` throw `ERR_PI_UNSUPPORTED`.
+  - Extension files load in a separate QuickJS extension host for each `reload()` (`ops_sdk_resources/extensions.rs`). `reload({ resolveProjectTrust })` and `loadProjectTrustExtensions` load the user, global, and CLI extensions first and reuse them after trust resolves. `extensionFactories` run in the host of the caller (`host/sdk_extensions.js`); the extension host loads a mirror of each factory that forwards handlers, tools, commands, and completions (`host/sdk_mirror.js`). Event data, handler results, and tool hook data must be JSON data; other values throw a `TypeError`. `pi.events` of the extension host reaches the `eventBus` of the loader asynchronously. Factories cannot call `pi.registerMcpServer`, `pi.unregisterMcpServer`, `pi.getMcpServers`, or `pi.callMcpTool`. Their providers and virtual models are kept apart from the ones of the caller's host, also under the same name, and their callbacks run in the caller's host.
+  - One reload serves one child session, because an extension runner binds one session: a second `createAgentSession` throws `ERR_PI_UNSUPPORTED` until the next `reload()`. `ctx.reload()` in that session throws `ERR_PI_UNSUPPORTED`.
+  - `getExtensions()` returns file extensions with `path`, `resolvedPath`, `sourceInfo`, `tools` (definitions without `execute`), `commands`, and `flags`. Their `handlers`, `shortcuts`, and renderers throw `ERR_PI_UNSUPPORTED`. `runtime` is the factory runtime when there are no extension files, and throws `ERR_PI_UNSUPPORTED` when there are. `extensionsOverride` can drop and reorder extensions; adding one throws `ERR_PI_UNSUPPORTED`.
+  - Before `reload()`, `createAgentSession` loads the system prompts of the loader once; upstream uses the empty values.
+  - An override must return objects of the upstream types; other values throw a `TypeError`. Skills keep the pi-rust fields `license`, `compatibility`, `metadata`, and `allowedTools`.
+  - The theme color mode reads the process environment of pi-rust, so changes to `process.env` in JavaScript do not change it. `~` in settings paths uses the home directory of pi-rust.
+- Each `ModelRuntime.create` makes a separate Rust runtime with its own models, credentials, and runtime keys. It works before a session binds, so during extension loading. It supports `authPath`, `modelsPath`, `modelsStorePath`, `catalogBaseUrl`, `allowModelNetwork`, `refreshOnCreate`, `modelRefreshTimeoutMs`, and `signal`. The model reads and type queries, auth status, `setRuntimeApiKey`, `removeRuntimeApiKey`, `listCredentials`, `refresh` with `allowNetwork`, `providers`, and `signal`, the API key and usage requests, `classify`, and `generateImages` work. `new ModelRegistry(runtime)` reads the same runtime. These differences remain:
+  - `credentials`, `modelsStore`, and `modelsPath: null` throw `ERR_PI_UNSUPPORTED`, as do `login`, `logout`, provider and virtual model registration, `getRegisteredProviderConfig`, `getRegisteredNativeProvider`, `getCompatibilityRequestConfig`, and `getPhysicalModel`. `stream` and `streamSimple` work only on the host runtime; a child session that uses a created runtime streams in Rust.
+  - `refreshOnCreate: false` still restores cached catalogs offline. `getError` keeps the error from `create`. `getAllAvailable` and `getAvailableOfType` use the last auth check, and `getProviders` returns `{ id, name }`. A runtime is kept until the extension runtime ends.
+- `generateDiffString` and `generateUnifiedPatch` use a fixed value of 4 context lines.
+- `createModels` and `createProvider` are upstream code. The providers of `@earendil-works/pi-ai/providers/all` read the Rust catalog and stream, classify, and generate images in Rust. Their API key auth resolves as the Rust resolver does, over the credential variables that `ctx.env` of upstream `ApiKeyAuth.resolve` returns. Google Vertex AI asks `ctx.fileExists` for its application default credentials file, as upstream does. Their API key `login` asks for one key. For Amazon Bedrock, Google Vertex AI, and Cloudflare, upstream asks for more values. OAuth `login`, `refresh`, and `toAuth` run the Rust flows.
+- `ExtensionEditorComponent` runs the external editor through the Rust editor runner. An editor ended by a signal reports `signal <number>` where upstream names the signal. In print and RPC modes the external editor fails with a message, because pi has no terminal there.
+- `builtinProviders()` returns the 42 upstream providers. `getBuiltinProviders()` also lists `cursor` and `google-antigravity`, which only pi-rust has.
+
+## Removed upstream, still in pi-rust
+
+Upstream `7472cda0d` (2026-10-12) deleted the experimental server stack: the client, protocol, and server packages and `pi experimental`. A decision on 2026-10-21 keeps these items in pi-rust on purpose as pi-rust extras:
+
+- `pi-client`, `pi-protocol`, and `pi-server`
+- the `pi experimental` commands (`server`, `client`, `durable`, `vacation`)
+- the facets and services runtime in pi-chord that they use
+
+The three crates are in `allowlist.json`. They get no upstream fixes from now on.
+
+Upstream `92ab53602` removed the Chord state getters `Session.documentState()`, `Conversation.viewState()`, and `Harness.taskGraph()` with the `DocumentState` type. pi-durable keeps them because the experimental stack in pi-coding-agent reads conversations and the task graph through them. When a document is retired, its document state publishes `null`. When a new document is created at the same address, the state publishes the value of that document. A watch on an address works the same way.
+
+## pi-rust extensions
+
+pi-rust adds this behavior on purpose. Do not report these items as gaps in the parity review.
+
+- Account model lists ([Account model lists](../../crates/pi-coding-agent/docs/providers.md#account-model-lists)). Each provider gets its list from one endpoint:
+  - `openai-codex` from the Codex backend's `/codex/models`
+  - `anthropic` from `/v1/models`
+  - `github-copilot` from the Copilot `/models` endpoint
+  - `openai` and `xai` from `/models`
+  - `google` from the Gemini API `/models`
+  - `cursor` from `AvailableModels`
+  - `google-antigravity` from the `model` and `thought_level` selectors of the Antigravity ACP server
+- Subscription providers `cursor` and `google-antigravity` with their logins and the APIs `cursor-agent` and `antigravity-acp` ([Subscription providers](../providers/subscription-providers.md)).
+- Fast mode: `/fast`, `--fast`, the `fastMode` setting, `compat.fastMode`, the ACP `fast_mode` option, RPC `set_fast_mode`, and the `fastMode` and `fastModeAvailable` fields of `get_state` ([Fast mode](../../crates/pi-coding-agent/docs/providers.md#fast-mode-pi-rust-extension)).
+- Built-in commands in RPC and ACP modes: RPC `prompt` runs `/usage`, `/context`, `/extensions`, `/fast`, `/reload`, `/session`, `/changelog`, `/export`, and `/name` without a model call, lists them in `get_commands`, sends a `command_output` record, and sets `agentInvoked` in the response. ACP mode runs the first five too and sends `config_option_update` on in-session model, thinking, and fast mode changes ([RPC mode](../../crates/pi-coding-agent/docs/rpc.md)).
+- MCP server `lifecycle` (`eager` or `lazy`) in `mcp.json` and the tool cache in `mcp-cache/` ([MCP server lifecycle](../../crates/pi-coding-agent/docs/mcp.md)).
+- Deferred context: the `contextExposure` setting, the skill frontmatter `exposure`, `contextEntries` in `resources_discover` results, and the context matches of `tool_search` ([Deferred context](../../crates/pi-coding-agent/docs/deferred-context.md)).
+- Markdown export: if the output path ends in `.md`, `/export` and `pi --export` write Markdown ([Export](../../crates/pi-coding-agent/docs/commands.md#export)).
+- The README section "Differences from upstream pi" lists the other additions: slash commands, CLI commands and flags, and settings. It also lists the bugs that pi-rust fixes and that are still open upstream. `allowlist.json` holds the matching parity report entries.
+
+## Sonnet catalog label
+
+The `Claude Sonnet 4.5 (latest)` name for `anthropic/claude-sonnet-4-5` comes from [models.dev](https://github.com/anomalyco/models.dev/blob/dev/models/anthropic/claude-sonnet-4-5.toml). Upstream Pi copies that name into its generated catalog, and `cargo xtask models` preserves it in Pi Rust. The model selector displays the catalog name; Pi Rust adds no `latest` suffix. The dated `claude-sonnet-4-5-20250929` entry is named `Claude Sonnet 4.5`. The external names are kept unchanged.
+
+## ACP and provider integration work
+
+- Paseo rejects exact MCP tool preapproval for generic ACP providers before it starts Pi. Its provider contract and ACP permission handler must match tools exactly. Pi's permission modes alone cannot resolve that host-side error. Pi sends the exact MCP server and tool names in `_meta.piAcp.mcp` of each permission request and accepts `_meta.piAcp.clientMcpExposure: "direct"`; a host adapter that matches grants is still missing ([ACP mode](../../crates/pi-coding-agent/docs/acp.md#tool-approval)).
+- ACP `session/new` and `session/load` connect client-supplied stdio `mcpServers` for the session, with literal values that pi does not save. `http` and `sse` servers are rejected (`mcpCapabilities` is false), and a session reopened without `session/load` has no client servers ([ACP mode](../../crates/pi-coding-agent/docs/acp.md#mcp-servers-from-the-client)).
+- ACP has no standard model icon field. Fast catalog variants get a lightning-bolt label. Models with a fast mode get the **Fast mode** option ([Fast mode](../../crates/pi-coding-agent/docs/providers.md#fast-mode-pi-rust-extension)).
+
+## Platform
+
+- On non-Linux Unix, QuickJS marks received IPC sockets close-on-exec before JavaScript sees them. A child spawned on another thread between receipt and that flag can still inherit the socket. Node's macOS `posix_spawn` path closes inherited descriptors.
+
+- `pi experimental server` and `client` use Unix sockets. On Windows, they report that they need Unix.
+- On Unix, the chord2 host manager gives a child its IPC channel as stdin. Upstream uses an extra file descriptor there. On Windows, the channel is a named pipe. On Windows, `kill_tree` ends only the child, as upstream does there.
+- When pi-durable stops waiting for a local shell command's output (100 ms after the exit or the last chunk after it), it delivers queued chunks and any chunk the readers finish reading before they observe the stop signal. On Unix it also takes at most 64 KiB more per stream if readable without waiting. Windows pipes read on a blocking thread, so on Windows it starts no further read.
+- This Rust tree has no Durable Objects or workerd runtime target. `sqlite_cloudflare.rs` checks the Durable Object SQLite driver's contract, including the `SELECT changes()` count of `run_counted`, on a stand-in adapter over the bundled SQLite. Upstream's workerd tests (`test-workers/`) are not run.

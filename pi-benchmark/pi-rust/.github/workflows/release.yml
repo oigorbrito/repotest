@@ -1,0 +1,388 @@
+name: Release
+
+# Releases run after CI passes on main: conventional commits since the last tag decide
+# the next semantic version. Pushing a `v*` tag releases that exact version.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  pull_request:
+    paths: [".github/workflows/release.yml", "xtask/**", "Cargo.toml", "Cargo.lock"]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (auto reads conventional commits)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+      dry_run:
+        description: Build every target without tagging or publishing
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  plan:
+    # workflow_run filters by branch name only, and a fork can name its branch `main`. This job runs
+    # the code of that commit with a write token, so the CI run must be of this repository.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event != 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    # Pushes the version commit and the tag.
+    permissions:
+      contents: write
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
+      publish: ${{ steps.mode.outputs.publish }}
+      ref: ${{ steps.commit.outputs.ref || steps.mode.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Plan version
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          BUMP: ${{ inputs.bump || 'auto' }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT" = push ]; then
+            cargo xtask check-tag "$REF_NAME"
+            version="${REF_NAME#v}"
+            prerelease=false
+            case "$version" in *-*) prerelease=true ;; esac
+            printf 'release=true\nversion=%s\ntag=%s\nprerelease=%s\n' "$version" "$REF_NAME" "$prerelease" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT" = pull_request ]; then
+            version="$(cargo xtask plan | sed -n 's/^version=//p')"
+            printf 'release=true\nversion=%s\ntag=v%s\nprerelease=false\n' "${version:-0.0.0}" "${version:-0.0.0}" >> "$GITHUB_OUTPUT"
+          else
+            cargo xtask plan --bump "$BUMP" --github-output
+          fi
+      - name: Decide whether to publish
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          REF: ${{ github.ref }}
+          RELEASE: ${{ steps.plan.outputs.release }}
+        run: |
+          publish=false
+          case "$EVENT" in
+            push) publish=true ;;
+            workflow_run) publish="$RELEASE" ;;
+            workflow_dispatch) [ "$DRY_RUN" = false ] && [ "$REF" = refs/heads/main ] && publish="$RELEASE" ;;
+          esac
+          if [ "$publish" = true ] && [ "$EVENT" != push ]; then
+            git fetch --quiet origin main
+            if [ "$(git rev-parse origin/main)" != "$(git rev-parse HEAD)" ]; then
+              echo "main moved past $(git rev-parse --short HEAD); the next CI run on main releases it."
+              publish=false
+            fi
+          fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Commit version and tag
+        id: commit
+        if: steps.mode.outputs.publish == 'true' && github.event_name != 'push'
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cargo xtask prepare "$VERSION"
+          git add Cargo.toml Cargo.lock CHANGELOG.md
+          git diff --cached --quiet || git commit -m "chore(release): v$VERSION"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin HEAD:refs/heads/main "refs/tags/v$VERSION"
+          echo "ref=v$VERSION" >> "$GITHUB_OUTPUT"
+
+  notices:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      # The licenses of the third-party crates go into every release archive (about.toml, about.hbs).
+      - name: Install cargo-about
+        run: cargo install --locked cargo-about --version 0.9.3 --features cli
+      - name: Write THIRD-PARTY-LICENSES.md
+        run: cargo about generate --workspace --locked --fail -c about.toml about.hbs -o THIRD-PARTY-LICENSES.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: third-party-licenses
+          path: THIRD-PARTY-LICENSES.md
+
+  build:
+    needs: [plan, notices]
+    if: needs.plan.outputs.release == 'true'
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-musl, os: ubuntu-latest, zig: true }
+          - { target: aarch64-unknown-linux-musl, os: ubuntu-latest, zig: true }
+          - { target: armv7-unknown-linux-musleabihf, os: ubuntu-latest, zig: true }
+          - { target: x86_64-apple-darwin, os: macos-latest }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: aarch64-pc-windows-msvc, os: windows-latest }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: third-party-licenses
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Install cargo-zigbuild
+        if: matrix.zig
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install --quiet cargo-zigbuild
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+      - name: Put clang on PATH for ring
+        if: matrix.target == 'aarch64-pc-windows-msvc'
+        shell: bash
+        run: echo "C:\\Program Files\\LLVM\\bin" >> "$GITHUB_PATH"
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.zig }}" = true ]; then
+            cargo zigbuild --release --locked -p pi-coding-agent -p pi-env-daemon --target ${{ matrix.target }}
+          elif [ "${{ runner.os }}" = Windows ]; then
+            cargo build --release --locked -p pi-coding-agent --target ${{ matrix.target }}
+            # Static C runtime, so the daemon needs no Visual C++ redistributable on the remote machine (as upstream).
+            RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --locked -p pi-env-daemon \
+              --target ${{ matrix.target }} --target-dir target-daemon
+          else
+            cargo build --release --locked -p pi-coding-agent -p pi-env-daemon --target ${{ matrix.target }}
+          fi
+      - name: Package
+        shell: bash
+        env:
+          TAG: ${{ needs.plan.outputs.tag }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          name="pi-$TAG-$TARGET"
+          mkdir -p "dist/$name"
+          cp README.md LICENSE THIRD-PARTY-LICENSES.md crates/pi-coding-agent/src/acp/LICENSE-pi-acp \
+            crates/pi-js/src/js/LICENSE-node crates/pi-js/src/js/LICENSE-v8 \
+            crates/pi-mcp/src/oauth/LICENSE-mcp-typescript-sdk \
+            crates/pi-coding-agent/src/extensions/js/LICENSE-chalk \
+            crates/pi-coding-agent/src/extensions/js/LICENSE-proper-lockfile \
+            crates/pi-coding-agent/src/extensions/js/LICENSE-signal-exit "dist/$name/"
+          cp crates/pi-coding-agent/src/settings/LICENSE-v8 "dist/$name/LICENSE-v8-settings"
+          [ -f CHANGELOG.md ] && cp CHANGELOG.md "dist/$name/"
+          if [ "${{ runner.os }}" = Windows ]; then
+            cp "target/$TARGET/release/pi.exe" "dist/$name/"
+            (cd dist && 7z a -tzip -bso0 "$name.zip" "$name")
+          else
+            cp "target/$TARGET/release/pi" "dist/$name/"
+            tar -C dist -czf "dist/$name.tar.gz" "$name"
+          fi
+          rm -rf "dist/$name"
+          ls -l dist
+      - name: Package the pi-env daemon
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          # Folder names follow pi-env's packaged_daemon: pi-env-<platform>-<arch>. Upstream has no 32-bit ARM remote.
+          case "$TARGET" in
+            x86_64-unknown-linux-musl) remote=linux-x64 ;;
+            aarch64-unknown-linux-musl) remote=linux-arm64 ;;
+            x86_64-apple-darwin) remote=darwin-x64 ;;
+            aarch64-apple-darwin) remote=darwin-arm64 ;;
+            x86_64-pc-windows-msvc) remote=windows-x64 ;;
+            aarch64-pc-windows-msvc) remote=windows-arm64 ;;
+            *) exit 0 ;;
+          esac
+          mkdir -p "daemon/pi-env-$remote"
+          if [ "${{ runner.os }}" = Windows ]; then
+            cp "target-daemon/$TARGET/release/pi-env.exe" "daemon/pi-env-$remote/"
+          else
+            cp "target/$TARGET/release/pi-env" "daemon/pi-env-$remote/"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pi-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: matrix.target != 'armv7-unknown-linux-musleabihf'
+        with:
+          name: daemon-${{ matrix.target }}
+          path: daemon/*
+          if-no-files-found: error
+
+  android-daemons:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    name: daemon (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: aarch64-linux-android, name: android-arm64, clang: aarch64-linux-android24 }
+          - { target: x86_64-linux-android, name: android-x64, clang: x86_64-linux-android24 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Configure the Android NDK linker
+        # A fixed NDK, installed when the runner image does not have it (as upstream's env-daemons workflow).
+        env:
+          NDK_VERSION: 27.2.12479018
+        run: |
+          ndk="$ANDROID_HOME/ndk/$NDK_VERSION"
+          # The NDK download fails now and then (a corrupt archive), so try it up to three times.
+          for attempt in 1 2 3; do
+            [ -d "$ndk/toolchains" ] && break
+            { yes || true; } | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK_VERSION" > /dev/null || true
+            [ -d "$ndk/toolchains" ] || sleep 15
+          done
+          linker="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/${{ matrix.clang }}-clang"
+          test -x "$linker"
+          variable="CARGO_TARGET_$(echo '${{ matrix.target }}' | tr 'a-z-' 'A-Z_')_LINKER"
+          echo "$variable=$linker" >> "$GITHUB_ENV"
+          echo "CC_$(echo '${{ matrix.target }}' | tr '-' '_')=$linker" >> "$GITHUB_ENV"
+      - name: Build
+        run: cargo build --release --locked -p pi-env-daemon --target ${{ matrix.target }}
+      - name: Collect
+        run: |
+          mkdir -p "daemon/pi-env-${{ matrix.name }}"
+          cp "target/${{ matrix.target }}/release/pi-env" "daemon/pi-env-${{ matrix.name }}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daemon-${{ matrix.target }}
+          path: daemon/*
+          if-no-files-found: error
+
+  publish:
+    needs: [plan, notices, build, android-daemons]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pi-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: daemon-*
+          path: daemons/pi-env-daemons
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: third-party-licenses
+          path: daemons/pi-env-daemons
+      - name: Package the pi-env daemons
+        env:
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          find daemons -type f -name pi-env -exec chmod +x {} +
+          cp LICENSE daemons/pi-env-daemons/
+          tar -C daemons -czf "dist/pi-env-daemons-$TAG.tar.gz" pi-env-daemons
+          tar -tzf "dist/pi-env-daemons-$TAG.tar.gz"
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+        run: |
+          flags=()
+          [ "$PRERELEASE" = true ] && flags+=(--prerelease)
+          if cargo xtask notes "$VERSION" > notes.md; then
+            flags+=(--notes-file notes.md)
+          else
+            flags+=(--generate-notes)
+          fi
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --title "$TAG" --verify-tag "${flags[@]}"
+          fi
+      # Signed build provenance for every file in SHA256SUMS (checked with `gh attestation verify`).
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-checksums: dist/SHA256SUMS
+
+  # Points the Homebrew tap (brew install yannelli/tap/pi) at the new release. Skipped until the
+  # HOMEBREW_TAP_TOKEN secret exists: a fine-grained token with contents write on yannelli/homebrew-tap.
+  homebrew:
+    needs: [plan, publish]
+    if: needs.plan.outputs.publish == 'true' && needs.plan.outputs.prerelease != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - name: Update the formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::HOMEBREW_TAP_TOKEN is not set; the Homebrew tap was not updated."
+            exit 0
+          fi
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p SHA256SUMS -D "$RUNNER_TEMP"
+          git clone --depth 1 "https://x-access-token:$GH_TOKEN@github.com/yannelli/homebrew-tap.git" "$RUNNER_TEMP/tap"
+          mkdir -p "$RUNNER_TEMP/tap/Formula"
+          scripts/homebrew-formula.sh "$VERSION" "$RUNNER_TEMP/SHA256SUMS" > "$RUNNER_TEMP/tap/Formula/pi.rb"
+          cd "$RUNNER_TEMP/tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/pi.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "pi $VERSION"
+          git push origin HEAD

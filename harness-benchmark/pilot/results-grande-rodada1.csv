@@ -1,0 +1,61 @@
+﻿"agente","tarefa","categoria","faixa","modo","repeticao","resposta_correta","workspace_ok","sucesso","resposta","esperado","erros","segundos","entrada","saida","cache_leitura","cache_escrita","custo_est_usd","custo_reportado_usd"
+"orca","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","","total_limit=98200","","0,6","0","0","0","0","0",
+"aider","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","The API provider is not able to authenticate you. Check your API key.","total_limit=98200","","7,4","0","0","0","0","0",
+"marshall","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","2,5","0","0","0","0","0",
+"pi","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","total_limit=97278","total_limit=98200","","20,6","8","5302","7713","16136","0,004746","0,00474593"
+"orca","big-max","cross-file-large-search","grande","read","1","False","True","False","","service=svc-027; limit=1000","","0,4","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","1","False","True","False","The API provider is not able to authenticate you. Check your API key.","service=svc-027; limit=1000","","6,5","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","2,4","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","1","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","6,8","10","604","20048","11411","0,00193","0,001929855"
+"orca","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","","owner=team-0; count=42","","0,6","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","The API provider is not able to authenticate you. Check your API key.","owner=team-0; count=42","","7,3","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","2,5","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","1","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","9,5","12","904","17897","6212","0,001409","0,00140867"
+"orca","big-canary","cross-file-large-count","grande","read","1","False","True","False","","canary=8","","0,6","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","1","False","True","False","The API provider is not able to authenticate you. Check your API key.","canary=8","","6,2","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","2,3","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","1","False","True","False","canary=9","canary=8","","10,9","12","938","18234","7713","0,001617","0,001616665"
+"orca","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","0,6","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","The API provider is not able to authenticate you. Check your API key.","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","6,4","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","2,5","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","1","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,4","8","225","8218","5138","0,000838","0,00083773"
+"orca","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","","total_limit=98200","","0,4","0","0","0","0","0",
+"aider","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","The API provider is not able to authenticate you. Check your API key.","total_limit=98200","","6,6","0","0","0","0","0",
+"marshall","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","2,4","0","0","0","0","0",
+"pi","big-sum","cross-file-large-aggregate","grande","read","2","True","True","True","total_limit=98200","total_limit=98200","","22,1","8","5380","9175","14717","0,004622","0,004622175"
+"orca","big-max","cross-file-large-search","grande","read","2","False","True","False","","service=svc-027; limit=1000","","0,6","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","2","False","True","False","The API provider is not able to authenticate you. Check your API key.","service=svc-027; limit=1000","","8","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","3","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","2","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","6,4","10","591","20046","11398","0,001922","0,00192171"
+"orca","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","","owner=team-0; count=42","","0,6","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","The API provider is not able to authenticate you. Check your API key.","owner=team-0; count=42","","6,9","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","2,3","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","2","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","11,6","14","1085","27571","8178","0,001842","0,00184186"
+"orca","big-canary","cross-file-large-count","grande","read","2","False","True","False","","canary=8","","0,6","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","2","False","True","False","The API provider is not able to authenticate you. Check your API key.","canary=8","","6","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","2,3","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","2","True","True","True","canary=8","canary=8","","9,9","12","997","40254","29771","0,004624","0,004623615"
+"orca","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","0,4","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","The API provider is not able to authenticate you. Check your API key.","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","6,1","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","2,3","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","2","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,5","8","225","10251","3105","0,000604","0,000603935"
+"orca","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","","total_limit=98200","","0,7","0","0","0","0","0",
+"aider","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","The API provider is not able to authenticate you. Check your API key.","total_limit=98200","","5,9","0","0","0","0","0",
+"marshall","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","2,6","0","0","0","0","0",
+"pi","big-sum","cross-file-large-aggregate","grande","read","3","True","True","True","total_limit=98200","total_limit=98200","","16,3","8","3625","9175","14740","0,003748","0,00374755"
+"orca","big-max","cross-file-large-search","grande","read","3","False","True","False","","service=svc-027; limit=1000","","0,6","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","3","False","True","False","The API provider is not able to authenticate you. Check your API key.","service=svc-027; limit=1000","","6,5","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","2,5","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","3","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","7,1","10","617","20050","11424","0,001938","0,001938"
+"orca","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","","owner=team-0; count=42","","0,6","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","The API provider is not able to authenticate you. Check your API key.","owner=team-0; count=42","","8,4","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","2,5","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","3","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","11,3","12","807","24660","7943","0,001644","0,001644175"
+"orca","big-canary","cross-file-large-count","grande","read","3","False","True","False","","canary=8","","0,6","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","3","False","True","False","The API provider is not able to authenticate you. Check your API key.","canary=8","","8,1","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","2,6","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","3","True","True","True","canary=8","canary=8","","11,3","12","943","18262","7713","0,001619","0,001619445"
+"orca","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","0,4","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","The API provider is not able to authenticate you. Check your API key.","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","6,2","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","2,4","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","3","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,4","8","225","10251","3105","0,000604","0,000603935"

@@ -1,0 +1,414 @@
+//! The mode-independent extension UI (upstream `ExtensionUIContext`). The extension host calls
+//! it; the TUI implements it with dialogs and RPC mode with `extension_ui_request` records.
+//! Methods that hand over TUI components stay on the TUI side, since they need a terminal.
+
+use std::path::PathBuf;
+use std::time::Duration;
+
+use async_trait::async_trait;
+use serde_json::Value;
+use tokio_util::sync::CancellationToken;
+
+use crate::extensions::{ComponentFactory, CustomRequest};
+use crate::theme::ThemeColor;
+
+/// Editor text and cursor (a byte offset) for [`ExtensionUi::autocomplete_base`].
+#[derive(Clone, Debug, Default)]
+pub struct AutocompleteRequest {
+    pub lines: Vec<String>,
+    pub cursor_line: usize,
+    pub cursor_col: usize,
+    pub force: bool,
+}
+
+/// The run mode an extension sees as `ctx.mode`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ExtensionMode {
+    Tui,
+    Rpc,
+    Json,
+    Print,
+}
+
+impl ExtensionMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Tui => "tui",
+            Self::Rpc => "rpc",
+            Self::Json => "json",
+            Self::Print => "print",
+        }
+    }
+
+    /// Whether dialogs work (`ctx.hasUI`): true in the TUI and RPC modes.
+    pub fn has_ui(self) -> bool {
+        matches!(self, Self::Tui | Self::Rpc)
+    }
+}
+
+/// Options of a dialog (upstream `ExtensionUIDialogOptions`).
+#[derive(Clone, Debug, Default)]
+pub struct DialogOptions {
+    /// Dismiss the dialog with its default value after this long.
+    pub timeout: Option<Duration>,
+    /// Dismiss the dialog with its default value when cancelled.
+    pub cancel: Option<CancellationToken>,
+    /// `input` only (pi-rust): the initial text.
+    pub prefill: Option<String>,
+    /// `input` only (pi-rust): show `*` for each character.
+    pub secret: bool,
+}
+
+impl DialogOptions {
+    pub fn with_timeout(timeout: Duration) -> Self {
+        Self { timeout: Some(timeout), ..Self::default() }
+    }
+}
+
+/// Severity of a notification; upstream defaults to `info`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum NotifyType {
+    #[default]
+    Info,
+    Warning,
+    Error,
+}
+
+impl NotifyType {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Info => "info",
+            Self::Warning => "warning",
+            Self::Error => "error",
+        }
+    }
+}
+
+/// Where a widget goes; upstream defaults to `aboveEditor`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WidgetPlacement {
+    #[default]
+    AboveEditor,
+    BelowEditor,
+}
+
+impl WidgetPlacement {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::AboveEditor => "aboveEditor",
+            Self::BelowEditor => "belowEditor",
+        }
+    }
+}
+
+/// The streaming loader's look (upstream `WorkingIndicatorOptions`): empty frames hide it.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct WorkingIndicatorOptions {
+    pub frames: Option<Vec<String>>,
+    pub interval_ms: Option<u64>,
+}
+
+/// How chat messages and the editor look (pi-rust `ctx.ui.setChatStyle`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ChatStyle {
+    /// Drawn before the first line of each user message; the other lines get the same indent.
+    pub user_prefix: Option<String>,
+    /// Drawn before the first line of the text of each assistant message.
+    pub assistant_prefix: Option<String>,
+    /// Finished thinking blocks show the hidden thinking label; the block being written shows.
+    pub collapse_thinking: bool,
+    /// Round editor corners, and side bars when the editor has padding.
+    pub rounded_editor: bool,
+    /// The editor border color in every layout, in place of the thinking level and bash colors.
+    pub editor_border_color: Option<EditorBorderColor>,
+    /// The frame around the editor text; `None` leaves it to `rounded_editor`.
+    pub prompt_layout: Option<PromptLayout>,
+}
+
+/// An editor border color: a theme color token or a `#rrggbb` color.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum EditorBorderColor {
+    Token(ThemeColor),
+    Hex(String),
+}
+
+impl EditorBorderColor {
+    pub fn parse(value: &str) -> Option<Self> {
+        if let Some(digits) = value.strip_prefix('#') {
+            let is_hex = digits.len() == 6 && digits.chars().all(|digit| digit.is_ascii_hexdigit());
+            return is_hex.then(|| Self::Hex(value.to_ascii_lowercase()));
+        }
+        ThemeColor::from_name(value).map(Self::Token)
+    }
+}
+
+/// The frame around the editor text (`promptLayout`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PromptLayout {
+    /// The rounded editor: rounded corners and side bars in the padding.
+    Frame,
+    /// A rounded box with a `›` gutter and a placeholder.
+    Caret,
+    /// A caret box after a blank line, with plain border rules in the theme border color.
+    Harbor,
+}
+
+impl ChatStyle {
+    /// The style of `setChatStyle(options)`: `{ userPrefix, assistantPrefix, collapseThinking,
+    /// roundedEditor, editorBorderColor, promptLayout }`; missing or invalid fields keep pi's look.
+    pub fn from_json(options: &Value) -> Self {
+        let prefix = |key: &str| options[key].as_str().filter(|text| !text.is_empty()).map(str::to_string);
+        let prompt_layout = match options["promptLayout"].as_str() {
+            Some("frame") => Some(PromptLayout::Frame),
+            Some("caret") => Some(PromptLayout::Caret),
+            Some("harbor") => Some(PromptLayout::Harbor),
+            _ => None,
+        };
+        Self {
+            user_prefix: prefix("userPrefix"),
+            assistant_prefix: prefix("assistantPrefix"),
+            collapse_thinking: options["collapseThinking"].as_bool() == Some(true),
+            rounded_editor: options["roundedEditor"].as_bool() == Some(true),
+            editor_border_color: options["editorBorderColor"].as_str().and_then(EditorBorderColor::parse),
+            prompt_layout,
+        }
+    }
+}
+
+/// A theme the UI can switch to (upstream `getAllThemes()` entries).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ThemeInfo {
+    pub name: String,
+    pub path: Option<PathBuf>,
+}
+
+/// UI requests from extensions. Dialogs resolve to their default value (`None` or `false`)
+/// when dismissed, cancelled, or timed out; the other methods do not wait.
+#[async_trait]
+pub trait ExtensionUi: Send + Sync {
+    /// Pick one of `options`.
+    async fn select(&self, title: &str, options: &[String], opts: DialogOptions) -> Option<String>;
+    /// Yes or no; `false` when dismissed.
+    async fn confirm(&self, title: &str, message: &str, opts: DialogOptions) -> bool;
+    /// One line of free text.
+    async fn input(&self, title: &str, placeholder: Option<&str>, opts: DialogOptions) -> Option<String>;
+    /// Multi-line text, starting from `prefill`.
+    async fn editor(&self, title: &str, prefill: Option<&str>, opts: DialogOptions) -> Option<String>;
+
+    fn notify(&self, message: &str, kind: Option<NotifyType>);
+    /// Set (or clear with `None`) a footer status entry.
+    fn set_status(&self, key: &str, text: Option<&str>);
+    /// Set (or clear with `None`) a block of text lines around the editor.
+    fn set_widget(&self, key: &str, lines: Option<&[String]>, placement: Option<WidgetPlacement>);
+    /// The terminal window or tab title.
+    fn set_title(&self, title: &str);
+    fn set_editor_text(&self, text: &str);
+
+    /// Paste into the editor; without paste handling this is [`Self::set_editor_text`].
+    fn paste_to_editor(&self, text: &str) {
+        self.set_editor_text(text);
+    }
+
+    fn get_editor_text(&self) -> String {
+        String::new()
+    }
+
+    fn set_working_message(&self, _message: Option<&str>) {}
+
+    fn set_working_visible(&self, _visible: bool) {}
+
+    fn set_working_indicator(&self, _options: Option<WorkingIndicatorOptions>) {}
+
+    fn set_hidden_thinking_label(&self, _label: Option<&str>) {}
+
+    fn set_chat_style(&self, _style: ChatStyle) {}
+
+    fn get_all_themes(&self) -> Vec<ThemeInfo> {
+        Vec::new()
+    }
+
+    /// Switch the theme by name; the error is shown to the extension.
+    fn set_theme(&self, _name: &str) -> Result<(), String> {
+        Err("UI not available".into())
+    }
+
+    fn get_tools_expanded(&self) -> bool {
+        false
+    }
+
+    fn set_tools_expanded(&self, _expanded: bool) {}
+
+    /// Show an extension component until it calls `done` (`ctx.ui.custom()`); `None` when this UI
+    /// cannot show components, an error when the factory fails.
+    async fn custom(&self, _request: CustomRequest) -> Result<Option<Value>, String> {
+        Ok(None)
+    }
+
+    /// A session replacement an extension started (`ctx.newSession()`, `ctx.fork()`) failed; the
+    /// TUI reports it as fatal and ends the run (upstream `handleFatalRuntimeError`).
+    /// `stack` is the JavaScript stack when the error came from an extension.
+    fn fatal_runtime_error(&self, _prefix: &str, _message: &str, _stack: &str) {}
+
+    /// A method of the overlay handle `onHandle` received (`hide`, `setHidden`, `isHidden`,
+    /// `focus`, `unfocus`, `isFocused`, `getBounds`) for the `custom()` overlay `id`.
+    fn overlay(&self, _id: u64, _method: &str, _arg: &Value) -> Value {
+        Value::Null
+    }
+
+    /// Suggestions of the built-in autocomplete provider, for providers extensions stack on it.
+    async fn autocomplete_base(
+        &self,
+        _request: AutocompleteRequest,
+    ) -> Option<pi_tui::autocomplete::AutocompleteSuggestions> {
+        None
+    }
+
+    /// Set (or clear with `None`) a widget built by an extension component factory.
+    fn set_widget_component(
+        &self,
+        _key: &str,
+        _factory: Option<ComponentFactory>,
+        _placement: Option<WidgetPlacement>,
+    ) {
+    }
+
+    /// Replace (or restore with `None`) the footer.
+    fn set_footer(&self, _factory: Option<ComponentFactory>) {}
+
+    /// Replace (or restore with `None`) the header.
+    fn set_header(&self, _factory: Option<ComponentFactory>) {}
+
+    /// Replace (or restore with `None`) the input editor.
+    fn set_editor_component(&self, _factory: Option<ComponentFactory>) {}
+
+    /// Wrap the editor's autocomplete provider; the factory receives the current one.
+    fn add_autocomplete_provider(&self, _factory: ComponentFactory) {}
+
+    /// Whether extensions listen to raw terminal input (`onTerminalInput`); pass input to
+    /// [`crate::extensions::ExtensionRunner::terminal_input`] while enabled.
+    fn set_terminal_input_listening(&self, _listening: bool) {}
+
+    /// Render extension components again (`tui.requestRender()`).
+    fn request_render(&self, _force: bool) {}
+
+    /// Upstream `tui.stop()`: give the terminal to another program until [`Self::start_tui`].
+    fn stop_tui(&self) {}
+
+    /// Upstream `tui.start()` after [`Self::stop_tui`].
+    fn start_tui(&self) {}
+
+    /// Upstream `editInExternalEditor`: the edited text, or the message of the failure.
+    async fn external_editor(&self, _command: &str, _content: &str) -> Result<String, String> {
+        Err("pi has no terminal for an external editor in this mode".into())
+    }
+
+    /// Terminal `(columns, rows)` for extension components.
+    fn terminal_size(&self) -> (u16, u16) {
+        (80, 24)
+    }
+
+    /// Footer data for extension footers: `gitBranch`, `statuses`, `providerCount`, and the
+    /// pi-rust `sessionStats` and `runState`.
+    fn footer_data(&self, _kind: &str) -> Value {
+        Value::Null
+    }
+
+    /// Call the JavaScript callback `key` of `factory`'s runner when the footer's git branch
+    /// changes (`footerData.onBranchChange`).
+    fn on_branch_change(&self, _factory: ComponentFactory, _key: u64) {}
+
+    /// Stop the `onBranchChange` listener `key` of session `target`.
+    fn off_branch_change(&self, _target: u64, _key: u64) {}
+
+    /// Write raw bytes to the terminal between frames (`ctx.ui.writeTerminal`, pi-rust only), wrapped
+    /// for tmux when `tmux_passthrough` is set and inside tmux. Returns whether this UI wrote.
+    fn write_terminal(&self, _data: &str, _tmux_passthrough: bool) -> bool {
+        false
+    }
+
+    /// A custom editor reports `submit`, `change`, `escape`, `ctrlD`, `pasteImage`, or `action`
+    /// (with the app action id) as the default editor would handle it.
+    fn editor_event(&self, _kind: &str, _value: Option<&str>) {}
+
+    /// The app actions a custom editor forwards through [`Self::editor_event`].
+    fn editor_actions(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// A tool renderer asked to draw the row of `tool_call_id` again (`context.invalidate()`).
+    fn invalidate_tool(&self, _tool_call_id: &str) {}
+
+    /// Run pi's OAuth login dialog for `provider` (`auth.login` of native extensions): `Ok(true)`
+    /// after a login, `Ok(false)` when the user cancels it.
+    async fn login(&self, _provider: &str) -> Result<bool, String> {
+        Err("pi has no login dialog in this mode".into())
+    }
+}
+
+/// The UI of modes without one (print and JSON): dialogs return their defaults at once.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct NoOpExtensionUi;
+
+#[async_trait]
+impl ExtensionUi for NoOpExtensionUi {
+    async fn select(&self, _title: &str, _options: &[String], _opts: DialogOptions) -> Option<String> {
+        None
+    }
+
+    async fn confirm(&self, _title: &str, _message: &str, _opts: DialogOptions) -> bool {
+        false
+    }
+
+    async fn input(&self, _title: &str, _placeholder: Option<&str>, _opts: DialogOptions) -> Option<String> {
+        None
+    }
+
+    async fn editor(&self, _title: &str, _prefill: Option<&str>, _opts: DialogOptions) -> Option<String> {
+        None
+    }
+
+    fn notify(&self, _message: &str, _kind: Option<NotifyType>) {}
+
+    fn set_status(&self, _key: &str, _text: Option<&str>) {}
+
+    fn set_widget(&self, _key: &str, _lines: Option<&[String]>, _placement: Option<WidgetPlacement>) {}
+
+    fn set_title(&self, _title: &str) {}
+
+    fn set_editor_text(&self, _text: &str) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn chat_style_reads_the_editor_border_color_and_prompt_layout() {
+        let style = ChatStyle::from_json(&json!({"editorBorderColor": "borderAccent", "promptLayout": "harbor"}));
+        assert_eq!(style.editor_border_color, Some(EditorBorderColor::Token(ThemeColor::BorderAccent)));
+        assert_eq!(style.prompt_layout, Some(PromptLayout::Harbor));
+
+        let style = ChatStyle::from_json(&json!({"editorBorderColor": "#FF8800", "promptLayout": "caret"}));
+        assert_eq!(style.editor_border_color, Some(EditorBorderColor::Hex("#ff8800".into())));
+        assert_eq!(style.prompt_layout, Some(PromptLayout::Caret));
+        assert_eq!(ChatStyle::from_json(&json!({"promptLayout": "frame"})).prompt_layout, Some(PromptLayout::Frame));
+    }
+
+    #[test]
+    fn chat_style_keeps_pi_look_for_invalid_fields() {
+        for (color, layout) in [
+            (json!(""), json!("box")),
+            (json!("#ff88"), json!(1)),
+            (json!("#gg8800"), json!("Caret")),
+            (json!("nope"), json!(null)),
+            (json!("selectedBg"), json!(true)),
+            (json!(7), json!("")),
+        ] {
+            let style = ChatStyle::from_json(&json!({"editorBorderColor": color, "promptLayout": layout}));
+            assert_eq!(style, ChatStyle::default(), "{color} {layout}");
+        }
+        assert_eq!(ChatStyle::from_json(&json!({"unknownKey": true})), ChatStyle::default());
+    }
+}

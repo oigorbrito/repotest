@@ -1,0 +1,1 @@
+﻿Renomeie a função Get-Total para Get-OrderTotal. Ela está definida em src\Orders.ps1 e é usada em src\Report.ps1. Atualize os dois arquivos, de modo que não reste nenhuma referência a Get-Total nesses arquivos. Build-Report deve continuar funcionando. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

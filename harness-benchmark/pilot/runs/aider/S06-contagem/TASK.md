@@ -1,0 +1,1 @@
+﻿Corrija src\Get-WordCount.ps1. Get-WordCount -Text deve contar palavras, onde palavra é uma sequência de letras (A-Z, a-z) ou dígitos (0-9). Sequências só de pontuação ou símbolos não contam. Exemplos: 'Ola, mundo!!' -> 2; '-- --' -> 0; 'a-b c' -> 3. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

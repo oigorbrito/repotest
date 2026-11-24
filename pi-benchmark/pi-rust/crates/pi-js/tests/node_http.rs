@@ -1,0 +1,71 @@
+use crate::common;
+
+use common::*;
+
+// Each fixture is an async function body; its `.json` file is what Node 24 returns for it.
+// Everything stays on localhost.
+async fn check(script: &str, expected: &str) {
+    let (_dir, root) = tempdir();
+    let (runtime, capture) = runtime(&root);
+    let actual = run_cjs_within(&runtime, &root, script, 120).await;
+    println!("{actual}");
+    assert_same_keys(&actual, &serde_json::from_str(expected).unwrap());
+    let uncaught = capture.uncaught.lock().unwrap();
+    assert!(
+        uncaught.is_empty(),
+        "{:?}",
+        uncaught.iter().map(|(_, error)| error.display_with_stack()).collect::<Vec<_>>()
+    );
+}
+
+#[tokio::test]
+async fn http_matches_node() {
+    check(include_str!("fixtures/node_http/http1.js"), include_str!("fixtures/node_http/http1.json")).await;
+}
+
+#[tokio::test]
+async fn https_matches_node() {
+    let script = include_str!("fixtures/node_http/https.js")
+        .replace("__KEY__", &format!("{:?}", include_str!("fixtures/node_http/key.pem")))
+        .replace("__CERT__", &format!("{:?}", include_str!("fixtures/node_http/cert.pem")));
+    check(&script, include_str!("fixtures/node_http/https.json")).await;
+}
+
+#[tokio::test]
+async fn http2_matches_node() {
+    let script = include_str!("fixtures/node_http/http2.js")
+        .replace("__KEY__", &format!("{:?}", include_str!("fixtures/node_http/key.pem")))
+        .replace("__CERT__", &format!("{:?}", include_str!("fixtures/node_http/cert.pem")));
+    check(&script, include_str!("fixtures/node_http/http2.json")).await;
+}
+
+#[tokio::test]
+async fn fetch_decoding_matches_node() {
+    check(include_str!("fixtures/node_http/fetch_decode.js"), include_str!("fixtures/node_http/fetch_decode.json"))
+        .await;
+}
+
+#[tokio::test]
+async fn http2_push_matches_node() {
+    check(include_str!("fixtures/node_http/http2_push.js"), include_str!("fixtures/node_http/http2_push.json")).await;
+}
+
+#[tokio::test]
+async fn http2_server_answers_a_half_closed_client() {
+    check(
+        include_str!("fixtures/node_http/http2_half_close.js"),
+        include_str!("fixtures/node_http/http2_half_close.json"),
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn http2_close_keeps_the_socket_until_the_peer_ends() {
+    check(include_str!("fixtures/node_http/http2_close.js"), include_str!("fixtures/node_http/http2_close.json")).await;
+}
+
+#[tokio::test]
+async fn http2_custom_settings_match_node() {
+    check(include_str!("fixtures/node_http/http2_settings.js"), include_str!("fixtures/node_http/http2_settings.json"))
+        .await;
+}
