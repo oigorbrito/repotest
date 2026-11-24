@@ -1,0 +1,7 @@
+cache exit=1 duration_s=45
+storage-cache exit=0 duration_s=5
+grpc-middleware exit=1 duration_s=4
+server exit=1 duration_s=10
+grpc-middleware exit=1 dur=2s fail_lines=29 pass_lines=311
+auth-server exit=1 dur=2s fail_lines=10 pass_lines=125
+all exit=1 duration_s=97

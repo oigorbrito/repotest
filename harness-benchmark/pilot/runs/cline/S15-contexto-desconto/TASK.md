@@ -1,0 +1,1 @@
+﻿Implemente Get-Discount em src\Get-Discount.ps1. Recebe -Amount (valor da compra) e retorna o valor do desconto em reais, seguindo as regras atuais do produto descritas na pasta docs. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

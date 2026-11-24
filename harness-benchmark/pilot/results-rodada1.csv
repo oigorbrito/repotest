@@ -1,0 +1,46 @@
+﻿"agente","tarefa","sucesso","segundos","entrada","saida","cache_leitura","cache_escrita","iteracoes","custo_est_usd","custo_reportado_usd","teste","log"
+"pi","T1-fix","True","12,5","12","1067","17739","2509",,"0,001026","0,001025715","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T1-fix\agent.log"
+"orca","T1-fix","True","48","20","2243","51197","10024","9","0,002888",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T1-fix\agent.log"
+"marshall","T1-fix","True","12,8","27983","1157","0","0",,"0,003377",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\T1-fix\agent.log"
+"cline","T1-fix","True","25,6","101892","2953","80084","12884","8","0,014077","0,00524674","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\T1-fix\agent.log"
+"aider","T1-fix","False","8,2","692","118","0","0",,"0,000128","0,00013","FAIL: lista vazia esperada 0","D:\projetos\harness-benchmark\pilot\runs\aider\T1-fix\agent.log"
+"pi","T2-impl","True","11,8","14","1109","23681","3417",,"0,00122","0,001219835","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T2-impl\agent.log"
+"orca","T2-impl","True","47,6","20","2343","49286","11002","9","0,003042",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T2-impl\agent.log"
+"marshall","T2-impl","True","15,2","35959","1655","0","0",,"0,004423",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\T2-impl\agent.log"
+"cline","T2-impl","False","18,4","59840","1522","51790","0","5","0,007263","0,0024314","powershell.exe : nao implementado
+No D:\projetos\harness-benchmark\pilot\run-pilot.ps1:94 caractere:17
++ ... $testOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File 
+(Jo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (nao implementado:String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+No D:\projetos\harness-benchmark\pilot\runs\cline\T2-impl\src\Format-Durati
+on.ps1:3 caractere:5
++     throw ""nao implementado""
++     ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (nao implementado:String)  
+   [], RuntimeException
+    + FullyQualifiedErrorId : nao implementado","D:\projetos\harness-benchmark\pilot\runs\cline\T2-impl\agent.log"
+"aider","T2-impl","False","7,8","686","137","0","0",,"0,000137","0,00014","powershell.exe : nao implementado
+No D:\projetos\harness-benchmark\pilot\run-pilot.ps1:94 caractere:17
++ ... $testOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File 
+(Jo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (nao implementado:String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+No D:\projetos\harness-benchmark\pilot\runs\aider\T2-impl\src\Format-Durati
+on.ps1:3 caractere:5
++     throw ""nao implementado""
++     ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (nao implementado:String)  
+   [], RuntimeException
+    + FullyQualifiedErrorId : nao implementado","D:\projetos\harness-benchmark\pilot\runs\aider\T2-impl\agent.log"
+"pi","T3-bug","True","13,9","14","2080","24924","3719",,"0,001756","0,001755515","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T3-bug\agent.log"
+"orca","T3-bug","True","48,8","20","2694","52625","10546","9","0,003194",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T3-bug\agent.log"
+"marshall","T3-bug","True","18","37107","2329","0","0",,"0,004875",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\T3-bug\agent.log"
+"cline","T3-bug","False","16,6","58363","1251","51790","0","5","0,00698","0,0021457","FAIL: 'a,""b,c"",d' -> 'a|b|c|d' (esperado 'a|b,c|d'); 'x,""say """"hi"""""",y' -> 'x|say """"hi|y' (esperado 'x|say ""hi""|y')","D:\projetos\harness-benchmark\pilot\runs\cline\T3-bug\agent.log"
+"aider","T3-bug","False","8,7","697","128","0","0",,"0,000134","0,00013","FAIL: 'a,""b,c"",d' -> 'a|b|c|d' (esperado 'a|b,c|d'); 'x,""say """"hi"""""",y' -> 'x|say """"hi|y' (esperado 'x|say ""hi""|y')","D:\projetos\harness-benchmark\pilot\runs\aider\T3-bug\agent.log"

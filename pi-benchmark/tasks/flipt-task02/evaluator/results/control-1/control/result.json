@@ -1,0 +1,48 @@
+{
+ "run_id": "control-1",
+ "agent": "control",
+ "control": true,
+ "base_commit": "0eaf98f050d86247bfe9bd7e41178865cb585060",
+ "started_utc": "2026-11-18T21:38:27.087303+00:00",
+ "status": "EVALUATED",
+ "reason": "control",
+ "agent_clone_status_lines": 0,
+ "agent_diff_stat": "",
+ "go_cmd": [
+  "go",
+  "test",
+  "-json",
+  "-count=1",
+  "-run",
+  "^(TestNewCache|TestCacheControlHeaderKey|TestSetHandleMarshalError|TestGetEvaluationRules)$",
+  "./..."
+ ],
+ "timed_out": false,
+ "go_exit_code": 1,
+ "per_identifier": {
+  "TestNewCache": "PASS",
+  "TestCacheControlHeaderKey": "NOT_RUN",
+  "TestSetHandleMarshalError": "PASS",
+  "TestGetEvaluationRules": "PASS"
+ },
+ "build_failed_packages": [
+  "go.flipt.io/flipt/cmd/flipt",
+  "go.flipt.io/flipt/internal/cmd",
+  "go.flipt.io/flipt/internal/storage/auth/sql",
+  "go.flipt.io/flipt/internal/storage/oplock/sql",
+  "go.flipt.io/flipt/internal/storage/sql",
+  "go.flipt.io/flipt/internal/storage/sql/common",
+  "go.flipt.io/flipt/internal/storage/sql/mysql",
+  "go.flipt.io/flipt/internal/storage/sql/postgres",
+  "go.flipt.io/flipt/internal/storage/sql/sqlite",
+  "go.flipt.io/flipt/internal/storage/sql/testing"
+ ],
+ "non_json_lines": 0,
+ "fail_to_pass_total": 0,
+ "fail_to_pass_pass": 0,
+ "pass_to_pass_total": 0,
+ "pass_to_pass_pass": 0,
+ "resolved": true,
+ "work_dir_removed": true,
+ "finished_utc": "2026-11-18T21:39:15.222098+00:00"
+}

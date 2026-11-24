@@ -1,0 +1,1 @@
+﻿Corrija o bug em src\Parse-Csv.ps1. A função Parse-CsvLine separa a linha por vírgulas, mas não respeita campos entre aspas: vírgulas dentro de aspas devem ficar no campo, e "" dentro de um campo entre aspas representa uma aspa. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

@@ -1,0 +1,1273 @@
+// Copyright (c) 2015-present Jeevanandam M (jeeva@myjeeva.com), All rights reserved.
+// resty source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
+
+package resty
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"crypto/tls"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func TestSSESourceSimpleFlow(t *testing.T) {
+	es := createSSESource(t, "", nil, nil)
+
+	messageCounter := 0
+	messageFunc := func(e any) {
+		event := e.(*SSE)
+		assertEqual(t, strconv.Itoa(messageCounter), event.ID)
+		assertTrue(t, strings.HasPrefix(event.Data, "The time is"))
+		messageCounter++
+		if messageCounter == 100 {
+			es.Close()
+		}
+	}
+	es.OnMessage(messageFunc, nil)
+
+	counter := 0
+	ts := createSSETestServer(
+		t,
+		10*time.Millisecond,
+		func(w io.Writer) error {
+			if counter == 100 {
+				return fmt.Errorf("stop sending events")
+			}
+			_, err := fmt.Fprintf(w, "id: %v\ndata: The time is %s\n\n", counter, time.Now().Format(time.UnixDate))
+			counter++
+			return err
+		},
+	)
+	defer ts.Close()
+
+	es.SetURL(ts.URL)
+	es.SetMethod(MethodPost)
+	err := es.Get()
+	assertNil(t, err)
+	assertEqual(t, counter, messageCounter)
+}
+
+func TestSSESourceLeadingBOM(t *testing.T) {
+	for _, prefix := range []string{"", "\ufeff"} {
+		t.Run(fmt.Sprintf("prefix=%q", prefix), func(t *testing.T) {
+			es := NewSSESource()
+			var messages []string
+			es.OnMessage(func(value any) {
+				messages = append(messages, value.(*SSE).Data)
+			}, nil)
+			res := &http.Response{Body: io.NopCloser(strings.NewReader(
+				prefix + "data: first\n\ndata: \ufeffsecond\n\n\ufeffdata: ignored\n\n",
+			))}
+
+			assertErrorIs(t, io.EOF, es.listenStream(res))
+			assertEqual(t, []string{"first", "\ufeffsecond"}, messages)
+		})
+	}
+}
+
+func TestSSESourceMultipleEventTypes(t *testing.T) {
+	type userEvent struct {
+		UserName string    `json:"username"`
+		Message  string    `json:"msg"`
+		Time     time.Time `json:"time"`
+	}
+
+	tm := time.Now().Add(-1 * time.Minute)
+	userConnectCounter := 0
+	userConnectFunc := func(e any) {
+		data := e.(*userEvent)
+		assertEqual(t, "username"+strconv.Itoa(userConnectCounter), data.UserName)
+		assertTrue(t, data.Time.After(tm))
+		userConnectCounter++
+	}
+
+	userMessageCounter := 0
+	userMessageFunc := func(e any) {
+		data := e.(*userEvent)
+		assertEqual(t, "username"+strconv.Itoa(userConnectCounter), data.UserName)
+		assertEqual(t, "Hello, how are you?", data.Message)
+		assertTrue(t, data.Time.After(tm))
+		userMessageCounter++
+	}
+
+	counter := 0
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createSSETestServer(
+		t,
+		10*time.Millisecond,
+		func(w io.Writer) error {
+			if counter == 100 {
+				es.Close()
+				return fmt.Errorf("stop sending events")
+			}
+
+			id := counter / 2
+			if counter%2 == 0 {
+				event := fmt.Sprintf("id: %v\n"+
+					"event: user_message\n"+
+					`data: {"username": "%v", "time": "%v", "msg": "Hello, how are you?"}`+"\n\n",
+					id,
+					"username"+strconv.Itoa(id),
+					time.Now().Format(time.RFC3339),
+				)
+				fmt.Fprint(w, event)
+			} else {
+				event := fmt.Sprintf("id: %v\n"+
+					"event: user_connect\n"+
+					`data: {"username": "%v", "time": "%v"}`+"\n\n",
+					int(id),
+					"username"+strconv.Itoa(int(id)),
+					time.Now().Format(time.RFC3339),
+				)
+				fmt.Fprint(w, event)
+			}
+
+			counter++
+			return nil
+		},
+	)
+	defer ts.Close()
+
+	es.SetURL(ts.URL).
+		SetMethod(MethodPost).
+		AddEventListener("user_connect", userConnectFunc, userEvent{}).
+		AddEventListener("user_message", userMessageFunc, userEvent{})
+
+	err := es.Get()
+	assertNil(t, err)
+	assertEqual(t, userConnectCounter, userMessageCounter)
+}
+
+func TestSSESourceOverwriteFuncs(t *testing.T) {
+	messageFunc1 := func(e any) {
+		assertNotNil(t, e)
+	}
+	es := createSSESource(t, "", messageFunc1, nil)
+
+	message2Counter := 0
+	messageFunc2 := func(e any) {
+		event := e.(*SSE)
+		assertEqual(t, strconv.Itoa(message2Counter), event.ID)
+		assertTrue(t, strings.HasPrefix(event.Data, "The time is"))
+		message2Counter++
+		if message2Counter == 50 {
+			es.Close()
+		}
+	}
+
+	counter := 0
+	ts := createSSETestServer(
+		t,
+		10*time.Millisecond,
+		func(w io.Writer) error {
+			if counter == 50 {
+				return fmt.Errorf("stop sending events")
+			}
+			_, err := fmt.Fprintf(w, "id: %v\ndata: The time is %s\n\n", counter, time.Now().Format(time.UnixDate))
+			counter++
+			return err
+		},
+	)
+	defer ts.Close()
+
+	lb := new(bytes.Buffer)
+	es.outputLogTo(lb)
+
+	es.SetURL(ts.URL).
+		OnMessage(messageFunc2, nil).
+		OnOpen(func(url string, respHdr http.Header) {
+			t.Log("from overwrite func", url, respHdr)
+		}).
+		OnError(func(err error) {
+			t.Log("from overwrite func", err)
+		})
+
+	err := es.Get()
+	assertNil(t, err)
+	assertEqual(t, counter, message2Counter)
+
+	logLines := lb.String()
+	assertTrue(t, strings.Contains(logLines, "Overwriting an existing OnEvent callback"))
+	assertTrue(t, strings.Contains(logLines, "Overwriting an existing OnOpen callback"))
+	assertTrue(t, strings.Contains(logLines, "Overwriting an existing OnError callback"))
+}
+
+func TestSSESourceRetry(t *testing.T) {
+	es := createSSESource(t, "", nil, nil)
+
+	messageCounter := 2 // 0 & 1 connection failure
+	messageFunc := func(e any) {
+		event := e.(*SSE)
+		assertEqual(t, strconv.Itoa(messageCounter), event.ID)
+		assertTrue(t, strings.HasPrefix(event.Data, "The time is"))
+		messageCounter++
+		if messageCounter == 15 {
+			es.Close()
+		}
+	}
+	es.OnMessage(messageFunc, nil)
+
+	counter := 0
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		if counter == 1 && r.URL.Query().Get("reconnect") == "1" {
+			w.WriteHeader(http.StatusTooManyRequests)
+			counter++
+			return
+		}
+		if counter < 2 || counter == 7 {
+			w.WriteHeader(http.StatusTooManyRequests)
+			counter++
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		// for local testing allow it
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		// Create a channel for client disconnection
+		clientGone := r.Context().Done()
+
+		rc := http.NewResponseController(w)
+		tick := time.NewTicker(10 * time.Millisecond)
+		defer tick.Stop()
+		for {
+			select {
+			case <-clientGone:
+				t.Log("Client disconnected")
+				return
+			case <-tick.C:
+				if counter == 5 {
+					fmt.Fprintf(w, "id: %v\nretry: abc\ndata: The time is %s\n\n", counter, time.Now().Format(time.UnixDate))
+					counter++
+					return
+				}
+				if counter == 15 {
+					es.Close()
+					return // stop sending events
+				}
+				fmt.Fprintf(w, "id: %v\nretry: 1\ndata: The time is %s\ndata\n\n", counter, time.Now().Format(time.UnixDate))
+				counter++
+				if err := rc.Flush(); err != nil {
+					t.Log(err)
+					return
+				}
+			}
+		}
+	})
+	defer ts.Close()
+
+	// first round
+	es.SetURL(ts.URL)
+	err1 := es.Get()
+	assertNotNil(t, err1)
+
+	// second round
+	counter = 0
+	messageCounter = 2
+	es.SetRetryCount(1).
+		SetURL(ts.URL + "?reconnect=1")
+	err2 := es.Get()
+	assertNotNil(t, err2)
+}
+
+func TestSSEParseRetryRequiresASCIIDigits(t *testing.T) {
+	for _, retry := range []string{"+100", "-100", " 100", "100 ", "1.5", "abc", "١٠٠", ""} {
+		t.Run(retry, func(t *testing.T) {
+			event, err := parseEventFunc([]byte("retry: 250\nretry: " + retry + "\ndata: message"))
+			assertError(t, err)
+			defer putRawEvent(event)
+			assertEqual(t, "250", string(event.Retry), "invalid retry must not replace the previous valid value")
+			assertEqual(t, "message", string(event.Data))
+		})
+	}
+	for _, retry := range []string{"0", "100", "00100"} {
+		t.Run(retry, func(t *testing.T) {
+			event, err := parseEventFunc([]byte("retry: " + retry))
+			assertError(t, err)
+			defer putRawEvent(event)
+			assertEqual(t, retry, string(event.Retry))
+		})
+	}
+}
+
+func TestSSESourceRetryReusesRequestBody(t *testing.T) {
+	const payload = `{"test":"retry-body"}`
+
+	attempt := 0
+	bodies := make([]string, 0, 2)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		assertNil(t, err)
+		bodies = append(bodies, string(body))
+
+		attempt++
+		if attempt == 1 {
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+	defer ts.Close()
+
+	es := NewSSESource().
+		SetURL(ts.URL).
+		SetMethod(MethodPost).
+		SetRetryCount(1).
+		SetRetryWaitTime(1 * time.Millisecond).
+		SetRetryMaxWaitTime(1 * time.Millisecond)
+	es.SetBody(bytes.NewBufferString(payload))
+
+	resp, err := es.connect()
+	assertNil(t, err)
+	assertNotNil(t, resp)
+	if resp != nil {
+		closeq(resp.Body)
+	}
+
+	assertEqual(t, 2, attempt, "expected one retry attempt")
+	assertEqual(t, 2, len(bodies), "expected request body on both attempts")
+	assertEqual(t, payload, bodies[0], "expected first attempt body to match")
+	assertEqual(t, payload, bodies[1], "expected retry attempt body to match")
+}
+
+func TestSSESourceTLSConfigerInterface(t *testing.T) {
+
+	t.Run("set and get tls config", func(t *testing.T) {
+		es := createSSESource(t, "", func(any) {}, nil)
+
+		tc, err := es.tlsConfig()
+		assertNil(t, err)
+		assertNotNil(t, tc)
+
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		es.SetTLSClientConfig(tlsConfig)
+		assertEqual(t, tlsConfig, es.TLSClientConfig())
+	})
+
+	t.Run("get tls config error", func(t *testing.T) {
+		es := createSSESource(t, "", func(any) {}, nil)
+
+		ct := &CustomRoundTripper1{}
+		es.httpClient.Transport = ct
+		assertNil(t, es.TLSClientConfig())
+	})
+
+	t.Run("set tls config", func(t *testing.T) {
+		es := createSSESource(t, "", func(any) {}, nil)
+
+		ct := &CustomRoundTripper2{}
+		es.httpClient.Transport = ct
+
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		es.SetTLSClientConfig(tlsConfig)
+		assertNotNil(t, es.TLSClientConfig())
+	})
+
+	t.Run("set tls config error", func(t *testing.T) {
+		es := createSSESource(t, "", func(any) {}, nil)
+
+		ct := &CustomRoundTripper2{returnErr: true}
+		es.httpClient.Transport = ct
+
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+		es.SetTLSClientConfig(tlsConfig)
+		assertNil(t, es.TLSClientConfig())
+	})
+}
+
+func TestSSESourceSetTransport(t *testing.T) {
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+	defer ts.Close()
+
+	transport := &http.Transport{
+		// something like Proxying to httptest.Server, etc...
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return url.Parse(ts.URL)
+		},
+	}
+	es.SetTransport(transport)
+	transportInUse := es.httpClient.Transport
+
+	assertTrue(t, transport == transportInUse, "HTTP Transport should be of same type")
+}
+
+func TestSSESourceNoRetryRequired(t *testing.T) {
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+	defer ts.Close()
+
+	es.SetURL(ts.URL)
+	err := es.Get()
+	fmt.Println(err)
+	assertTrue(t, strings.Contains(err.Error(), "400 Bad Request"))
+}
+
+func TestGH1044TrimHeader(t *testing.T) {
+	t.Run("data is nil", func(t *testing.T) {
+		result := trimHeader(0, nil)
+		assertNil(t, result)
+	})
+
+	t.Run("data has double whitespace", func(t *testing.T) {
+		data := []byte("data:  double whitespace message")
+		result := trimHeader(5, data)
+		assertTrue(t, result[0] == ' ')
+	})
+
+	t.Run("data has newline", func(t *testing.T) {
+		data := []byte("data: newline message\n")
+		result := trimHeader(5, data)
+		assertEqual(t, "newline message", string(result))
+	})
+
+	t.Run("data has CRLF", func(t *testing.T) {
+		data := []byte("data: crlf message\r\n")
+		result := trimHeader(5, data)
+		assertEqual(t, "crlf message", string(result))
+	})
+
+	t.Run("data has CR", func(t *testing.T) {
+		data := []byte("data: cr message\r")
+		result := trimHeader(5, data)
+		assertEqual(t, "cr message", string(result))
+	})
+}
+
+func TestGH1041RequestFailureWithResponseBody(t *testing.T) {
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(hdrContentTypeKey, jsonContentType)
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{ "id": "bad_request", "message": "Unable to establish connection" }`))
+	})
+	defer ts.Close()
+
+	rfFunc := func(err error, res *http.Response) {
+		defer res.Body.Close()
+		resBytes, _ := io.ReadAll(res.Body)
+
+		assertNotNil(t, err)
+		assertEqual(t, "resty:sse: 400 Bad Request", err.Error())
+		assertEqual(t, `{ "id": "bad_request", "message": "Unable to establish connection" }`, string(resBytes))
+	}
+
+	es.SetURL(ts.URL).OnRequestFailure(rfFunc)
+	es.OnRequestFailure(rfFunc)
+	err := es.Get()
+	assertNotNil(t, err)
+	assertEqual(t, "resty:sse: 400 Bad Request", err.Error())
+}
+
+func TestSSESourceHTTPError(t *testing.T) {
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://local host", http.StatusTemporaryRedirect)
+	})
+	defer ts.Close()
+
+	es.SetURL(ts.URL)
+	err := es.Get()
+	assertTrue(t, strings.Contains(err.Error(), `invalid character " " in host name`))
+}
+
+func TestSSESourceParseAndReadError(t *testing.T) {
+	type data struct{}
+	counter := 0
+	es := createSSESource(t, "", func(any) {}, data{})
+	ts := createSSETestServer(
+		t,
+		5*time.Millisecond,
+		func(w io.Writer) error {
+			if counter == 5 {
+				es.Close()
+				return fmt.Errorf("stop sending events")
+			}
+			_, err := fmt.Fprintf(w, "id: %v\n"+
+				`data: The time is %s\n\n`+"\n\n", counter, time.Now().Format(time.UnixDate))
+			counter++
+			return err
+		},
+	)
+	defer ts.Close()
+
+	es.SetURL(ts.URL)
+	err := es.Get()
+	assertNil(t, err)
+
+	// parse error
+	parseEvent = func(_ []byte) (*rawSSE, error) {
+		return nil, errors.New("test error")
+	}
+	counter = 0
+	err = es.Get()
+	assertNil(t, err)
+	t.Cleanup(func() {
+		parseEvent = parseEventFunc
+	})
+}
+
+func TestSSESourceReadError(t *testing.T) {
+	es := createSSESource(t, "", func(any) {}, nil)
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	defer ts.Close()
+
+	// read error
+	readEvent = func(_ *bufio.Scanner) ([]byte, error) {
+		return nil, errors.New("read event test error")
+	}
+	t.Cleanup(func() {
+		readEvent = readEventFunc
+	})
+
+	es.SetURL(ts.URL)
+	err := es.Get()
+	assertNotNil(t, err)
+	assertTrue(t, strings.Contains(err.Error(), "read event test error"))
+}
+
+func TestSSESourceWithDifferentMethods(t *testing.T) {
+	testCases := []struct {
+		name   string
+		method string
+		body   []byte
+	}{
+		{
+			name:   "GET Method",
+			method: MethodGet,
+			body:   nil,
+		},
+		{
+			name:   "POST Method",
+			method: MethodPost,
+			body:   []byte(`{"test":"post_data"}`),
+		},
+		{
+			name:   "PUT Method",
+			method: MethodPut,
+			body:   []byte(`{"test":"put_data"}`),
+		},
+		{
+			name:   "DELETE Method",
+			method: MethodDelete,
+			body:   nil,
+		},
+		{
+			name:   "PATCH Method",
+			method: MethodPatch,
+			body:   []byte(`{"test":"patch_data"}`),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			es := createSSESource(t, "", nil, nil)
+
+			messageCounter := 0
+			messageFunc := func(e any) {
+				event := e.(*SSE)
+				assertEqual(t, strconv.Itoa(messageCounter), event.ID)
+				assertTrue(t, strings.HasPrefix(event.Data, fmt.Sprintf("%s method test:", tc.method)))
+				messageCounter++
+				if messageCounter == 20 {
+					es.Close()
+				}
+			}
+			es.OnMessage(messageFunc, nil)
+
+			counter := 0
+			methodVerified := false
+			bodyVerified := false
+
+			ts := createMethodVerifyingSSETestServer(
+				t,
+				10*time.Millisecond,
+				tc.method,
+				tc.body,
+				&methodVerified,
+				&bodyVerified,
+				func(w io.Writer) error {
+					if counter == 20 {
+						return fmt.Errorf("stop sending events")
+					}
+					_, err := fmt.Fprintf(w, "id: %v\ndata: %s method test: %s\n\n", counter, tc.method, time.Now().Format(time.RFC3339))
+					counter++
+					return err
+				},
+			)
+			defer ts.Close()
+
+			es.SetURL(ts.URL)
+			es.SetMethod(tc.method)
+
+			// set body
+			if tc.body != nil {
+				es.SetBody(bytes.NewBuffer(tc.body))
+			}
+
+			err := es.Get()
+			assertNil(t, err)
+
+			// check the message count
+			assertEqual(t, counter, messageCounter)
+
+			// check if server receive correct method and body
+			assertTrue(t, methodVerified)
+			if tc.body != nil {
+				assertTrue(t, bodyVerified)
+			}
+		})
+	}
+}
+
+func TestSSESource_readEventFunc(t *testing.T) {
+	t.Run("successful scan", func(t *testing.T) {
+		input := "event: test\ndata: test data\n\n"
+		scanner := bufio.NewScanner(strings.NewReader(input))
+
+		event, err := readEventFunc(scanner)
+
+		assertNil(t, err)
+		assertNotNil(t, event)
+		assertEqual(t, "event: test", string(event))
+	})
+
+	t.Run("scanner error", func(t *testing.T) {
+		// Create a custom reader that returns an error
+		scanner := bufio.NewScanner(&errorReader{})
+
+		event, err := readEventFunc(scanner)
+
+		assertNotNil(t, err)
+		assertNil(t, event)
+		assertEqual(t, "fake", err.Error())
+	})
+
+	t.Run("EOF error", func(t *testing.T) {
+		// Empty reader will immediately return EOF
+		scanner := bufio.NewScanner(strings.NewReader(""))
+
+		event, err := readEventFunc(scanner)
+
+		assertEqual(t, io.EOF, err)
+		assertNil(t, event)
+	})
+
+	t.Run("multiple lines", func(t *testing.T) {
+		input := "line1\nline2\nline3\n"
+		scanner := bufio.NewScanner(strings.NewReader(input))
+
+		// First call should return the first line
+		event1, err1 := readEventFunc(scanner)
+		assertNil(t, err1)
+		assertEqual(t, "line1", string(event1))
+
+		// Second call should return the second line
+		event2, err2 := readEventFunc(scanner)
+		assertNil(t, err2)
+		assertEqual(t, "line2", string(event2))
+
+		// Third call should return the third line
+		event3, err3 := readEventFunc(scanner)
+		assertNil(t, err3)
+		assertEqual(t, "line3", string(event3))
+
+		// Fourth call should return EOF
+		event4, err4 := readEventFunc(scanner)
+		assertEqual(t, io.EOF, err4)
+		assertNil(t, event4)
+	})
+}
+
+func TestSSESourceCoverage(t *testing.T) {
+	es := NewSSESource()
+	err1 := es.Get()
+	assertEqual(t, "resty:sse: event source URL is required", err1.Error())
+
+	es.SetURL("https://example.com/events")
+	err2 := es.Get()
+	assertEqual(t, "resty:sse: At least one OnMessage/AddEventListener func is required", err2.Error())
+
+	es.OnMessage(func(a any) {}, nil)
+	es.SetURL("//res%20ty.dev")
+	err3 := es.Get()
+	assertTrue(t, strings.Contains(err3.Error(), `invalid URL escape "%20"`))
+
+	wrapResponse(nil, nil)
+	trimHeader(2, nil)
+	parseEvent([]byte{})
+}
+
+func TestSSESourceDefaultLogger(t *testing.T) {
+	es := NewSSESource()
+	assertNotNil(t, es.Logger())
+
+	lb := new(bytes.Buffer)
+	es.outputLogTo(lb)
+
+	// overwriting callbacks logs a warning; it must not panic
+	// when the user has not provided a logger
+	es.OnMessage(func(any) {}, nil)
+	es.OnMessage(func(any) {}, nil)
+	assertTrue(t, strings.Contains(lb.String(), "Overwriting an existing OnEvent callback"))
+
+	// body read failures are logged; it must not panic either
+	es.SetBody(&errorReader{})
+	assertNil(t, es.bodyBytes)
+}
+
+func TestSSESetBody(t *testing.T) {
+	t.Run("nil input", func(t *testing.T) {
+		es := createSSESource(t, "", nil, nil)
+
+		es.SetBody(nil)
+		assertNil(t, es.bodyBytes)
+	})
+
+	t.Run("read error", func(t *testing.T) {
+		es := createSSESource(t, "", nil, nil)
+
+		es.SetBody(&errorReader{})
+		assertNil(t, es.bodyBytes)
+	})
+}
+
+func createSSESource(t *testing.T, url string, fn SSEMessageFunc, rt any) *SSESource {
+	es := NewSSESource().
+		SetURL(url).
+		SetMethod(MethodGet).
+		AddHeader("X-Test-Header-1", "test header 1").
+		SetHeader("X-Test-Header-2", "test header 2").
+		SetRetryCount(2).
+		SetRetryWaitTime(200 * time.Millisecond).
+		SetRetryMaxWaitTime(1000 * time.Millisecond).
+		SetSizeMaxBuffer(1 << 14). // 16kb
+		SetLogger(createLogger()).
+		OnOpen(func(url string, respHdr http.Header) {
+			t.Log("I'm connected:", url, respHdr)
+		}).
+		OnError(func(err error) {
+			t.Log("Error occurred:", err)
+		})
+	if fn != nil {
+		es.OnMessage(fn, rt)
+	}
+	return es
+}
+
+func createSSETestServer(t *testing.T, ticker time.Duration, fn func(io.Writer) error) *httptest.Server {
+	return createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		// for local testing allow it
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		// Create a channel for client disconnection
+		clientGone := r.Context().Done()
+
+		rc := http.NewResponseController(w)
+		tick := time.NewTicker(ticker)
+		defer tick.Stop()
+		for {
+			select {
+			case <-clientGone:
+				t.Log("Client disconnected")
+				return
+			case <-tick.C:
+				if err := fn(w); err != nil {
+					t.Log(err)
+					return
+				}
+				if err := rc.Flush(); err != nil {
+					t.Log(err)
+					return
+				}
+			}
+		}
+	})
+}
+
+// almost like create server before but add verifying method and body
+func createMethodVerifyingSSETestServer(
+	t *testing.T,
+	ticker time.Duration,
+	expectedMethod string,
+	expectedBody []byte,
+	methodVerified *bool,
+	bodyVerified *bool,
+	fn func(io.Writer) error,
+) *httptest.Server {
+	return createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		// validate method
+		if r.Method == expectedMethod {
+			*methodVerified = true
+		} else {
+			t.Errorf("Expected method %s, got %s", expectedMethod, r.Method)
+		}
+
+		// validate body
+		if expectedBody != nil {
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Errorf("Failed to read request body: %v", err)
+			} else if string(body) == string(expectedBody) {
+				*bodyVerified = true
+			} else {
+				t.Errorf("Expected body %s, got %s", string(expectedBody), string(body))
+			}
+		}
+
+		// same as createSSETestServer
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		clientGone := r.Context().Done()
+
+		rc := http.NewResponseController(w)
+		tick := time.NewTicker(ticker)
+		defer tick.Stop()
+
+		for {
+			select {
+			case <-clientGone:
+				t.Log("Client disconnected")
+				return
+			case <-tick.C:
+				if err := fn(w); err != nil {
+					t.Log(err)
+					return
+				}
+				if err := rc.Flush(); err != nil {
+					t.Log(err)
+					return
+				}
+			}
+		}
+	})
+}
+
+// The data field used to be appended onto a slice aliasing the scanner buffer.
+func TestSSEParseEventDoesNotCorruptScannerBuffer(t *testing.T) {
+	raw := "id: 1\ndata: first\ndata: second\n\nid: 2\ndata: third\n\n"
+	scanner := bufio.NewScanner(strings.NewReader(raw))
+	scanner.Split(func(data []byte, atEOF bool) (int, []byte, error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if i := bytes.Index(data, []byte{'\n', '\n'}); i >= 0 {
+			return i + 1, data[0:i], nil
+		}
+		if atEOF {
+			return len(data), data, nil
+		}
+		return 0, nil, nil
+	})
+
+	var got []string
+	for {
+		ev, err := readEvent(scanner)
+		if err != nil {
+			break
+		}
+		parsed, err := parseEvent(ev)
+		if err != nil {
+			continue
+		}
+		if len(parsed.Data) > 0 {
+			// the splitter leaves the second newline of each "\n\n" pair in the
+			// stream, which yields a trailing data-less token
+			got = append(got, string(parsed.Data))
+		}
+		putRawEvent(parsed)
+	}
+
+	assertEqual(t, 2, len(got))
+	assertEqual(t, "first\nsecond", got[0])
+	assertEqual(t, "third", got[1])
+}
+
+// connect must not hold the read lock across httpClient.Do, the retry wait, or
+// the nested read locks taken by createRequest and the failure callback: a
+// concurrent Close taking the write lock in between would deadlock both.
+func TestSSESourceConcurrentCloseDoesNotDeadlock(t *testing.T) {
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+	})
+	defer ts.Close()
+
+	es := NewSSESource().
+		SetURL(ts.URL).
+		SetRetryCount(5).
+		SetRetryWaitTime(20 * time.Millisecond).
+		SetRetryMaxWaitTime(40 * time.Millisecond)
+	es.OnMessage(func(any) {}, nil)
+
+	done := make(chan error, 1)
+	go func() { done <- es.Get() }()
+
+	// Hammer the write lock while connect is retrying, from its own goroutine:
+	// under the old code SetHeader itself blocks, so doing this on the test
+	// goroutine would hang the whole binary instead of reporting a failure.
+	stopProbe := make(chan struct{})
+	probeDone := make(chan struct{})
+	go func() {
+		defer close(probeDone)
+		for {
+			select {
+			case <-stopProbe:
+				return
+			default:
+				es.SetHeader("X-Probe", "1")
+				time.Sleep(time.Millisecond)
+			}
+		}
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("SSESource.Get did not return; connect deadlocked against a concurrent setter")
+	}
+
+	close(stopProbe)
+	select {
+	case <-probeDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("SSESource.SetHeader is blocked; connect is holding the read lock")
+	}
+	es.Close()
+}
+
+// A connect attempt that is not returned to the caller must not leak its body,
+// and the resulting error must carry the status code.
+func TestSSESourceConnectFailureReportsStatus(t *testing.T) {
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+	})
+	defer ts.Close()
+
+	es := NewSSESource().
+		SetURL(ts.URL).
+		SetRetryCount(1).
+		SetRetryWaitTime(time.Millisecond).
+		SetRetryMaxWaitTime(2 * time.Millisecond)
+	es.OnMessage(func(any) {}, nil)
+
+	err := es.Get()
+	assertNotNil(t, err)
+	assertTrue(t, strings.Contains(err.Error(), "429 Too Many Requests"),
+		"error should name the status, got: "+err.Error())
+}
+
+// The retry backoff between connect attempts must observe the source context.
+// Without it, Get sits out the whole wait after the caller has given up, and
+// then goes on to make another connection attempt.
+func TestSSESourceConnectContextDoneDuringRetryWait(t *testing.T) {
+	var attempts atomic.Int32
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		w.WriteHeader(http.StatusInternalServerError) // retryable, per the defaults
+	})
+	defer ts.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	es := createSSESource(t, ts.URL, func(any) {}, nil).
+		SetContext(ctx).
+		SetRetryCount(5).
+		SetRetryWaitTime(3 * time.Second).
+		SetRetryMaxWaitTime(5 * time.Second)
+
+	go func() {
+		for attempts.Load() == 0 {
+			time.Sleep(time.Millisecond)
+		}
+		// the first attempt has failed, so connect is now in the retry wait
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	start := time.Now()
+	err := es.Get()
+	assertErrorIs(t, context.Canceled, err)
+	assertTrue(t, time.Since(start) < 2*time.Second,
+		"expected the retry wait to be abandoned when the context is done")
+	assertEqual(t, int32(1), attempts.Load(), "expected no further connect attempts")
+}
+
+// A data field with an empty value still fills the data buffer, so the event
+// must be dispatched with empty data; only an event without any data field is
+// dropped.
+// https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage
+func TestSSESourceDispatchesEventWithEmptyData(t *testing.T) {
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(hdrContentTypeKey, "text/event-stream")
+		_, _ = io.WriteString(w, "data\n\n"+
+			"data:\n\n"+
+			"event: done\ndata: \n\n"+
+			"event: ignored\n\n"+
+			"data:\ndata:\n\n"+
+			"data: last\n\n")
+	})
+	defer ts.Close()
+
+	var messages, done []string
+	es := createSSESource(t, ts.URL, func(e any) {
+		messages = append(messages, e.(*SSE).Data)
+	}, nil).
+		SetRetryCount(0).
+		AddEventListener("done", func(e any) {
+			done = append(done, e.(*SSE).Data)
+		}, nil).
+		AddEventListener("ignored", func(e any) {
+			t.Errorf("event without a data field must not be dispatched: %#v", e)
+		}, nil)
+
+	err := es.Get()
+	assertErrorIs(t, io.EOF, err)
+	assertEqual(t, []string{"", "", "\n", "last"}, messages)
+	assertEqual(t, []string{""}, done)
+}
+
+// WHATWG HTML §9.2.5 defines SSE line endings as CRLF, LF, or CR, with any
+// pair of consecutive line breaks acting as an event delimiter.
+func TestSSESourceLineEndings(t *testing.T) {
+	type expectedEvent struct {
+		ID   string
+		Name string
+		Data string
+	}
+
+	for _, tc := range []struct {
+		name       string
+		stream     string
+		wantMsgs   []expectedEvent
+		wantPings  []expectedEvent
+		wantLastID string
+		wantRetry  time.Duration
+	}{
+		{
+			name: "CRLF stream",
+			stream: "\ufeff: keepalive\r\n\r\n" +
+				"id: 1\r\nretry: 1500\r\ndata: line1\r\ndata\r\ndata: line3\r\n\r\n" +
+				"id: 2\r\nevent: ping\r\ndata: pong\r\n\r\n" +
+				"data:\r\n\r\n",
+			wantMsgs: []expectedEvent{
+				{ID: "1", Data: "line1\n\nline3"},
+				{Data: ""},
+			},
+			wantPings: []expectedEvent{
+				{ID: "2", Name: "ping", Data: "pong"},
+			},
+			wantLastID: "2",
+			wantRetry:  1500 * time.Millisecond,
+		},
+		{
+			name: "CR stream",
+			stream: ": keepalive\r\r" +
+				"id: 10\rretry: 250\rdata: alpha\rdata: beta\r\r" +
+				"event: ping\rdata: cr-ping\r\r" +
+				"data\r\r",
+			wantMsgs: []expectedEvent{
+				{ID: "10", Data: "alpha\nbeta"},
+				{Data: ""},
+			},
+			wantPings: []expectedEvent{
+				{Name: "ping", Data: "cr-ping"},
+			},
+			wantLastID: "10",
+			wantRetry:  250 * time.Millisecond,
+		},
+		{
+			name: "mixed line endings and blank delimiters",
+			stream: "id: a\r\ndata: first\n\r\n" +
+				"id: b\rdata: second\r\n\n" +
+				"event: ping\r\nretry: 300\rdata: third\r\r\n",
+			wantMsgs: []expectedEvent{
+				{ID: "a", Data: "first"},
+				{ID: "b", Data: "second"},
+			},
+			wantPings: []expectedEvent{
+				{Name: "ping", Data: "third"},
+			},
+			wantLastID: "b",
+			wantRetry:  300 * time.Millisecond,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set(hdrContentTypeKey, "text/event-stream")
+				_, _ = io.WriteString(w, tc.stream)
+			})
+			defer ts.Close()
+
+			var msgs, pings []expectedEvent
+			es := createSSESource(t, ts.URL, func(e any) {
+				ev := e.(*SSE)
+				msgs = append(msgs, expectedEvent{ID: ev.ID, Name: ev.Name, Data: ev.Data})
+			}, nil).
+				SetRetryCount(0).
+				OnError(func(err error) {
+					t.Errorf("unexpected SSE error: %v", err)
+				}).
+				AddEventListener("ping", func(e any) {
+					ev := e.(*SSE)
+					pings = append(pings, expectedEvent{ID: ev.ID, Name: ev.Name, Data: ev.Data})
+				}, nil)
+
+			err := es.Get()
+			assertErrorIs(t, io.EOF, err)
+			assertEqual(t, tc.wantMsgs, msgs)
+			assertEqual(t, tc.wantPings, pings)
+			assertEqual(t, tc.wantLastID, es.lastEventID)
+			assertEqual(t, tc.wantRetry, es.serverSentRetry)
+		})
+	}
+}
+
+func TestSSESourceLiveStreamingLineEndings(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		chunks []string
+		want   []string
+	}{
+		{
+			name:   "CRLF flushed per event",
+			chunks: []string{"data: first\r\n\r\n", "data: second\r\n\r\n"},
+			want:   []string{"first", "second"},
+		},
+		{
+			name:   "CR flushed per event",
+			chunks: []string{"data: first\r\r", "data: second\r\r"},
+			want:   []string{"first", "second"},
+		},
+		{
+			name:   "split CRLF within single event",
+			chunks: []string{"data: line1\r", "\ndata: line2\r\n\r\n"},
+			want:   []string{"line1\nline2"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			received := make(chan string, len(tc.want))
+			releaseSecond := make(chan struct{})
+			ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set(hdrContentTypeKey, "text/event-stream")
+				rc := http.NewResponseController(w)
+				for idx, chunk := range tc.chunks {
+					_, _ = io.WriteString(w, chunk)
+					_ = rc.Flush()
+					if idx == 0 && len(tc.want) > 1 {
+						select {
+						case <-releaseSecond:
+						case <-r.Context().Done():
+							return
+						case <-time.After(time.Second):
+							return
+						}
+					}
+				}
+			})
+			defer ts.Close()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			es := NewSSESource().
+				SetContext(ctx).
+				SetURL(ts.URL).
+				SetRetryCount(0).
+				OnMessage(func(e any) {
+					received <- e.(*SSE).Data
+				}, nil)
+
+			errCh := make(chan error, 1)
+			go func() { errCh <- es.Get() }()
+
+			var got []string
+			var getErr error
+			haveErr := false
+			select {
+			case msg := <-received:
+				got = append(got, msg)
+			case getErr = <-errCh:
+				haveErr = true
+			case <-time.After(time.Second):
+				t.Fatalf("first event was not dispatched live before subsequent writes")
+			}
+			close(releaseSecond)
+
+			if !haveErr {
+				getErr = <-errCh
+			}
+			if !errors.Is(getErr, io.EOF) {
+				t.Fatalf("unexpected Get error: %v", getErr)
+			}
+			close(received)
+			for msg := range received {
+				got = append(got, msg)
+			}
+			assertEqual(t, tc.want, got)
+		})
+	}
+}
+
+func TestSplitSSEEvent(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		data        string
+		atEOF       bool
+		wantAdvance int
+		wantToken   string
+		wantNilTok  bool
+	}{
+		{name: "empty at EOF", data: "", atEOF: true, wantNilTok: true},
+		{name: "partial line non-EOF", data: "data: a", atEOF: false, wantNilTok: true},
+		{name: "trailing CR non-EOF", data: "data: a\r", atEOF: false, wantNilTok: true},
+		{name: "trailing CR at EOF", data: "data: a\r", atEOF: true, wantAdvance: 8, wantToken: "data: a\r"},
+		{name: "single LF non-EOF", data: "data: a\n", atEOF: false, wantNilTok: true},
+		{name: "single CRLF non-EOF", data: "data: a\r\n", atEOF: false, wantNilTok: true},
+		{name: "CRLF blank line", data: "data: a\r\n\r\n", atEOF: false, wantAdvance: 11, wantToken: "data: a"},
+		{name: "CR blank line non-EOF", data: "data: a\r\r", atEOF: false, wantAdvance: 9, wantToken: "data: a"},
+		{name: "CR followed by CRLF blank line", data: "data: a\r\r\n", atEOF: false, wantAdvance: 10, wantToken: "data: a"},
+		{name: "CRLF followed by CR at non-EOF", data: "data: a\r\n\r", atEOF: false, wantAdvance: 10, wantToken: "data: a"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			adv, tok, err := splitSSEEvent([]byte(tc.data), tc.atEOF)
+			assertNil(t, err)
+			assertEqual(t, tc.wantAdvance, adv)
+			if tc.wantNilTok {
+				assertNil(t, tok)
+				return
+			}
+			assertEqual(t, tc.wantToken, string(tok))
+		})
+	}
+}

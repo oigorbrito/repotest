@@ -1,0 +1,82 @@
+﻿"agente","tarefa","sucesso","segundos","entrada","saida","cache_leitura","cache_escrita","iteracoes","custo_est_usd","custo_reportado_usd","teste","log"
+"pi","S09-refatora-validacao","True","14,4","12","1448","20118","3777",,"0,001399","0,001398505","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S09-refatora-validacao\agent.log"
+"orca","S09-refatora-validacao","True","46,3","20","2562","53693","12134","9","0,003337",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S09-refatora-validacao\agent.log"
+"marshall","S09-refatora-validacao","True","11","21187","1581","0","0",,"0,002909",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\S09-refatora-validacao\agent.log"
+"cline","S09-refatora-validacao","True","23,6","93732","3057","62826","10471","7","0,012839","0,005904135","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S09-refatora-validacao\agent.log"
+"aider","S09-refatora-validacao","True","10,5","1400","393","0","0",,"0,000336","0,00033","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\S09-refatora-validacao\agent.log"
+"pi","S10-refatora-fatura","True","15,5","12","2399","21551","4987",,"0,00204","0,002039585","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S10-refatora-fatura\agent.log"
+"orca","S10-refatora-fatura","True","43,3","14","2243","32301","10181","6","0,002719",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S10-refatora-fatura\agent.log"
+"marshall","S10-refatora-fatura","True","15","26931","2398","0","0",,"0,003892",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\S10-refatora-fatura\agent.log"
+"cline","S10-refatora-fatura","True","34","97269","3862","62826","10471","7","0,013595","0,007425335","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S10-refatora-fatura\agent.log"
+"aider","S10-refatora-fatura","True","8,7","1300","441","0","0",,"0,00035","0,00035","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\S10-refatora-fatura\agent.log"
+"pi","S11-renomeia","True","11,8","14","1642","27368","4670",,"0,00168","0,00167983","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S11-renomeia\agent.log"
+"orca","S11-renomeia","True","46,3","16","2224","122168","52039","7","0,00884",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S11-renomeia\agent.log"
+"marshall","S11-renomeia","True","11,9","38765","1220","0","0",,"0,004486",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\S11-renomeia\agent.log"
+"cline","S11-renomeia","True","14,6","62270","1709","41848","10462","5","0,008808","0,00367523","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S11-renomeia\agent.log"
+"aider","S11-renomeia","True","8,8","1200","421","0","0",,"0,00033","0,00034","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\S11-renomeia\agent.log"
+"pi","S12-moeda","True","10,7","12","1863","21294","4589",,"0,001719","0,001719265","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S12-moeda\agent.log"
+"orca","S12-moeda","True","46,6","18","2548","170978","52694","8","0,009572",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S12-moeda\agent.log"
+"marshall","S12-moeda","True","11,4","21716","1724","0","0",,"0,003034",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\S12-moeda\agent.log"
+"cline","S12-moeda","True","20,3","96238","2636","62754","10459","7","0,012877","0,005886415","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S12-moeda\agent.log"
+"aider","S12-moeda","True","7,9","1300","287","0","0",,"0,000274","0,00028","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\S12-moeda\agent.log"
+"pi","S13-terminal-resumo","True","21,9","16","3105","125712","36881",,"0,007421","0,007421345","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S13-terminal-resumo\agent.log"
+"orca","S13-terminal-resumo","True","112,4","18","3780","42697","180638","8","0,024899",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S13-terminal-resumo\agent.log"
+"marshall","S13-terminal-resumo","False","18,2","44800","2739","0","0",,"0,00585",,"FAIL: saida\resumo.txt nao foi gerado","D:\projetos\harness-benchmark\pilot\runs\marshall\S13-terminal-resumo\agent.log"
+"cline","S13-terminal-resumo","True","28,7","115475","3657","73297","10471","8","0,015418","0,007814045","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S13-terminal-resumo\agent.log"
+"aider","S13-terminal-resumo","False","11,3","1200","782","0","0",,"0,000511","0,00051","FAIL: saida\resumo.txt nao foi gerado","D:\projetos\harness-benchmark\pilot\runs\aider\S13-terminal-resumo\agent.log"
+"pi","S14-terminal-checks","True","19,2","14","2561","27237","5871",,"0,002288","0,002288145","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S14-terminal-checks\agent.log"
+"orca","S14-terminal-checks","True","119,9","22","4478","56354","225779","10","0,031027",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S14-terminal-checks\agent.log"
+"marshall","S14-terminal-checks","False","17,9","51752","2730","0","0",,"0,00654",,"FAIL: relatorio\resultados.txt nao foi gerado","D:\projetos\harness-benchmark\pilot\runs\marshall\S14-terminal-checks\agent.log"
+"cline","S14-terminal-checks","True","29,5","101054","3483","62808","10468","7","0,013783","0,00727188","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S14-terminal-checks\agent.log"
+"aider","S14-terminal-checks","True","22,3","2800","561","0","0",,"0,00056","0,0019","powershell.exe : .\tools\Run-Checks.ps1 : O termo '.\tools\Run-Checks.ps1' 
+não é 
+No D:\projetos\harness-benchmark\pilot\run-pilot.ps1:95 caractere:17
++ ... $testOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File 
+(Jo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (.\tools\Run-Che...cks.ps1' nã 
+   o é :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+reconhecido como nome de cmdlet, função, arquivo de script ou programa 
+operável. Verifique a grafia do nome ou, se um caminho tiver sido 
+incluído, veja se o caminho está correto e tente novamente.
+No D:\projetos\harness-benchmark\pilot\runs\aider\S14-terminal-checks\tests
+.ps1:1 caractere:1
++ .\tools\Run-Checks.ps1
++ ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\tools\Run-Checks.ps1:Stri 
+   ng) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+.\tests.ps1 : O termo '.\tests.ps1' não é reconhecido como nome de cmdlet, 
+função, arquivo de script ou programa operável. Verifique a grafia do nome 
+ou, se um caminho tiver sido incluído, veja se o caminho está correto e 
+tente novamente.
+No D:\projetos\harness-benchmark\pilot\runs\aider\S14-terminal-checks\tests
+.ps1:2 caractere:1
++ .\tests.ps1
++ ~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\tests.ps1:String) [], Com 
+   mandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException","D:\projetos\harness-benchmark\pilot\runs\aider\S14-terminal-checks\agent.log"
+"pi","S15-contexto-desconto","True","12","12","1364","19051","3291",,"0,001285","0,001285085","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\S15-contexto-desconto\agent.log"
+"orca","S15-contexto-desconto","True","49,6","22","2593","260983","50470","10","0,010217",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\S15-contexto-desconto\agent.log"
+"marshall","S15-contexto-desconto","True","12,7","31765","1625","0","0",,"0,003989",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\S15-contexto-desconto\agent.log"
+"cline","S15-contexto-desconto","True","21,8","92588","2580","62826","10471","7","0,012486","0,005692235","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\S15-contexto-desconto\agent.log"
+"aider","S15-contexto-desconto","True","9,2","1200","293","0","0",,"0,000266","0,00026","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\S15-contexto-desconto\agent.log"
+"pi","T1-fix","True","9,4","12","1065","18972","3391",,"0,001147","0,001147295","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T1-fix\agent.log"
+"orca","T1-fix","True","43,9","18","2052","43229","10420","8","0,002763",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T1-fix\agent.log"
+"marshall","T1-fix","True","10","23523","1065","0","0",,"0,002885",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\T1-fix\agent.log"
+"cline","T1-fix","True","13,2","47079","1464","31368","10456","4","0,007061","0,00311468","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\T1-fix\agent.log"
+"aider","T1-fix","True","9,7","971","229","0","0",,"0,000212","0,00021","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\T1-fix\agent.log"
+"pi","T2-impl","True","15,4","14","1830","30860","6507",,"0,002038","0,002038375","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T2-impl\agent.log"
+"orca","T2-impl","True","46,2","22","2228","58146","12083","10","0,003208",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T2-impl\agent.log"
+"marshall","T2-impl","True","16,4","56055","1756","0","0",,"0,006484",,"PASS","D:\projetos\harness-benchmark\pilot\runs\marshall\T2-impl\agent.log"
+"cline","T2-impl","True","18,7","74222","2197","52280","10456","6","0,01035","0,0044109","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\T2-impl\agent.log"
+"aider","T2-impl","True","7,8","1100","300","0","0",,"0,00026","0,00026","PASS","D:\projetos\harness-benchmark\pilot\runs\aider\T2-impl\agent.log"
+"pi","T3-bug","True","15,9","12","2638","20290","4932",,"0,00214","0,0021396","PASS","D:\projetos\harness-benchmark\pilot\runs\pi\T3-bug\agent.log"
+"orca","T3-bug","True","91,5","18","3340","45212","15048","8","0,004005",,"PASS","D:\projetos\harness-benchmark\pilot\runs\orca\T3-bug\agent.log"
+"marshall","T3-bug","False","14,9","31746","2159","0","0",,"0,004254",,"FAIL: 'a,b,c' -> 'System.String[]' (esperado 'a|b|c'); 'a,""b,c"",d' -> 'System.String[]' (esperado 'a|b,c|d'); 'x,""say """"hi"""""",y' -> 'System.String[]' (esperado 'x|say ""hi""|y'); '"""",z' -> 'System.String[]' (esperado '|z')","D:\projetos\harness-benchmark\pilot\runs\marshall\T3-bug\agent.log"
+"cline","T3-bug","True","20,9","48884","2042","31368","10456","4","0,00753","0,00395768","PASS","D:\projetos\harness-benchmark\pilot\runs\cline\T3-bug\agent.log"
+"aider","T3-bug","False","14","1100","477","0","0",,"0,000348","0,00035","FAIL: 'a,b,c' -> 'System.String[]' (esperado 'a|b|c'); 'a,""b,c"",d' -> 'System.String[]' (esperado 'a|b,c|d'); 'x,""say """"hi"""""",y' -> 'System.String[]' (esperado 'x|say ""hi""|y'); '"""",z' -> 'System.String[]' (esperado '|z')","D:\projetos\harness-benchmark\pilot\runs\aider\T3-bug\agent.log"

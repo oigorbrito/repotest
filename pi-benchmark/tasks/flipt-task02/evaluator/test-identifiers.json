@@ -1,0 +1,18 @@
+{
+ "instance_id": "instance_flipt-io__flipt-e2bd19dafa7166c96b082fb2a59eb54b4be0d778",
+ "base_commit": "0eaf98f050d86247bfe9bd7e41178865cb585060",
+ "source": "ScaleAI/SWE-bench_Pro split=test via datasets-server rows API",
+ "fail_to_pass": [
+  "TestCacheControlUnaryInterceptor",
+  "TestCacheControlHeaderKey",
+  "TestEvaluationCacheUnaryInterceptor_Evaluate",
+  "TestEvaluationCacheUnaryInterceptor_Evaluation_Boolean",
+  "TestEvaluationCacheUnaryInterceptor_Evaluation_Variant",
+  "TestGetFlagCached",
+  "TestGetJSONHandleGetError",
+  "TestGetJSONHandleUnmarshalError",
+  "TestSetJSONHandleMarshalError",
+  "TestSetSkipsWhenDoNotStore"
+ ],
+ "pass_to_pass": []
+}

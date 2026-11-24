@@ -1,0 +1,249 @@
+//! Harness settings (upstream `HarnessSettings` and `Settings`) and their built-in defaults.
+
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
+use pi_ai::{CacheRetention, Transport};
+use pi_chord::JsonMap;
+use serde::{Deserialize, Serialize};
+
+use super::define::Extension;
+use super::types::{ModelRef, QueueMode, ToolExecutionMode};
+use crate::errors::DurableResult;
+use crate::models::DeferredOption;
+use crate::session::{DEFAULT_PERSIST_WITHIN_MS, document_retention, persist_within};
+
+/// Curated pi-ai request options; absent fields use pi-ai defaults.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConversationStreamOptions {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transport: Option<Transport>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_retries: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_retry_delay_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub headers: Option<BTreeMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none", with = "crate::harness::util::json_map::option")]
+    pub metadata: Option<JsonMap>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_retention: Option<CacheRetention>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deferred: Option<DeferredOption>,
+}
+
+/// Durable retries of generation requests; the JSON shape of pi-ai `RetryPolicy`.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConversationRetryPolicy {
+    pub enabled: bool,
+    pub max_retries: u32,
+    pub base_delay_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_agent_delay_ms: Option<u64>,
+}
+
+/// Automatic compaction thresholds (spec section 8.7); manual compaction ignores `enabled`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompactionPolicy {
+    pub enabled: bool,
+    pub reserve_tokens: u64,
+    pub keep_recent_tokens: u64,
+    pub background_tokens: u64,
+}
+
+/// How often running progress is committed, and how long it may wait in memory before it is stored. Progress commits
+/// are deferred (`CommitPersistence`): watches see each at once, and Storage gets them together, at the run's next
+/// phase boundary or after `persist_within_ms`.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressPolicy {
+    pub partial_interval_ms: u64,
+    pub output_interval_ms: u64,
+    /// How long these commits, and other deferred commits without their own `within_ms`, may stay in memory before
+    /// they are stored; a crash loses at most about this much of an answer or of tool output. Default 1,000; infinity
+    /// stores them only at the next commit that reads or writes their document and at close.
+    pub persist_within_ms: f64,
+}
+
+pub const DEFAULT_RETRY_POLICY: ConversationRetryPolicy =
+    ConversationRetryPolicy { enabled: true, max_retries: 3, base_delay_ms: 2000, max_agent_delay_ms: Some(60000) };
+
+pub const DEFAULT_COMPACTION_POLICY: CompactionPolicy =
+    CompactionPolicy { enabled: true, reserve_tokens: 16384, keep_recent_tokens: 20000, background_tokens: 32768 };
+
+pub const DEFAULT_PROGRESS_POLICY: ProgressPolicy =
+    ProgressPolicy { partial_interval_ms: 100, output_interval_ms: 100, persist_within_ms: DEFAULT_PERSIST_WITHIN_MS };
+
+/// Default `context_retention_ms`: ten minutes.
+pub const DEFAULT_CONTEXT_RETENTION_MS: f64 = 600_000.0;
+
+/// Default `restart_limit`.
+pub const DEFAULT_RESTART_LIMIT: f64 = 5.0;
+
+/// What a run that fails (`model_error`, `no_model`, `interrupted`, `restart_limit`, `nothing_to_answer`) does with
+/// the inputs queued behind it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AfterFailedRun {
+    /// Leave them queued until the next input or queued write.
+    #[default]
+    Keep,
+    /// Start the next run with them, as an answer would.
+    Continue,
+    /// Settle them `unanswered` with reason `run_failed`.
+    Withdraw,
+}
+
+/// Partial retry policy of [`HarnessSettings`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct RetryOverrides {
+    pub enabled: Option<bool>,
+    pub max_retries: Option<u32>,
+    pub base_delay_ms: Option<u64>,
+    pub max_agent_delay_ms: Option<u64>,
+}
+
+/// Partial compaction policy of [`HarnessSettings`].
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CompactionOverrides {
+    pub enabled: Option<bool>,
+    pub reserve_tokens: Option<u64>,
+    pub keep_recent_tokens: Option<u64>,
+    pub background_tokens: Option<u64>,
+    /// Keyed by exact `"provider/modelId"`; each field set replaces the harness-wide one for that model, so small-
+    /// and large-window models can share a harness. Nested `model_overrides` are ignored.
+    pub model_overrides: Option<BTreeMap<String, CompactionOverrides>>,
+}
+
+/// Partial progress policy of [`HarnessSettings`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ProgressOverrides {
+    pub partial_interval_ms: Option<u64>,
+    pub output_interval_ms: Option<u64>,
+    pub persist_within_ms: Option<f64>,
+}
+
+/// Harness-wide run policy. `HarnessOptions::settings` returns it at every resolution.
+#[derive(Clone, Default)]
+pub struct HarnessSettings {
+    /// Default extension selection; `None`: every installed extension, in install order.
+    pub extensions: Option<Vec<Arc<Extension>>>,
+    pub stream: Option<ConversationStreamOptions>,
+    pub retry: Option<RetryOverrides>,
+    pub compaction: Option<CompactionOverrides>,
+    pub progress: Option<ProgressOverrides>,
+    pub tool_execution: Option<ToolExecutionMode>,
+    pub steering_mode: Option<QueueMode>,
+    pub follow_up_mode: Option<QueueMode>,
+    /// How long an idle conversation keeps its last context read in memory; `0` drops it at once.
+    pub context_retention_ms: Option<f64>,
+    /// How long a loaded document that no watch or document state observes stays in memory after its last read or
+    /// write; the next access loads it from Storage. Observed documents always stay. Default ten minutes; `0` drops
+    /// one right after use; `f64::INFINITY` keeps them. Anything else that is not a count of milliseconds means the
+    /// default.
+    pub document_retention_ms: Option<f64>,
+    /// What a failed run does with the inputs queued behind it; default `Keep`.
+    pub after_failed_run: Option<AfterFailedRun>,
+    /// Consecutive interruptions without progress before a task ends. Default 5; infinity never ends it for restarts.
+    /// Generations first charge interrupted requests and polls under the retry policy. Below 1 uses the default.
+    pub restart_limit: Option<f64>,
+}
+
+/// Resolved settings: every field over its built-in default.
+#[derive(Clone)]
+pub struct Settings {
+    pub extensions: Option<Vec<Arc<Extension>>>,
+    pub stream: ConversationStreamOptions,
+    pub retry: ConversationRetryPolicy,
+    /// Harness-wide policy over the defaults; use [`Settings::compaction_for`] where the model is known.
+    pub compaction: CompactionPolicy,
+    /// Per-model compaction overrides by `"provider/modelId"`.
+    pub compaction_model_overrides: BTreeMap<String, CompactionOverrides>,
+    pub progress: ProgressPolicy,
+    pub tool_execution: ToolExecutionMode,
+    pub steering_mode: QueueMode,
+    pub follow_up_mode: QueueMode,
+    pub context_retention_ms: f64,
+    pub document_retention_ms: f64,
+    pub after_failed_run: AfterFailedRun,
+    pub restart_limit: f64,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        resolve_settings(None)
+    }
+}
+
+impl Settings {
+    /// The compaction policy for `model`: its override entry over the harness-wide policy, field by field.
+    pub fn compaction_for(&self, model: &ModelRef) -> CompactionPolicy {
+        let key = format!("{}/{}", model.provider, model.model_id);
+        let Some(entry) = self.compaction_model_overrides.get(&key) else { return self.compaction };
+        CompactionPolicy {
+            enabled: entry.enabled.unwrap_or(self.compaction.enabled),
+            reserve_tokens: entry.reserve_tokens.unwrap_or(self.compaction.reserve_tokens),
+            keep_recent_tokens: entry.keep_recent_tokens.unwrap_or(self.compaction.keep_recent_tokens),
+            background_tokens: entry.background_tokens.unwrap_or(self.compaction.background_tokens),
+        }
+    }
+}
+
+/// Where the Harness reads its settings; called at each access.
+pub type SettingsSource = Arc<dyn Fn() -> DurableResult<HarnessSettings> + Send + Sync>;
+
+/// A settings source that always returns `settings`.
+pub fn fixed_settings(settings: HarnessSettings) -> SettingsSource {
+    Arc::new(move || Ok(settings.clone()))
+}
+
+/// Resolve the host settings: every field over its built-in default, object fields merged field by field.
+pub fn resolve_settings(settings: Option<&HarnessSettings>) -> Settings {
+    let default = HarnessSettings::default();
+    let settings = settings.unwrap_or(&default);
+    let retry = settings.retry.unwrap_or_default();
+    let compaction = settings.compaction.clone().unwrap_or_default();
+    let progress = settings.progress.unwrap_or_default();
+    Settings {
+        extensions: settings.extensions.clone(),
+        stream: settings.stream.clone().unwrap_or_default(),
+        retry: ConversationRetryPolicy {
+            enabled: retry.enabled.unwrap_or(DEFAULT_RETRY_POLICY.enabled),
+            max_retries: retry.max_retries.unwrap_or(DEFAULT_RETRY_POLICY.max_retries),
+            base_delay_ms: retry.base_delay_ms.unwrap_or(DEFAULT_RETRY_POLICY.base_delay_ms),
+            max_agent_delay_ms: retry.max_agent_delay_ms.or(DEFAULT_RETRY_POLICY.max_agent_delay_ms),
+        },
+        compaction: CompactionPolicy {
+            enabled: compaction.enabled.unwrap_or(DEFAULT_COMPACTION_POLICY.enabled),
+            reserve_tokens: compaction.reserve_tokens.unwrap_or(DEFAULT_COMPACTION_POLICY.reserve_tokens),
+            keep_recent_tokens: compaction.keep_recent_tokens.unwrap_or(DEFAULT_COMPACTION_POLICY.keep_recent_tokens),
+            background_tokens: compaction.background_tokens.unwrap_or(DEFAULT_COMPACTION_POLICY.background_tokens),
+        },
+        compaction_model_overrides: compaction.model_overrides.unwrap_or_default(),
+        progress: ProgressPolicy {
+            partial_interval_ms: progress.partial_interval_ms.unwrap_or(DEFAULT_PROGRESS_POLICY.partial_interval_ms),
+            output_interval_ms: progress.output_interval_ms.unwrap_or(DEFAULT_PROGRESS_POLICY.output_interval_ms),
+            persist_within_ms: persist_within(progress.persist_within_ms),
+        },
+        tool_execution: settings.tool_execution.unwrap_or_default(),
+        steering_mode: settings.steering_mode.unwrap_or_default(),
+        follow_up_mode: settings.follow_up_mode.unwrap_or_default(),
+        context_retention_ms: settings.context_retention_ms.unwrap_or(DEFAULT_CONTEXT_RETENTION_MS),
+        document_retention_ms: document_retention(settings.document_retention_ms),
+        after_failed_run: settings.after_failed_run.unwrap_or_default(),
+        restart_limit: restart_limit(settings.restart_limit),
+    }
+}
+
+/// A restart limit as given when it is a number of restarts, 1 or more, rounded down; else the default.
+fn restart_limit(limit: Option<f64>) -> f64 {
+    match limit {
+        Some(limit) if limit >= 1.0 => limit.floor(),
+        _ => DEFAULT_RESTART_LIMIT,
+    }
+}

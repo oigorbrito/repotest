@@ -1,0 +1,23 @@
+check-isolation 2026-11-18T18:22:04-03:00
+== pi-original (agents/pi-original/flipt)
+  HEAD OK (0eaf98f050d86247bfe9bd7e41178865cb585060)
+  arvore limpa
+  commit associado ausente (esperado)
+  sem alternates
+  sem remotes
+  sha256 dos arquivos rastreados = snapshot de preparação
+  arquivos ignorados: 0
+== pi-rust (agents/pi-rust/flipt)
+  HEAD OK (0eaf98f050d86247bfe9bd7e41178865cb585060)
+  arvore limpa
+  commit associado ausente (esperado)
+  sem alternates
+  sem remotes
+  sha256 dos arquivos rastreados = snapshot de preparação
+  arquivos ignorados: 0
+== origem (source)
+  HEAD OK
+  arvore limpa
+== independência dos .git
+  .git distintos (inodes 10977524092527238 / 10133099162396511 / 10414574139098144)
+RESULTADO: OK

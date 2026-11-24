@@ -1,0 +1,752 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -39,11 +39,14 @@
+     srcs = [
+         "benchmark_test.go",
+         "cert_watcher_test.go",
++        "circuit_breaker_test.go",
++        "client_clone_test.go",
+         "client_test.go",
+         "context_test.go",
+         "curl_test.go",
+         "digest_test.go",
+         "hedging_test.go",
++        "hooks_concurrency_test.go",
+         "load_balancer_test.go",
+         "middleware_test.go",
+         "multipart_test.go",
+--- a/circuit_breaker.go
++++ b/circuit_breaker.go
+@@ -391,9 +391,11 @@
+ 
+ // RunOnTriggerHooks method executes all registered trigger hooks with the given request and error.
+ func (cb *circuitBreakerBase) RunOnTriggerHooks(req *Request, err error) {
++	// hooks run without holding cb.lock, so they may register further hooks
+ 	cb.lock.RLock()
+-	defer cb.lock.RUnlock()
+-	for _, h := range cb.triggerHooks {
++	hooks := cb.triggerHooks
++	cb.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -409,9 +411,11 @@
+ 
+ // RunOnStateChangeHooks method executes all registered state change hooks with the given old and new states.
+ func (cb *circuitBreakerBase) RunOnStateChangeHooks(oldState, newState CircuitBreakerState) {
++	// hooks run without holding cb.lock, so they may register further hooks
+ 	cb.lock.RLock()
+-	defer cb.lock.RUnlock()
+-	for _, h := range cb.stateChangeHooks {
++	hooks := cb.stateChangeHooks
++	cb.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(oldState, newState)
+ 	}
+ }
+--- a/client.go
++++ b/client.go
+@@ -931,9 +931,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnError hooks; deadlock will happen.
+ func (c *Client) OnError(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -946,9 +943,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnSuccess hooks; deadlock will happen.
+ func (c *Client) OnSuccess(hooks ...SuccessHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -961,9 +955,6 @@
+ //
+ // Out of the [Client.OnSuccess], [Client.OnError], [Client.OnInvalid], [Client.OnPanic]
+ // callbacks, exactly one set will be invoked for each call to [Request.Execute] that completes.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnInvalid hooks; deadlock will happen.
+ func (c *Client) OnInvalid(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -979,9 +970,6 @@
+ //
+ // If an [Client.OnSuccess], [Client.OnError], or [Client.OnInvalid] callback panics,
+ // then exactly one rule can be violated.
+-//
+-// NOTE:
+-//   - Do not use [Client] setter methods within OnPanic hooks; deadlock will happen.
+ func (c *Client) OnPanic(hooks ...ErrorHook) *Client {
+ 	c.lock.Lock()
+ 	defer c.lock.Unlock()
+@@ -2422,6 +2410,11 @@
+ //     when you are sure that any other concurrent process is not using the client
+ //     or client instance is protected by a mutex.
+ func (c *Client) Clone(ctx context.Context) *Client {
++	// Copy under the parent's read lock. Clone never runs hooks or setters, so this
++	// cannot deadlock with hook dispatch, and no internal caller holds c.lock here.
++	c.lock.RLock()
++	defer c.lock.RUnlock()
++
+ 	cc := new(Client)
+ 	// dereference the pointer and copy the value
+ 	*cc = *c
+@@ -2432,6 +2425,20 @@
+ 	cc.header = c.header.Clone()
+ 	cc.pathParams = maps.Clone(c.pathParams)
+ 
++	// Slices below are appended to by Client setters under each client's own lock.
++	// Each client must own its backing arrays, otherwise appends on one side can
++	// overwrite elements that the other side still sees.
++	cc.beforeRequest = slices.Clone(c.beforeRequest)
++	cc.afterResponse = slices.Clone(c.afterResponse)
++	cc.retryConditions = slices.Clone(c.retryConditions)
++	cc.retryHooks = slices.Clone(c.retryHooks)
++	cc.errorHooks = slices.Clone(c.errorHooks)
++	cc.invalidHooks = slices.Clone(c.invalidHooks)
++	cc.panicHooks = slices.Clone(c.panicHooks)
++	cc.successHooks = slices.Clone(c.successHooks)
++	cc.closeHooks = slices.Clone(c.closeHooks)
++	cc.contentDecompresserKeys = slices.Clone(c.contentDecompresserKeys)
++
+ 	if c.credentials != nil {
+ 		cc.credentials = c.credentials.Clone()
+ 	}
+@@ -2439,17 +2446,14 @@
+ 	cc.contentTypeEncoders = maps.Clone(c.contentTypeEncoders)
+ 	cc.contentTypeDecoders = maps.Clone(c.contentTypeDecoders)
+ 	cc.contentDecompressers = maps.Clone(c.contentDecompressers)
+-	copy(cc.contentDecompresserKeys, c.contentDecompresserKeys)
+ 
+ 	if c.proxyURL != nil {
+ 		cc.proxyURL, _ = url.Parse(c.proxyURL.String())
+ 	}
+-	// clone cookies
+-	if l := len(c.cookies); l > 0 {
+-		cc.cookies = make([]*http.Cookie, 0, l)
+-		for _, cookie := range c.cookies {
+-			cc.cookies = append(cc.cookies, cloneCookie(cookie))
+-		}
++	// clone cookies: always allocate, so a parent slice with spare capacity is never shared
++	cc.cookies = make([]*http.Cookie, 0, len(c.cookies))
++	for _, cookie := range c.cookies {
++		cc.cookies = append(cc.cookies, cloneCookie(cookie))
+ 	}
+ 
+ 	// certain values need to be reset
+@@ -2669,17 +2673,21 @@
+ // It wraps the error in a [ResponseError] if the resp is not nil
+ // so hooks can access it.
+ func (c *Client) onErrorHooks(req *Request, res *Response, err error) {
+-	c.lock.RLock()
+-	defer c.lock.RUnlock()
++	// Hooks run without holding c.lock, so they may call Client getters and setters.
++	// Hook slices are only ever appended to, and elements below the snapshot length
++	// are never rewritten, so reading the snapshot after unlocking is race-free.
++	c.lock.RLock()
++	errorHooks, successHooks := c.errorHooks, c.successHooks
++	c.lock.RUnlock()
+ 	if err != nil {
+ 		if res != nil { // wrap with ResponseError
+ 			err = &ResponseError{Response: res, Err: err}
+ 		}
+-		for _, h := range c.errorHooks {
++		for _, h := range errorHooks {
+ 			h(req, err)
+ 		}
+ 	} else {
+-		for _, h := range c.successHooks {
++		for _, h := range successHooks {
+ 			h(c, res)
+ 		}
+ 	}
+@@ -2688,8 +2696,9 @@
+ // Helper to run panicHooks hooks.
+ func (c *Client) onPanicHooks(req *Request, err error) {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.panicHooks {
++	hooks := c.panicHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -2697,8 +2706,9 @@
+ // Helper to run invalidHooks hooks.
+ func (c *Client) onInvalidHooks(req *Request, err error) {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.invalidHooks {
++	hooks := c.invalidHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h(req, err)
+ 	}
+ }
+@@ -2706,8 +2716,9 @@
+ // Helper to run closeHooks hooks.
+ func (c *Client) onCloseHooks() {
+ 	c.lock.RLock()
+-	defer c.lock.RUnlock()
+-	for _, h := range c.closeHooks {
++	hooks := c.closeHooks
++	c.lock.RUnlock()
++	for _, h := range hooks {
+ 		h()
+ 	}
+ }
+--- /dev/null
++++ b/client_clone_test.go
+@@ -0,0 +1,211 @@
++package resty
++
++import (
++	"context"
++	"net/http"
++	"sync"
++	"testing"
++)
++
++// Regression tests for Client.Clone(). Each test gives the parent's slice spare
++// capacity explicitly, so the outcome never depends on how the Go runtime grows
++// slices: with spare capacity, an append on one side writes into storage that the
++// other side would see if the backing array were shared.
++
++// withSpareCap returns a copy of s with len(s) elements and capacity n.
++func withSpareCap[T any](s []T, n int) []T {
++	out := make([]T, len(s), n)
++	copy(out, s)
++	return out
++}
++
++// Response middlewares added to parent and clone must not overwrite each other.
++func TestCloneDoesNotShareResponseMiddlewares(t *testing.T) {
++	parent := dcnl()
++	var ran []string
++	mk := func(name string) ResponseMiddleware {
++		return func(*Client, *Response) error { ran = append(ran, name); return nil }
++	}
++	parent.afterResponse = withSpareCap([]ResponseMiddleware{mk("p0")}, 8)
++
++	clone := parent.Clone(context.Background())
++	parent.AddResponseMiddleware(mk("P"))
++	clone.AddResponseMiddleware(mk("C"))
++
++	assertEqual(t, 2, len(parent.afterResponse))
++	assertEqual(t, 2, len(clone.afterResponse))
++	parent.afterResponse[1](parent, &Response{})
++	assertEqual(t, []string{"P"}, ran, "parent's middleware was overwritten by the clone's")
++	ran = nil
++	clone.afterResponse[1](clone, &Response{})
++	assertEqual(t, []string{"C"}, ran, "clone's middleware was overwritten by the parent's")
++}
++
++// Request middlewares inserted on parent and clone must not overwrite each other.
++func TestCloneDoesNotShareRequestMiddlewares(t *testing.T) {
++	parent := dcnl()
++	var ran []string
++	mk := func(name string) RequestMiddleware {
++		return func(*Client, *Request) error { ran = append(ran, name); return nil }
++	}
++	parent.beforeRequest = withSpareCap([]RequestMiddleware{mk("p0")}, 8)
++
++	clone := parent.Clone(context.Background())
++	parent.AddRequestMiddleware(mk("P"))
++	clone.AddRequestMiddleware(mk("C"))
++
++	// AddRequestMiddleware inserts before the last entry, so the expected order is
++	// [new, p0] on each side. Compare the whole sequence, not a fixed index.
++	runAll := func(c *Client) []string {
++		ran = nil
++		for _, m := range c.beforeRequest {
++			_ = m(c, &Request{})
++		}
++		return ran
++	}
++	assertEqual(t, 2, len(parent.beforeRequest))
++	assertEqual(t, 2, len(clone.beforeRequest))
++	assertEqual(t, []string{"P", "p0"}, runAll(parent), "parent's middleware was overwritten by the clone's")
++	assertEqual(t, []string{"C", "p0"}, runAll(clone), "clone's middleware was overwritten by the parent's")
++}
++
++// Retry conditions added to parent and clone must not overwrite each other.
++func TestCloneDoesNotShareRetryConditions(t *testing.T) {
++	parent := dcnl()
++	mk := func(result bool) RetryConditionFunc {
++		return func(*Response, error) bool { return result }
++	}
++	parent.retryConditions = withSpareCap([]RetryConditionFunc{mk(false)}, 8)
++
++	clone := parent.Clone(context.Background())
++	parent.AddRetryConditions(mk(true)) // parent's second condition: true
++	clone.AddRetryConditions(mk(false)) // clone's second condition: false
++
++	assertEqual(t, 2, len(parent.retryConditions))
++	assertEqual(t, 2, len(clone.retryConditions))
++	assertEqual(t, true, parent.retryConditions[1](nil, nil), "parent's condition was overwritten")
++	assertEqual(t, false, clone.retryConditions[1](nil, nil))
++}
++
++// The decompresser key list must have its own storage on each side.
++func TestCloneDoesNotShareContentDecompresserKeys(t *testing.T) {
++	parent := dcnl()
++	parent.contentDecompresserKeys = withSpareCap([]string{"gzip", "deflate"}, 8)
++
++	clone := parent.Clone(context.Background())
++	if &parent.contentDecompresserKeys[0] == &clone.contentDecompresserKeys[0] {
++		t.Fatal("clone shares the decompresser key backing array with its parent")
++	}
++	clone.contentDecompresserKeys[0] = "changed-in-clone"
++	assertEqual(t, "gzip", parent.contentDecompresserKeys[0], "parent sees the clone's write")
++}
++
++// Close hooks registered on parent and clone must each run only on their own side.
++func TestCloneHookRegistrationIsolated(t *testing.T) {
++	parent := dcnl()
++	var p, q int
++	parent.closeHooks = withSpareCap([]CloseHook{func() {}, func() {}, func() {}}, 8)
++	clone := parent.Clone(context.Background())
++
++	parent.OnClose(func() { p++ })
++	clone.OnClose(func() { q++ })
++
++	assertEqual(t, 4, len(parent.closeHooks))
++	assertEqual(t, 4, len(clone.closeHooks))
++	parent.closeHooks[3]()
++	assertEqual(t, 1, p)
++	assertEqual(t, 0, q, "clone's hook leaked into the parent's storage")
++	clone.closeHooks[3]()
++	assertEqual(t, 1, p)
++	assertEqual(t, 1, q)
++}
++
++// Clone must not deadlock when called from a hook: hooks run without c.lock held.
++func TestCloneFromInsideHookDoesNotDeadlock(t *testing.T) {
++	parent := dcnl()
++	var cloned *Client
++	parent.OnClose(func() { cloned = parent.Clone(context.Background()) })
++	mustReturn(t, "Clone inside OnClose hook", func() { _ = parent.Close() })
++	if cloned == nil {
++		t.Fatal("hook did not produce a clone")
++	}
++}
++
++// Clone and registration racing on the same parent: no panic, no lost hooks, and
++// no clone ever observes more hooks than the parent finally holds.
++func TestCloneConcurrentWithRegistration(t *testing.T) {
++	parent := dcnl()
++	base := len(parent.closeHooks)
++	const writers = 4
++	const perWriter = 25
++	const clones = 50
++
++	var wg sync.WaitGroup
++	cloneCh := make(chan *Client, clones)
++	for i := 0; i < writers; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			for j := 0; j < perWriter; j++ {
++				parent.OnClose(func() {})
++			}
++		}()
++	}
++	for i := 0; i < clones; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			cloneCh <- parent.Clone(context.Background())
++		}()
++	}
++	wg.Wait()
++	close(cloneCh)
++
++	final := len(parent.closeHooks)
++	assertEqual(t, base+writers*perWriter, final, "registrations were lost")
++	for c := range cloneCh {
++		if n := len(c.closeHooks); n > final {
++			t.Errorf("clone observed %d hooks, parent ends with %d", n, final)
++		}
++	}
++}
++
++// Clone keeps the values it copies from the parent, and resets per-instance state.
++func TestCloneCopiesStateAndResetsInstanceState(t *testing.T) {
++	parent := dcnl().
++		SetBaseURL("http://example.com").
++		SetHeader("X-Parent", "1").
++		SetQueryParam("q", "v")
++	parent.cookies = []*http.Cookie{{Name: "c", Value: "1"}}
++
++	clone := parent.Clone(context.Background())
++	assertEqual(t, "http://example.com", clone.BaseURL())
++	assertEqual(t, "1", clone.Header().Get("X-Parent"))
++	assertEqual(t, 1, len(clone.Cookies()))
++
++	// header and query params are independent copies
++	clone.SetHeader("X-Parent", "2")
++	clone.SetQueryParam("q", "other")
++	assertEqual(t, "1", parent.Header().Get("X-Parent"))
++	assertEqual(t, "v", parent.queryParams.Get("q"))
++
++	// the clone gets a fresh lock: a parent's lock state does not leak to it
++	if clone.lock == parent.lock {
++		t.Fatal("clone shares the parent's lock")
++	}
++	assertEqual(t, false, clone.isClosed)
++}
++
++// An empty cookie slice with spare capacity must not be shared with the clone.
++func TestCloneDoesNotShareEmptyCookieSlice(t *testing.T) {
++	parent := dcnl()
++	parent.cookies = make([]*http.Cookie, 0, 4)
++
++	clone := parent.Clone(context.Background())
++	parent.cookies = append(parent.cookies, &http.Cookie{Name: "parent", Value: "1"})
++	clone.cookies = append(clone.cookies, &http.Cookie{Name: "clone", Value: "2"})
++
++	assertEqual(t, 1, len(parent.cookies))
++	assertEqual(t, "parent", parent.cookies[0].Name, "clone overwrote the parent's cookie")
++	assertEqual(t, "clone", clone.cookies[0].Name)
++}
+--- /dev/null
++++ b/hooks_concurrency_test.go
+@@ -0,0 +1,329 @@
++package resty
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"runtime"
++	"sync"
++	"testing"
++	"time"
++)
++
++// hookTestTimeout bounds every blocking wait so a deadlock fails the test
++// instead of hanging the whole test binary.
++const hookTestTimeout = 5 * time.Second
++
++const writerURL = "http://writer.example"
++
++// hookCase binds one hook kind to its registration and to an action that runs it.
++type hookCase struct {
++	name       string
++	register   func(c *Client, fn func())
++	trigger    func(c *Client)
++	repeatable bool // OnClose runs once per Client, so it cannot be re-dispatched
++}
++
++func hookCases() []hookCase {
++	okServer := func() *httptest.Server {
++		return createTestServer(func(w http.ResponseWriter, r *http.Request) {})
++	}
++	return []hookCase{
++		{
++			name:     "OnError",
++			register: func(c *Client, fn func()) { c.OnError(func(*Request, error) { fn() }) },
++			trigger: func(c *Client) {
++				srv := okServer()
++				u := srv.URL
++				srv.Close() // connection refused => error hooks
++				_, _ = c.R().Get(u)
++			},
++			repeatable: true,
++		},
++		{
++			name:     "OnSuccess",
++			register: func(c *Client, fn func()) { c.OnSuccess(func(*Client, *Response) { fn() }) },
++			trigger: func(c *Client) {
++				srv := okServer()
++				defer srv.Close()
++				_, _ = c.R().Get(srv.URL)
++			},
++			repeatable: true,
++		},
++		{
++			name:     "OnInvalid",
++			register: func(c *Client, fn func()) { c.OnInvalid(func(*Request, error) { fn() }) },
++			trigger: func(c *Client) {
++				_, _ = c.R().Get("http://[::1") // unparsable URL => invalid request
++			},
++			repeatable: true,
++		},
++		{
++			name:     "OnPanic",
++			register: func(c *Client, fn func()) { c.OnPanic(func(*Request, error) { fn() }) },
++			trigger: func(c *Client) {
++				c.SetRequestMiddlewares(func(*Client, *Request) error { panic("boom") })
++				defer func() { _ = recover() }() // Execute re-panics after the hooks run
++				_, _ = c.R().Get("http://example.invalid")
++			},
++			repeatable: true,
++		},
++		{
++			name:     "OnClose",
++			register: func(c *Client, fn func()) { c.OnClose(func() { fn() }) },
++			trigger:  func(c *Client) { _ = c.Close() },
++		},
++	}
++}
++
++// contentionProbe returns a hook body that reads a Client property while a
++// writer goroutine is queued on the write lock. It reports the value read on got
++// and closes writerDone once the writer has finished.
++//
++// The writer is queued once TryRLock fails: sync.RWMutex refuses new readers while
++// a writer is pending. If the dispatcher still holds its read lock, the writer can
++// never finish before the body returns, so the wait loop always ends with the
++// writer queued. The loop also stops if the writer completes on its own.
++func contentionProbe(c *Client) (body func(), got <-chan string, writerDone <-chan struct{}) {
++	g := make(chan string, 1)
++	done := make(chan struct{})
++	body = func() {
++		started := make(chan struct{})
++		go func() {
++			defer close(done)
++			close(started)
++			c.SetBaseURL(writerURL)
++		}()
++		<-started
++
++		for !isClosedChan(done) && c.lock.TryRLock() {
++			c.lock.RUnlock()
++			runtime.Gosched()
++		}
++		g <- c.BaseURL() // must return even though a writer waits for the lock
++	}
++	return body, g, done
++}
++
++// mustReturn runs fn and fails the test if it does not return within hookTestTimeout.
++func mustReturn(t *testing.T, what string, fn func()) {
++	t.Helper()
++	done := make(chan struct{})
++	go func() {
++		defer close(done)
++		fn()
++	}()
++	select {
++	case <-done:
++	case <-time.After(hookTestTimeout):
++		t.Fatalf("deadlock: %s did not return", what)
++	}
++}
++
++func isClosedChan(ch <-chan struct{}) bool {
++	select {
++	case <-ch:
++		return true
++	default:
++		return false
++	}
++}
++
++// Regression for GH #1263: a hook reading a Client getter while a writer waits on
++// the lock must not deadlock. Covers all five hook kinds.
++func TestClientHookGetterWhileWriterWaits(t *testing.T) {
++	for _, tc := range hookCases() {
++		t.Run(tc.name, func(t *testing.T) {
++			c := dcnl()
++			body, got, writerDone := contentionProbe(c)
++			tc.register(c, body)
++
++			triggered := make(chan struct{})
++			go func() {
++				defer close(triggered)
++				tc.trigger(c)
++			}()
++
++			select {
++			case v := <-got:
++				if v != "" && v != writerURL {
++					t.Errorf("getter returned unexpected value %q", v)
++				}
++			case <-time.After(hookTestTimeout):
++				t.Fatal("deadlock: hook getter did not return while a writer waited for the lock")
++			}
++
++			select {
++			case <-writerDone:
++			case <-time.After(hookTestTimeout):
++				t.Fatal("writer never acquired the lock after the hook returned")
++			}
++			select {
++			case <-triggered:
++			case <-time.After(hookTestTimeout):
++				t.Fatal("trigger did not return")
++			}
++			assertEqual(t, writerURL, c.BaseURL())
++		})
++	}
++}
++
++// Regression: Close() called from an OnClose hook must be a no-op, not a deadlock.
++func TestClientCloseReentrantFromOnCloseHook(t *testing.T) {
++	c := dcnl()
++	calls := 0
++	var reentrantErr error
++	c.OnClose(func() {
++		calls++
++		reentrantErr = c.Close()
++	})
++
++	done := make(chan error, 1)
++	go func() { done <- c.Close() }()
++	select {
++	case err := <-done:
++		assertNil(t, err)
++	case <-time.After(hookTestTimeout):
++		t.Fatal("deadlock: reentrant Close() from OnClose hook did not return")
++	}
++
++	assertNil(t, reentrantErr)
++	assertEqual(t, 1, calls)
++	assertNil(t, c.Close())
++	assertEqual(t, 1, calls)
++}
++
++// Hooks run in registration order; hooks registered while a dispatch is running
++// (including via a Client setter called from inside a hook) take effect from the
++// next dispatch, not the one in progress.
++func TestClientHookOrderAndRegistration(t *testing.T) {
++	rec := func(log *[]string, name string) func() {
++		return func() { *log = append(*log, name) }
++	}
++
++	for _, tc := range hookCases() {
++		t.Run(tc.name, func(t *testing.T) {
++			c := dcnl()
++			var log []string
++			tc.register(c, rec(&log, "a"))
++			tc.register(c, rec(&log, "b"))
++			tc.register(c, rec(&log, "c"))
++			mustReturn(t, "hook dispatch", func() { tc.trigger(c) })
++			assertEqual(t, []string{"a", "b", "c"}, log, "registration order")
++
++			if !tc.repeatable {
++				return
++			}
++
++			// registration from inside a running hook, then a second dispatch
++			c2 := dcnl()
++			var log2 []string
++			tc.register(c2, func() {
++				log2 = append(log2, "outer")
++				tc.register(c2, rec(&log2, "late"))
++			})
++			mustReturn(t, "hook dispatch", func() { tc.trigger(c2) })
++			assertEqual(t, []string{"outer"}, log2, "in-flight dispatch")
++
++			log2 = nil
++			mustReturn(t, "hook dispatch", func() { tc.trigger(c2) })
++			assertEqual(t, []string{"outer", "late"}, log2, "next dispatch")
++		})
++	}
++}
++
++// Regression: circuit breaker hooks run while the breaker's lock is held, so a
++// hook that registers another hook must not deadlock.
++func TestCircuitBreakerHookReentrantRegistration(t *testing.T) {
++	noopTrigger := func(*Request, error) {}
++	noopState := func(CircuitBreakerState, CircuitBreakerState) {}
++
++	cases := []struct {
++		name string
++		run  func(cb *CircuitBreakerCount)
++	}{
++		{
++			name: "OnTrigger",
++			run: func(cb *CircuitBreakerCount) {
++				cb.OnTrigger(func(*Request, error) { cb.OnTrigger(noopTrigger) })
++				cb.RunOnTriggerHooks(nil, ErrCircuitBreakerOpen)
++			},
++		},
++		{
++			name: "OnStateChange",
++			run: func(cb *CircuitBreakerCount) {
++				cb.OnStateChange(func(CircuitBreakerState, CircuitBreakerState) { cb.OnStateChange(noopState) })
++				cb.RunOnStateChangeHooks(CircuitBreakerStateClosed, CircuitBreakerStateOpen)
++			},
++		},
++	}
++
++	for _, tc := range cases {
++		t.Run(tc.name, func(t *testing.T) {
++			cb := NewCircuitBreakerCount(1, 1, time.Hour)
++			done := make(chan struct{})
++			go func() {
++				defer close(done)
++				tc.run(cb)
++			}()
++			select {
++			case <-done:
++			case <-time.After(hookTestTimeout):
++				t.Fatal("deadlock: circuit breaker hook registering another hook did not return")
++			}
++		})
++	}
++}
++
++// Concurrent registration and dispatch on the same client (adapted from the Rust
++// suite's C3). Every registration must survive (no lost update) and no dispatch may
++// block. Race freedom is only verified when the package runs under -race.
++func TestClientHookConcurrentRegistrationAndDispatch(t *testing.T) {
++	const registrars = 8
++	const perRegistrar = 10
++
++	for _, tc := range hookCases() {
++		if !tc.repeatable {
++			continue
++		}
++		t.Run(tc.name, func(t *testing.T) {
++			c := dcnl()
++			base := registeredHooks(c, tc.name)
++
++			var wg sync.WaitGroup
++			wg.Add(registrars)
++			for i := 0; i < registrars; i++ {
++				go func() {
++					defer wg.Done()
++					for j := 0; j < perRegistrar; j++ {
++						tc.register(c, func() {})
++					}
++				}()
++			}
++			for i := 0; i < perRegistrar; i++ {
++				mustReturn(t, "hook dispatch during concurrent registration", func() { tc.trigger(c) })
++			}
++			wg.Wait()
++
++			assertEqual(t, base+registrars*perRegistrar, registeredHooks(c, tc.name), "registrations were lost")
++		})
++	}
++}
++
++// registeredHooks reports how many hooks of the given family are stored on c.
++func registeredHooks(c *Client, kind string) int {
++	c.lock.RLock()
++	defer c.lock.RUnlock()
++	switch kind {
++	case "OnError":
++		return len(c.errorHooks)
++	case "OnSuccess":
++		return len(c.successHooks)
++	case "OnInvalid":
++		return len(c.invalidHooks)
++	case "OnPanic":
++		return len(c.panicHooks)
++	case "OnClose":
++		return len(c.closeHooks)
++	}
++	panic("unknown hook kind " + kind)
++}

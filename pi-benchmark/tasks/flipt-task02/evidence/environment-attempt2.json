@@ -1,0 +1,50 @@
+{
+  "captured_at": "2026-11-18 (sessão de baseline, tentativa 2)",
+  "host": {
+    "os": "Microsoft Windows 11 Pro 10.0.26300",
+    "machine": "DESKTOP-TF0CDSV (Lenovo, BIOS EGCN41WW 09/06/2023)",
+    "ram_total": "16.252 MB (systeminfo)",
+    "cpu": "1 processador instalado (modelo não capturado: saída com codificação quebrada)",
+    "shell": "MSYS2/MINGW64 (uname: MINGW64_NT-10.0-26300 3.6.10)"
+  },
+  "disk": {
+    "drive": "D:",
+    "size": "239G",
+    "avail_before": "88G (df)",
+    "avail_after": "87G (df)"
+  },
+  "tools": {
+    "git": "git version 2.56.0.windows.2",
+    "go": "go version go1.27.0 windows/amd64",
+    "go_env": {
+      "GOOS": "windows", "GOARCH": "amd64", "GOTOOLCHAIN": "auto",
+      "CGO_ENABLED": "0", "CC": "gcc (ausente no PATH)",
+      "GOPROXY": "https://proxy.golang.org,direct",
+      "GOMODCACHE": "C:\\Users\\igorb\\go\\pkg\\mod"
+    },
+    "docker_cli": "Docker version 29.9.3, build 5457199",
+    "docker_daemon": "NÃO ATIVO: npipe dockerDesktopLinuxEngine e docker_engine inexistentes; distro WSL docker-desktop 'Stopped'"
+  },
+  "wsl": {
+    "distros": ["Ubuntu (Stopped)", "docker-desktop (Stopped)"],
+    "go_in_ubuntu": "ausente (go: command not found)"
+  },
+  "git_config": {
+    "core.autocrlf": "true (efeito: working tree com CRLF, índice com LF)"
+  },
+  "source": {
+    "repo": "https://github.com/flipt-io/flipt.git",
+    "dir": "tasks/flipt-task02/source",
+    "head": "0eaf98f050d86247bfe9bd7e41178865cb585060",
+    "head_subject": "chore: upgrade dagger to 0.8.2 (#2009)",
+    "associated_commit": "e2bd19dafa7166c96b082fb2a59eb54b4be0d778",
+    "associated_commit_exists": true,
+    "base_is_ancestor_of_associated": true,
+    "go_mod_go_directive": "1.20"
+  },
+  "variant": {
+    "dir": "tasks/flipt-task02/source-lf-variant",
+    "config": "core.autocrlf=false",
+    "head": "0eaf98f050d86247bfe9bd7e41178865cb585060"
+  }
+}

@@ -1,0 +1,10 @@
+﻿REPOSITORY: Pi-Original
+PATH: D:\projetos\pi-benchmark\resty-3or
+
+=== HEAD ===
+
+=== STATUS ===
+
+=== TRACKED DIFF ===
+
+=== UNTRACKED FILES ===

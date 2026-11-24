@@ -1,0 +1,1 @@
+goos=windows go=go1.27.0 samples=200000 zero_ns_deltas=200000 zero_ms_deltas=200000 min_nonzero=1h0m0s expiry_not_before=20000/20000

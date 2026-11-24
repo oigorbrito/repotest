@@ -1,0 +1,523 @@
+//! Built-in generation task (upstream `harness/generation.ts`): prepares the positional system prompt and tool
+//! loadout, requests or polls the model, retries, and classifies the response. The run's inputs live in
+//! `pi.live.run`.
+
+mod classify;
+mod restart;
+mod round;
+
+use std::sync::{Arc, LazyLock};
+
+use futures::future::BoxFuture;
+use pi_ai::{AssistantMessage, DeferredHandle, Message, ThinkingLevel, ToolCall};
+use pi_chord::{Context, Json};
+use serde::{Deserialize, Serialize};
+
+use super::agent::section_extension;
+use super::compaction::{CompactionInput, create_compaction, estimate_context, select_cut};
+use super::define::{PromptInput, PromptSection};
+use super::inbox::{Boundary, BoundaryAt, apply_boundary, prepare_boundary, withdraw_queued_inputs};
+use super::live::{LIVE_DOC, LiveGeneration, LiveState, RunEnd, RunFailureReason, end_run};
+use super::prompt::{plan_system_entries, render_sections, replay_sections};
+use super::scheduler::{HookApi, TaskRuntime};
+use super::settings::{AfterFailedRun, CompactionPolicy, ConversationStreamOptions};
+use super::task::{Task, TaskDefinition, define_task};
+use super::types::{CompactionReason, ContextView, ModelRef, UserInput};
+use super::usage::{UsageBucket, record_usage};
+use crate::documents::encode;
+use crate::entries::{ASSISTANT_ENTRY, TypedEntryDraft};
+use crate::errors::{DurableError, DurableResult};
+use crate::ids::{ConversationId, EntryId, SubmissionId, TaskId};
+use crate::session::{Draft, Tx};
+use crate::tasks::{TaskOptions, TaskTrace};
+use crate::types::{
+    EntryDraft, EntryQuery, EntryRecord, HostCallback, JoinPolicy, ReportFrom, SubmissionSettlement, TaskOutcome,
+    TaskOutcomeError, TaskRecord, TaskState,
+};
+
+/// Checkpoint of a generation task.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "phase", rename_all = "camelCase", rename_all_fields = "camelCase")]
+pub enum GenerationCheckpoint {
+    Prepare {
+        attempt: u32,
+        /// The blocking compaction this generation waited for; it starts no other compaction.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        compacted: Option<TaskId>,
+        /// Error text of the overflow that started `compacted`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        overflow: Option<String>,
+        /// Set when the blocking threshold started `compacted`; its outcome is checked once when `prepare` resumes.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        threshold: bool,
+    },
+    Request {
+        attempt: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        compacted: Option<TaskId>,
+        model: ModelRef,
+        thinking_level: ThinkingLevel,
+        /// The settings' request options when preparation committed.
+        stream_options: ConversationStreamOptions,
+        /// Newest entry included in the request.
+        cutoff: EntryId,
+    },
+    Retry {
+        attempt: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        compacted: Option<TaskId>,
+        until: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        poll: Option<DeferredRetryPoll>,
+    },
+    Poll {
+        attempt: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        compacted: Option<TaskId>,
+        model: ModelRef,
+        /// Absent in checkpoints of earlier versions.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        thinking_level: Option<ThinkingLevel>,
+        cutoff: EntryId,
+        handle: DeferredHandle,
+        poll_at: f64,
+    },
+    /// Waiting on the round's tool tasks, which the generation owns.
+    Tools {
+        /// The tool-calling answer.
+        assistant: EntryId,
+        /// Tool tasks created so far, in call order.
+        tools: Vec<TaskId>,
+        /// Calls of a sequential round not started yet, in call order.
+        pending: Vec<String>,
+    },
+}
+
+/// The deferred response to poll again after an interrupted fetch's backoff.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeferredRetryPoll {
+    pub model: ModelRef,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thinking_level: Option<ThinkingLevel>,
+    pub cutoff: EntryId,
+    pub handle: DeferredHandle,
+}
+
+/// Result of a generation task.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GenerationResult {
+    pub entry_id: EntryId,
+}
+
+type Hook<A, R> = Arc<dyn Fn(A, HookApi, Context) -> BoxFuture<'static, DurableResult<R>> + Send + Sync>;
+
+/// Hooks of the built-in generation task.
+#[derive(Clone, Default)]
+pub struct GenerationHooks {
+    /// Before every request, including recovery; the result is used for that request only.
+    pub before_request: Option<Hook<Vec<Message>, Option<Vec<Message>>>>,
+    /// Every terminal provider message, before classification.
+    pub after_response: Option<Hook<AssistantMessage, ()>>,
+    /// A final answer; the first continuation appends a user message and continues the run.
+    pub on_yield: Option<Hook<AssistantMessage, Option<UserInput>>>,
+    /// After every tool of the round is terminal; results are the round's result entries in call order.
+    pub after_tools: Option<Hook<(EntryId, Vec<EntryId>), ()>>,
+}
+
+pub(crate) fn decode(task: &TaskRecord) -> DurableResult<GenerationCheckpoint> {
+    let checkpoint = task.state.checkpoint().cloned().unwrap_or(Json::Null);
+    Ok(checkpoint.deserialize_into()?)
+}
+
+pub(crate) fn running(checkpoint: &GenerationCheckpoint) -> DurableResult<Option<TaskState>> {
+    Ok(Some(TaskState::Running { checkpoint: encode(checkpoint)? }))
+}
+
+pub(crate) fn sleeping(checkpoint: &GenerationCheckpoint, until: f64) -> DurableResult<Option<TaskState>> {
+    Ok(Some(TaskState::Sleeping { checkpoint: encode(checkpoint)?, until }))
+}
+
+pub(crate) fn waiting(checkpoint: &GenerationCheckpoint, on: Vec<TaskId>) -> DurableResult<Option<TaskState>> {
+    Ok(Some(TaskState::Waiting { checkpoint: encode(checkpoint)?, on, policy: JoinPolicy::AllSettled }))
+}
+
+pub(crate) fn completed(result: Json) -> Option<TaskState> {
+    Some(TaskState::Terminal { outcome: TaskOutcome::Completed { result: Some(result) } })
+}
+
+pub(crate) fn failed(message: &str, reason: &str) -> Option<TaskState> {
+    let mut detail = pi_chord::JsonMap::new();
+    detail.insert("reason", reason);
+    let error = TaskOutcomeError { message: message.to_owned(), detail: Some(Json::from(detail)) };
+    Some(TaskState::Terminal { outcome: TaskOutcome::Failed { error, result: None } })
+}
+
+pub(crate) fn unanswered(reason: RunFailureReason, detail: Option<&str>) -> RunEnd {
+    RunEnd::unanswered(reason, detail)
+}
+
+static GENERATION_TASK: LazyLock<Task> = LazyLock::new(|| {
+    let first = GenerationCheckpoint::Prepare { attempt: 1, compacted: None, overflow: None, threshold: false };
+    // Version 2 keeps unoffered calls in a sequential `pending`, flagged on their slots, which version 1 would start
+    // unflagged; so version 1 leaves version 2 blocked. A version 1 record has no such calls and is kept as it is.
+    let definition = TaskDefinition::new("pi.generation", 2, move |_| encode(&first))
+        .migrate(|input, checkpoint, _| Ok((input.clone(), checkpoint.clone())))
+        .phase("prepare", prepare)
+        .phase("request", classify::request)
+        .phase("retry", retry)
+        .phase("poll", classify::poll)
+        .phase("tools", round::tools_phase)
+        .abort(round::abort);
+    define_task(definition)
+});
+
+/// The built-in `pi.generation` task.
+pub fn generation_task() -> Task {
+    GENERATION_TASK.clone()
+}
+
+/// Render the system prompt and tool loadout, append the `pi.system` entries they need, and move to `request`.
+async fn prepare(task: TaskRecord, runtime: TaskRuntime, context: Context) -> DurableResult<()> {
+    if super::live::cut_off_too_often(&task, &runtime) {
+        return restart::end_cut_off(task, runtime, context).await;
+    }
+    let conversation_id = runtime.conversation_id();
+    let agent = runtime.agent(&context).await?;
+    let settings = runtime.settings();
+    let model_ref = agent.model.clone();
+    let resolved = model_ref.as_ref().and_then(|m| runtime.models().get_model(&m.provider, &m.model_id));
+    let (Some(model_ref), Some(resolved)) = (model_ref.clone(), resolved) else {
+        return fail_no_model(&runtime, model_ref.as_ref(), &context).await;
+    };
+    let GenerationCheckpoint::Prepare { attempt, compacted, overflow, threshold: blocked } = decode(&task)? else {
+        return Err(DurableError::error("Generation checkpoint is not in phase prepare"));
+    };
+    if let (Some(compacted), Some(overflow)) = (compacted, &overflow) {
+        let outcomes = runtime.outcomes(&[compacted], &context).await?;
+        let summarized = match outcomes.first() {
+            Some(TaskOutcome::Completed { result: Some(result) }) => result.get("entryId").is_some(),
+            _ => false,
+        };
+        if !summarized {
+            return fail_model_error(&runtime, overflow, &context).await;
+        }
+    }
+    // A threshold compaction that found nothing to compact or was declined leaves a request that may still fit. One
+    // that failed left a context it judged too large: sending it would at best leave no room for the answer.
+    if let (Some(compacted), true) = (compacted, blocked) {
+        let outcomes = runtime.outcomes(&[compacted], &context).await?;
+        if let Some(text) = outcomes.first().and_then(compaction_failure) {
+            return fail_model_error(&runtime, &text, &context).await;
+        }
+    }
+    let view = runtime.context(conversation_id, &context, None).await?;
+    // Only a context ending in a user message or tool results owes an answer; system messages say nothing to answer.
+    let last = view.messages.iter().rfind(|message| !matches!(message, Message::System(_)));
+    if !matches!(last, Some(Message::User(_) | Message::ToolResult(_))) {
+        return fail_nothing_to_answer(&runtime, &context).await;
+    }
+    let shown = replay_sections(&view.messages);
+    let env = match runtime.env(&context).await {
+        Ok(env) => env,
+        Err(error) => {
+            if context.is_cancelled() {
+                return Err(error);
+            }
+            runtime.report_from(&error, ReportFrom::Host(HostCallback::Env));
+            None
+        }
+    };
+    let input = PromptInput {
+        conversation_id,
+        agent: agent.clone(),
+        env,
+        shown: shown.iter().cloned().collect(),
+        read: runtime.scheduler.core.session.clone(),
+    };
+    let report = |error: &DurableError, section: &PromptSection| {
+        runtime.report_from(error, ReportFrom::Extension(section_extension(&agent, &section.key)));
+    };
+    let wanted = render_sections(&agent.sections, &input, &shown, &report, &context).await?;
+    let tools: Vec<_> = agent.tools.iter().map(|tool| tool.tool.clone()).collect();
+    let entries = plan_system_entries(&view, &wanted, &tools, runtime.now());
+    let threshold = match compacted {
+        None => threshold_compaction(&view, &entries, resolved.context_window, &settings.compaction_for(&model_ref)),
+        Some(_) => None,
+    };
+    let owner = runtime.task_id();
+    if threshold == Some(Threshold::Blocking) {
+        // Compact first and prepare again; the transcript is unchanged until the compaction appends.
+        let change = move |tx: Tx, _| async move {
+            let input = CompactionInput { reason: CompactionReason::Threshold, instructions: None };
+            let child = create_compaction(&tx, conversation_id, input, Some(owner)).await?;
+            let checkpoint =
+                GenerationCheckpoint::Prepare { attempt, compacted: Some(child), overflow: None, threshold: true };
+            waiting(&checkpoint, vec![child])
+        };
+        return runtime.commit(change, &context).await;
+    }
+    let thinking_level = agent.thinking_level;
+    let stream_options = settings.stream.clone();
+    let change = move |tx: Tx, _| async move {
+        let page = tx.scan_entries(EntryQuery::new(conversation_id), 1, None).await?;
+        let mut cutoff = page.items.first().map(|entry| entry.id);
+        for entry in entries {
+            cutoff = Some(tx.append_entry(conversation_id, entry).await?.id);
+        }
+        let Some(cutoff) = cutoff else {
+            return Err(DurableError::error(format!("Conversation {conversation_id} has no entries to send")));
+        };
+        // Checked in this commit, so a compaction admitted during preparation counts.
+        let background = threshold == Some(Threshold::Background);
+        if background && tx.doc(&LIVE_DOC, conversation_id).await?.get()?.compactions.is_none() {
+            let input = CompactionInput { reason: CompactionReason::Threshold, instructions: None };
+            create_compaction(&tx, conversation_id, input, None).await?;
+        }
+        let model = model_ref;
+        running(&GenerationCheckpoint::Request { attempt, compacted, model, thinking_level, stream_options, cutoff })
+    };
+    runtime.commit(change, &context).await
+}
+
+/// After the backoff's sleep; a run before `until` (an early wake, or a record of an earlier version) sleeps again.
+async fn retry(task: TaskRecord, runtime: TaskRuntime, context: Context) -> DurableResult<()> {
+    if super::live::cut_off_too_often(&task, &runtime) {
+        return restart::end_cut_off(task, runtime, context).await;
+    }
+    let GenerationCheckpoint::Retry { attempt, compacted, until, poll } = decode(&task)? else {
+        return Err(DurableError::error("Generation checkpoint is not in phase retry"));
+    };
+    if until > runtime.now() {
+        let checkpoint = task.state.checkpoint().cloned().unwrap_or_default();
+        return runtime.sleep_until(until, checkpoint, &context).await;
+    }
+    let conversation_id = runtime.conversation_id();
+    let runtime_ = runtime.clone();
+    let change = move |tx: Tx, _| async move {
+        let live = tx.doc(&LIVE_DOC, conversation_id).await?;
+        let attempt = attempt + 1;
+        if let Some(poll) = poll {
+            let poll_at = runtime_.now();
+            let generation = LiveGeneration {
+                deferred: Some(super::live::DeferredPoll { poll_at }),
+                ..LiveGeneration::new(attempt)
+            };
+            live.edit(|live| live.generation = Some(generation))?;
+            return running(&GenerationCheckpoint::Poll {
+                attempt,
+                compacted,
+                model: poll.model,
+                thinking_level: poll.thinking_level,
+                cutoff: poll.cutoff,
+                handle: poll.handle,
+                poll_at,
+            });
+        }
+        live.edit(|live| live.generation = Some(LiveGeneration::new(attempt)))?;
+        running(&GenerationCheckpoint::Prepare { attempt, compacted, overflow: None, threshold: false })
+    };
+    runtime.commit(change, &context).await
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Threshold {
+    Blocking,
+    Background,
+}
+
+/// Which threshold compaction preparation starts before its request (spec section 8.3).
+fn threshold_compaction(
+    view: &ContextView,
+    planned: &[EntryDraft],
+    context_window: u64,
+    policy: &CompactionPolicy,
+) -> Option<Threshold> {
+    if !policy.enabled || context_window == 0 {
+        return None;
+    }
+    let extra: Vec<Message> = planned.iter().flat_map(|entry| entry.model.clone().unwrap_or_default()).collect();
+    let tokens = estimate_context(view, &extra) as i64;
+    let blocking = context_window as i64 - policy.reserve_tokens as i64;
+    let background = blocking - policy.background_tokens as i64;
+    let over = if tokens > blocking {
+        Threshold::Blocking
+    } else if policy.background_tokens > 0 && tokens > background {
+        Threshold::Background
+    } else {
+        return None;
+    };
+    select_cut(view, policy.keep_recent_tokens).map(|_| over)
+}
+
+/// Error text for a generation whose blocking compaction ended without completing; `None` when it completed.
+fn compaction_failure(outcome: &TaskOutcome) -> Option<String> {
+    match outcome {
+        TaskOutcome::Completed { .. } => None,
+        TaskOutcome::Failed { error, .. } | TaskOutcome::Faulted { error } => {
+            Some(format!("Compaction failed: {}", error.message))
+        }
+        TaskOutcome::Orphaned { reason } => Some(format!("Compaction failed: {reason}")),
+        TaskOutcome::Aborted { .. } => Some("Compaction was aborted".into()),
+    }
+}
+
+/// Settle the run's inputs `unanswered` with `model_error` and fail with `text`.
+pub(crate) async fn fail_model_error(runtime: &TaskRuntime, text: &str, context: &Context) -> DurableResult<()> {
+    let (runtime_, text) = (runtime.clone(), text.to_owned());
+    let change = move |tx: Tx, _| async move {
+        let failure = prepare_failure(&tx, &runtime_).await?;
+        end_failed_run(&tx, &runtime_, failure, unanswered(RunFailureReason::ModelError, Some(&text))).await?;
+        Ok(failed(&text, "model_error"))
+    };
+    runtime.commit(change, context).await
+}
+
+/// Settle the run's inputs `unanswered` with `no_model` and fail.
+pub(crate) async fn fail_no_model(
+    runtime: &TaskRuntime,
+    model: Option<&ModelRef>,
+    context: &Context,
+) -> DurableResult<()> {
+    let message = match model {
+        None => "No model is configured".to_owned(),
+        Some(m) => format!("Model {}/{} is not available", m.provider, m.model_id),
+    };
+    let runtime_ = runtime.clone();
+    let change = move |tx: Tx, _| async move {
+        let failure = prepare_failure(&tx, &runtime_).await?;
+        let end = RunEnd::Unanswered {
+            reason: RunFailureReason::NoModel,
+            detail: Some(message.clone()),
+            settlement: Some(SubmissionSettlement::Unanswered { reason: "no_model".into(), detail: None }),
+        };
+        end_failed_run(&tx, &runtime_, failure, end).await?;
+        Ok(failed(&message, "no_model"))
+    };
+    runtime.commit(change, context).await
+}
+
+/// End the run without a request: its context has nothing the model would answer.
+async fn fail_nothing_to_answer(runtime: &TaskRuntime, context: &Context) -> DurableResult<()> {
+    let runtime_ = runtime.clone();
+    let change = move |tx: Tx, _| async move {
+        let failure = prepare_failure(&tx, &runtime_).await?;
+        end_failed_run(&tx, &runtime_, failure, unanswered(RunFailureReason::NothingToAnswer, None)).await?;
+        Ok(failed("The conversation has nothing to answer", "nothing_to_answer"))
+    };
+    runtime.commit(change, context).await
+}
+
+/// What a failed run's end needs from the table, read before the commit's first table write.
+pub(crate) struct Failure {
+    policy: AfterFailedRun,
+    boundary: Option<Boundary>,
+}
+
+pub(crate) async fn prepare_failure(tx: &Tx, runtime: &TaskRuntime) -> DurableResult<Failure> {
+    let settings = runtime.settings();
+    let policy = settings.after_failed_run;
+    if policy != AfterFailedRun::Continue {
+        return Ok(Failure { policy, boundary: None });
+    }
+    let boundary = prepare_boundary(tx, runtime.conversation_id(), &settings).await?;
+    Ok(Failure { policy, boundary: Some(boundary) })
+}
+
+/// End a failed run as `end` says, and do with the inputs queued behind it what `settings.after_failed_run` says:
+/// keep them, start the next run with them, or withdraw them.
+pub(crate) async fn end_failed_run(tx: &Tx, runtime: &TaskRuntime, failure: Failure, end: RunEnd) -> DurableResult<()> {
+    let conversation_id = runtime.conversation_id();
+    let live = tx.doc(&LIVE_DOC, conversation_id).await?;
+    let mut state = live.get()?;
+    end_run(tx, &mut state, runtime.task_id(), end)?;
+    live.set(&state)?;
+    if failure.policy == AfterFailedRun::Withdraw {
+        withdraw_queued_inputs(tx, conversation_id, "run_failed").await?;
+    }
+    let Some(mut boundary) = failure.boundary else { return Ok(()) };
+    let placed = apply_boundary(tx, &mut boundary, BoundaryAt::Final, runtime.now()).await?;
+    if !placed.users.is_empty() {
+        start_run(tx, conversation_id, &live, placed.users, true).await?;
+    }
+    Ok(())
+}
+
+/// Append a committed partial left by an interrupted request as an aborted assistant entry.
+pub(crate) async fn convert_partial(
+    tx: &Tx,
+    live: &mut LiveState,
+    conversation_id: ConversationId,
+) -> DurableResult<()> {
+    let Some(partial) = live.generation.as_ref().and_then(|generation| generation.message.clone()) else {
+        return Ok(());
+    };
+    let Message::Assistant(mut message) = partial.deserialize_into()? else {
+        return Err(DurableError::error("Committed partial is not an assistant message"));
+    };
+    message.stop_reason = pi_ai::StopReason::Aborted;
+    append_assistant(tx, conversation_id, &message).await?;
+    Ok(())
+}
+
+/// Append a provider result and add its usage to `pi.usage` in the same commit.
+pub(crate) async fn append_assistant(
+    tx: &Tx,
+    conversation_id: ConversationId,
+    message: &AssistantMessage,
+) -> DurableResult<EntryRecord> {
+    let key = format!("{}/{}", message.provider, message.model);
+    record_usage(tx, conversation_id, UsageBucket::Models, &key, &message.usage).await?;
+    let draft = TypedEntryDraft { model: Some(vec![Message::Assistant(message.clone())]), ..TypedEntryDraft::new(()) };
+    Ok(tx.append_typed_entry(&ASSISTANT_ENTRY, conversation_id, draft).await?.record)
+}
+
+/// Start a run for `inputs`, placed input submissions: a new generation takes `pi.live.run`. Removes `run_failure`,
+/// unless `keep_failure`: a run started in the commit that ended the failed one keeps its failure.
+pub(crate) async fn start_run(
+    tx: &Tx,
+    conversation_id: ConversationId,
+    live: &Draft<LiveState>,
+    inputs: Vec<SubmissionId>,
+    keep_failure: bool,
+) -> DurableResult<()> {
+    // The run continues the first input's trace, or starts at the root; the other inputs become links.
+    let mut traces = Vec::new();
+    for id in &inputs {
+        traces.push(tx.current_submission(*id).await?.and_then(|record| record.trace));
+    }
+    let mut options = TaskOptions::conversation(conversation_id);
+    if let Some((first, rest)) = traces.split_first_mut() {
+        options.trace = first.take().map_or(TaskTrace::Root, TaskTrace::Carrier);
+        options.links = rest.iter_mut().filter_map(Option::take).collect();
+    }
+    let task_id = tx.create_task(generation_task(), Json::empty_object(), options).await?;
+    live.edit(|live| {
+        live.run = Some(super::live::LiveRun { task_id, inputs });
+        if !keep_failure {
+            live.run_failure = None;
+        }
+    })
+}
+
+/// A generation owned by its conversation.
+pub(crate) async fn create_generation(tx: &Tx, conversation_id: ConversationId) -> DurableResult<TaskId> {
+    tx.create_task(generation_task(), Json::empty_object(), TaskOptions::conversation(conversation_id)).await
+}
+
+/// Hand run control from `from` to `to`; the run's inputs move with it.
+pub(crate) fn hand_over(live: &mut LiveState, from: TaskId, to: TaskId) {
+    if let Some(run) = live.run.as_mut().filter(|run| run.task_id == from) {
+        run.task_id = to;
+    }
+}
+
+/// The calls `call_ids` of the assistant entry, in the given order.
+pub(crate) fn calls_of(entry: Option<&EntryRecord>, call_ids: &[String]) -> Vec<ToolCall> {
+    let calls: Vec<ToolCall> = match entry.and_then(|entry| entry.model.as_ref()).and_then(|model| model.first()) {
+        Some(Message::Assistant(message)) => message.tool_calls().cloned().collect(),
+        _ => Vec::new(),
+    };
+    call_ids.iter().filter_map(|id| calls.iter().find(|call| call.id == *id).cloned()).collect()
+}

@@ -1,0 +1,1 @@
+﻿Corrija src\Test-Palindrome.ps1. A função Test-Palindrome deve dizer se o texto é um palíndromo, ignorando diferenças de maiúsculas e minúsculas e espaços. Exemplos: 'Ana' -> $true; 'A man a plan a canal Panama' -> $true; 'abc' -> $false. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

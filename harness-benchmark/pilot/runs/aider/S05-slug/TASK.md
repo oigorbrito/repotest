@@ -1,0 +1,1 @@
+﻿Implemente New-Slug em src\New-Slug.ps1. Recebe -Text e retorna um slug: letras minúsculas a-z e dígitos 0-9 são mantidos; qualquer sequência de outros caracteres vira um único '-'; hífens no início e no fim são removidos. Exemplos: 'Teste   de  Slug' -> 'teste-de-slug'; '!!!' -> ''. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.

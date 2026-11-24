@@ -1,0 +1,1305 @@
+package resty
+
+import (
+	"bufio"
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
+	"compress/lzw"
+	"compress/zlib"
+	"errors"
+	"io"
+	"math"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"testing/iotest"
+	"time"
+)
+
+func TestDecodeJSONWhenResponseBodyIsNull(t *testing.T) {
+	r := &Response{
+		Body: io.NopCloser(bytes.NewReader([]byte("null"))),
+	}
+	r.wrapCopyReadCloser()
+	err := r.readAll()
+	assertNil(t, err)
+
+	var result map[int]int
+	err = decodeJSON(r.Body, &result)
+	assertNil(t, err)
+	assertNil(t, result, "expected result to be nil map when JSON is null")
+}
+
+func TestGetMethodWhenResponseIsNull(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("null"))
+	}))
+
+	client := New().SetRetryCount(3).SetCurlCmdGenerate(true)
+
+	var x any
+	resp, err := client.R().SetBody("{}").
+		SetHeader("Content-Type", "application/json; charset=utf-8").
+		SetResponseForceContentType("application/json").
+		SetMethodGetAllowPayload(true).
+		SetResponseBodyUnlimitedReads(true).
+		SetResult(&x).
+		Get(server.URL + "/test")
+
+	assertNil(t, err)
+	assertEqual(t, "null", resp.String())
+	assertNil(t, x, "expected result to be nil when response body is null")
+}
+
+func TestDecodeJSON(t *testing.T) {
+	t.Run("single object", func(t *testing.T) {
+		jsonData := `{"name": "John", "age": 30}`
+		reader := bytes.NewReader([]byte(jsonData))
+		var result map[string]any
+		err := decodeJSON(reader, &result)
+		assertNil(t, err)
+		assertEqual(t, "John", result["name"])
+		assertEqual(t, float64(30), result["age"])
+	})
+
+	t.Run("multiple objects", func(t *testing.T) {
+		multipleJSON := `{"id": 1}
+{"id": 2}
+{"id": 3}`
+		reader2 := bytes.NewReader([]byte(multipleJSON))
+		var result2 map[string]any
+		err := decodeJSON(reader2, &result2)
+		assertNil(t, err)
+		assertEqual(t, float64(3), result2["id"])
+	})
+
+	t.Run("list of objects", func(t *testing.T) {
+		multipleJSON := `[{"id": 1},
+{"id": 2},
+{"id": 3}]`
+		reader2 := bytes.NewReader([]byte(multipleJSON))
+		var result2 []map[string]any
+		err := decodeJSON(reader2, &result2)
+		assertNil(t, err)
+		assertEqual(t, float64(3), result2[2]["id"])
+	})
+
+	t.Run("malformed JSON", func(t *testing.T) {
+		malformedJSON := `{"name": "John", "age":}`
+		reader3 := bytes.NewReader([]byte(malformedJSON))
+		var result3 map[string]any
+		err := decodeJSON(reader3, &result3)
+		assertNotNil(t, err)
+	})
+
+	t.Run("empty body", func(t *testing.T) {
+		emptyJSON := ``
+		reader4 := bytes.NewReader([]byte(emptyJSON))
+		var result4 map[string]any
+		err := decodeJSON(reader4, &result4)
+		assertNil(t, err)
+	})
+
+	t.Run("exceeds maxDecodeObjects limit", func(t *testing.T) {
+		preMaxDecodeObjects := maxDecodeObjects
+		maxDecodeObjects = 51 // Set a lower limit for testing
+		t.Cleanup(func() {
+			maxDecodeObjects = preMaxDecodeObjects // Reset to original value after test
+		})
+
+		// Build a reader that returns maxDecodeObjects+1 objects without EOF
+		// by using a custom reader that signals no EOF until asked enough times.
+		// Simplest approach: patch the limit via the loop by creating a reader
+		// backed by a sufficient number of elements. We instead test the boundary
+		// by constructing exactly that many elements with a streaming reader
+		// built from io.MultiReader.
+		elem := []byte(`{"key": "value"}`)
+		readers := make([]io.Reader, maxDecodeObjects+1)
+		for i := range readers {
+			readers[i] = bytes.NewReader(elem)
+		}
+		r := io.MultiReader(readers...)
+
+		var v map[string]any
+		err := decodeJSON(r, &v)
+		assertNotNil(t, err)
+		assertEqual(t, "resty: JSON decode exceeded 51 objects without EOF", err.Error())
+	})
+}
+
+func TestWrapCopyReadCloser(t *testing.T) {
+	testData := "Hello, World!"
+	r := &Response{
+		Body: io.NopCloser(bytes.NewReader([]byte(testData))),
+	}
+
+	// Before wrapping, bodyBytes should be empty
+	assertEqual(t, 0, len(r.bodyBytes))
+
+	r.wrapCopyReadCloser()
+
+	// Read data - should trigger copy mechanism and transform to nopReadCloser
+	data, err := io.ReadAll(r.Body)
+	assertNil(t, err)
+	assertEqual(t, testData, string(data))
+	assertEqual(t, testData, string(r.bodyBytes))
+
+	// Should now be nopReadCloser for unlimited reads
+	_, ok := r.Body.(*nopReadCloser)
+	assertTrue(t, ok, "expected Body to be of type *nopReadCloser")
+
+	// Test unlimited reads
+	data2, err := io.ReadAll(r.Body)
+	assertNil(t, err)
+	assertEqual(t, testData, string(data2))
+}
+
+func TestMultipleJSONObjectsSupport(t *testing.T) {
+	// Test multiple JSON objects with wrapCopyReadCloser
+	jsonData := `{"first": 1}
+{"second": 2}
+{"third": 3}`
+
+	r := &Response{
+		Body: io.NopCloser(bytes.NewReader([]byte(jsonData))),
+	}
+	r.wrapCopyReadCloser()
+
+	// Should process all objects and get the last one
+	var result map[string]any
+	err := decodeJSON(r.Body, &result)
+	assertNil(t, err)
+	assertEqual(t, float64(3), result["third"])
+
+	// Should support unlimited reads and decoding
+	var result2 map[string]any
+	err = decodeJSON(r.Body, &result2)
+	assertNil(t, err)
+	assertEqual(t, float64(3), result2["third"])
+
+	// Test direct nopReadCloser usage
+	nopReader := &nopReadCloser{
+		r:          bytes.NewReader([]byte(jsonData)),
+		resetOnEOF: true,
+	}
+
+	var result3 map[string]any
+	err = decodeJSON(nopReader, &result3)
+	assertNil(t, err)
+	assertEqual(t, float64(3), result3["third"])
+}
+
+// Test case from GH-#1087 to ensure no panic occurs
+// with gzip.Reader on corrupted gzip data when multiple
+// concurrent requests are made.
+func TestGzipReaderPanicOnConcurrentCorruptedBody(t *testing.T) {
+	writeHeaders := func(w http.ResponseWriter) {
+		w.Header().Set(hdrContentEncodingKey, "gzip")
+		w.Header().Set(hdrContentTypeKey, "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		writeHeaders(w)
+
+		// We want the Client to think it's reading Gzip, but fail immediately
+		// upon processing these bytes.
+		w.Write([]byte{0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x01})
+	})
+	defer ts.Close()
+
+	client := NewWithTransportSettings(&TransportSettings{MaxIdleConns: 1000, MaxIdleConnsPerHost: 1000}).
+		SetRetryCount(2).
+		AddRetryConditions(func(r *Response, err error) bool {
+			return err != nil
+		})
+
+	totalRequests := 100
+	concurrencyLimit := 100
+	sem := make(chan struct{}, concurrencyLimit)
+
+	panicChan := make(chan any, 1)
+	doneChan := make(chan struct{})
+
+	go func() {
+		var wg sync.WaitGroup
+		defer close(doneChan)
+
+		for range totalRequests {
+			select {
+			case <-panicChan:
+				return
+			default:
+			}
+
+			wg.Add(1)
+			sem <- struct{}{}
+
+			go func() {
+				defer wg.Done()
+				defer func() { <-sem }()
+
+				defer func() {
+					if r := recover(); r != nil {
+						select {
+						case panicChan <- r:
+						default:
+						}
+					}
+				}()
+
+				var out map[string]any
+				client.R().
+					SetRetryAllowNonIdempotent(true).
+					SetResult(&out).
+					Post(ts.URL)
+			}()
+		}
+		wg.Wait()
+	}()
+
+	select {
+	case r := <-panicChan:
+		t.Errorf("Test Failed Immediately: Panic detected: %v", r)
+	case <-doneChan:
+		select {
+		case r := <-panicChan:
+			t.Errorf("Test Failed: Panic detected at end of run: %v", r)
+		default:
+			// If we get here, no panic occurred.
+		}
+	}
+
+	// at the end the client should still be functional
+	// and can make valid requests
+	goodServer := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		writeHeaders(w)
+
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		gz.Write([]byte(`{"status": "ok"}`))
+	})
+	defer goodServer.Close()
+
+	var result map[string]string
+	res, err := client.R().
+		SetResult(&result).
+		Post(goodServer.URL)
+
+	assertError(t, err)
+	assertEqual(t, http.StatusOK, res.StatusCode())
+	assertEqual(t, "ok", result["status"], "expected to successfully decode valid gzip response")
+}
+
+func TestGzipReaderAcquireAndResetError(t *testing.T) {
+	t.Run("invalid data", func(t *testing.T) {
+		// Test the scenario where gzip.NewReader fails (pool empty path)
+		invalidData := io.NopCloser(bytes.NewReader([]byte("not gzip data")))
+
+		// This should trigger the gzip.NewReader error path
+		wrapper, err := acquireGzipReader(invalidData)
+		assertNotNil(t, err)
+		assertNil(t, wrapper)
+		assertTrue(t, strings.Contains(err.Error(), "gzip") ||
+			strings.Contains(err.Error(), "header") ||
+			strings.Contains(err.Error(), "invalid"),
+			"expected gzip-related error, got: "+err.Error())
+	})
+
+	t.Run("reset error", func(t *testing.T) {
+		// Test the scenario where Reset fails (pool hit path)
+		validData := io.NopCloser(bytes.NewReader(createGzipValidData()))
+
+		// First acquire to populate the pool
+		wrapper, err := acquireGzipReader(validData)
+		assertNil(t, err)
+		assertNotNil(t, wrapper)
+		releaseGzipReader(wrapper)
+
+		errorReader := &brokenReadCloser{}
+
+		// Now acquire again with a broken reader to trigger Reset error on pool-hit path
+		wrapper2, err := acquireGzipReader(errorReader)
+		assertNotNil(t, err)
+		assertNil(t, wrapper2)
+		assertTrue(t, strings.Contains(err.Error(), "read error"))
+	})
+}
+
+func TestGzipReaderPoolConcurrentAccess(t *testing.T) {
+	// Test concurrent pool access to ensure thread safety
+
+	const numGoroutines = 10
+	const numOperations = 5
+
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	for range numGoroutines {
+		go func() {
+			defer wg.Done()
+
+			for range numOperations {
+				// Create fresh data for each operation
+				validData := io.NopCloser(bytes.NewReader(createGzipValidData()))
+				wrapper, err := acquireGzipReader(validData)
+				assertNil(t, err)
+				assertNotNil(t, wrapper)
+
+				// Use the reader briefly
+				_, err = wrapper.gr.Read(make([]byte, 5))
+				assertNil(t, err)
+
+				// Release back to pool
+				releaseGzipReader(wrapper)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+// Helper functions for testing
+
+func createGzipValidData() []byte {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	zw.Write([]byte("test data"))
+	zw.Close()
+	return buf.Bytes()
+}
+
+func createDeflateValidData() []byte {
+	var buf bytes.Buffer
+	zw, _ := flate.NewWriter(&buf, flate.BestSpeed)
+	zw.Write([]byte("test data"))
+	zw.Close()
+	return buf.Bytes()
+}
+
+// Test case to ensure no panic occurs with flate.Reader on corrupted deflate data
+// when multiple concurrent requests are made.
+func TestDeflateReaderPanicOnConcurrentCorruptedBody(t *testing.T) {
+	writeHeaders := func(w http.ResponseWriter) {
+		w.Header().Set(hdrContentEncodingKey, "deflate")
+		w.Header().Set(hdrContentTypeKey, "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+
+	ts := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		writeHeaders(w)
+		// Send bytes that are not valid deflate data to force a read error.
+		w.Write([]byte{0xde, 0xad, 0xbe, 0xef, 0x00, 0x01, 0x02, 0x03})
+	})
+	defer ts.Close()
+
+	client := NewWithTransportSettings(&TransportSettings{MaxIdleConns: 1000, MaxIdleConnsPerHost: 1000}).
+		SetRetryCount(2).
+		AddRetryConditions(func(r *Response, err error) bool {
+			return err != nil
+		})
+
+	totalRequests := 100
+	concurrencyLimit := 100
+	sem := make(chan struct{}, concurrencyLimit)
+
+	panicChan := make(chan any, 1)
+	doneChan := make(chan struct{})
+
+	go func() {
+		var wg sync.WaitGroup
+		defer close(doneChan)
+
+		for range totalRequests {
+			select {
+			case <-panicChan:
+				return
+			default:
+			}
+
+			wg.Add(1)
+			sem <- struct{}{}
+
+			go func() {
+				defer wg.Done()
+				defer func() { <-sem }()
+
+				defer func() {
+					if r := recover(); r != nil {
+						select {
+						case panicChan <- r:
+						default:
+						}
+					}
+				}()
+
+				var out map[string]any
+				client.R().
+					SetRetryAllowNonIdempotent(true).
+					SetResult(&out).
+					Post(ts.URL)
+			}()
+		}
+		wg.Wait()
+	}()
+
+	select {
+	case r := <-panicChan:
+		t.Errorf("Test Failed Immediately: Panic detected: %v", r)
+	case <-doneChan:
+		select {
+		case r := <-panicChan:
+			t.Errorf("Test Failed: Panic detected at end of run: %v", r)
+		default:
+			// If we get here, no panic occurred.
+		}
+	}
+
+	// at the end the client should still be functional
+	// and can make valid requests
+	goodServer := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+		writeHeaders(w)
+		zw, _ := flate.NewWriter(w, flate.BestSpeed)
+		defer zw.Close()
+		zw.Write([]byte(`{"status": "ok"}`))
+	})
+	defer goodServer.Close()
+
+	var result map[string]string
+	res, err := client.R().
+		SetResult(&result).
+		Post(goodServer.URL)
+
+	assertError(t, err)
+	assertEqual(t, http.StatusOK, res.StatusCode())
+	assertEqual(t, "ok", result["status"], "expected to successfully decode valid deflate response")
+}
+
+func TestDeflateReaderPoolAcquireAndRead(t *testing.T) {
+	// Test successful creation and read with valid deflate data
+	validData := io.NopCloser(bytes.NewReader(createDeflateValidData()))
+	wrapper, err := acquireDeflateReader(validData, validData)
+	assertNil(t, err)
+	assertNotNil(t, wrapper)
+
+	buf := make([]byte, 128)
+	// flate.Reader may return (n, io.EOF) in the same call on the final read; ignore it.
+	n, _ := wrapper.Read(buf)
+	assertTrue(t, n > 0, "expected to read some bytes from valid deflate data")
+	assertEqual(t, "test data", strings.TrimRight(string(buf[:n]), "\x00"))
+
+	wrapper.Close()
+
+	// Test that Read on a closed wrapper returns io.EOF
+	_, err = wrapper.Read(buf)
+	assertEqual(t, io.EOF, err)
+}
+
+func TestDeflateReaderPoolConcurrentAccess(t *testing.T) {
+	// Test concurrent pool access to ensure thread safety
+	const numGoroutines = 10
+	const numOperations = 5
+
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	for range numGoroutines {
+		go func() {
+			defer wg.Done()
+
+			for range numOperations {
+				// Create fresh data for each operation
+				validData := io.NopCloser(bytes.NewReader(createDeflateValidData()))
+				wrapper, err := acquireDeflateReader(validData, validData)
+				assertNil(t, err)
+				assertNotNil(t, wrapper)
+
+				// Use the reader briefly
+				_, err = wrapper.fr.Read(make([]byte, 5))
+				assertNil(t, err)
+
+				// Release back to pool
+				releaseDeflateReader(wrapper)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestLimitCloserResetterInterface(t *testing.T) {
+	testStr := "This is limit reset test"
+	testStrLen := int64(len(testStr))
+	r := bytes.NewReader([]byte(testStr))
+	lc := &limitReadCloser{
+		r: r,
+		l: testStrLen,
+		f: func(total int64) {},
+	}
+	assertEqual(t, testStrLen, lc.l)
+
+	rc := nopReadCloser{r: lc, resetOnEOF: true}
+	rc.Read(make([]byte, 25)) // read to reach total size
+	assertEqual(t, testStrLen, lc.l)
+	assertEqual(t, testStrLen, lc.t)
+
+	rc.Reset() // reset should change the total to 0
+	assertEqual(t, int64(0), lc.t)
+}
+
+func TestDecodeXML(t *testing.T) {
+	type Item struct {
+		Name string `xml:"name"`
+	}
+
+	t.Run("single object", func(t *testing.T) {
+		data := `<Item><name>foo</name></Item>`
+		var v Item
+		err := decodeXML(bytes.NewReader([]byte(data)), &v)
+		assertNil(t, err)
+		assertEqual(t, "foo", v.Name)
+	})
+
+	t.Run("multiple objects - last one wins", func(t *testing.T) {
+		data := `<Item><name>first</name></Item><Item><name>last</name></Item>`
+		var v Item
+		err := decodeXML(bytes.NewReader([]byte(data)), &v)
+		assertNil(t, err)
+		assertEqual(t, "last", v.Name)
+	})
+
+	t.Run("malformed XML returns error", func(t *testing.T) {
+		data := `<Item><name>broken</name>`
+		var v Item
+		err := decodeXML(bytes.NewReader([]byte(data)), &v)
+		assertNotNil(t, err)
+	})
+
+	t.Run("exceeds maxDecodeObjects limit", func(t *testing.T) {
+		preMaxDecodeObjects := maxDecodeObjects
+		maxDecodeObjects = 51 // Set a lower limit for testing
+		t.Cleanup(func() {
+			maxDecodeObjects = preMaxDecodeObjects // Reset to original value after test
+		})
+
+		// Build a reader that returns maxDecodeObjects+1 objects without EOF
+		// by using a custom reader that signals no EOF until asked enough times.
+		// Simplest approach: patch the limit via the loop by creating a reader
+		// backed by a sufficient number of elements. We instead test the boundary
+		// by constructing exactly that many elements with a streaming reader
+		// built from io.MultiReader.
+		elem := []byte(`<Item><name>x</name></Item>`)
+		readers := make([]io.Reader, maxDecodeObjects+1)
+		for i := range readers {
+			readers[i] = bytes.NewReader(elem)
+		}
+		r := io.MultiReader(readers...)
+
+		var v Item
+		err := decodeXML(r, &v)
+		assertNotNil(t, err)
+		assertEqual(t, "resty: XML decode exceeded 51 objects without EOF", err.Error())
+	})
+}
+
+func TestCancelReadCloser(t *testing.T) {
+	t.Run("read delegates to inner reader", func(t *testing.T) {
+		data := []byte("hello resty")
+		rc := &cancelReadCloser{
+			r:      io.NopCloser(bytes.NewReader(data)),
+			cancel: func() {},
+		}
+		buf := make([]byte, len(data))
+		n, err := rc.Read(buf)
+		assertNil(t, err)
+		assertEqual(t, len(data), n)
+		assertEqual(t, string(data), string(buf))
+	})
+
+	t.Run("close calls cancel", func(t *testing.T) {
+		canceled := false
+		rc := &cancelReadCloser{
+			r:      io.NopCloser(strings.NewReader("")),
+			cancel: func() { canceled = true },
+		}
+		err := rc.Close()
+		assertNil(t, err)
+		assertTrue(t, canceled, "expected cancel to be called on Close")
+	})
+
+	t.Run("close returns inner error", func(t *testing.T) {
+		closeErr := errors.New("inner close error")
+		canceled := false
+		rc := &cancelReadCloser{
+			r:      &errReadCloser{closeErr: closeErr},
+			cancel: func() { canceled = true },
+		}
+		err := rc.Close()
+		assertEqual(t, closeErr, err)
+		assertTrue(t, canceled, "expected cancel to be called even when inner Close errors")
+	})
+}
+
+// errReadCloser is a ReadCloser whose Close returns a fixed error.
+type errReadCloser struct {
+	closeErr error
+}
+
+func (e *errReadCloser) Read(p []byte) (int, error) { return 0, io.EOF }
+func (e *errReadCloser) Close() error               { return e.closeErr }
+
+func TestStreamMisc(t *testing.T) {
+	t.Run("wrapper gzip reader is nil", func(t *testing.T) {
+		// Simulate a scenario where gzip.NewReader returns a wrapper with nil gr
+		// due to an error, and ensure that Read on the wrapper does not panic
+		// and returns an appropriate error instead.
+		gzipReader := &gzipReaderWrapper{mu: new(sync.Mutex)}
+		n, err := gzipReader.Read(make([]byte, 5))
+		assertNotNil(t, err)
+		assertErrorIs(t, io.EOF, err)
+		assertEqual(t, 0, n)
+
+	})
+}
+
+// RFC 9110 section 8.4.1.2 defines the "deflate" content coding as a zlib
+// stream (RFC 1950) wrapping deflate-compressed data (RFC 1951). Resty
+// advertises deflate but decoded with compress/flate, so a conforming server's
+// response failed to decode -- and readAll mapped the resulting
+// io.ErrUnexpectedEOF to nil, surfacing a 200 with an empty body.
+func TestDecompressDeflateAcceptsZlibAndRawStreams(t *testing.T) {
+	const payload = `{"hello":"world"}`
+
+	var zlibFramed bytes.Buffer
+	zw := zlib.NewWriter(&zlibFramed)
+	_, _ = zw.Write([]byte(payload))
+	assertNil(t, zw.Close())
+
+	var rawFramed bytes.Buffer
+	fw, err := flate.NewWriter(&rawFramed, flate.DefaultCompression)
+	assertNil(t, err)
+	_, _ = fw.Write([]byte(payload))
+	assertNil(t, fw.Close())
+
+	for _, tc := range []struct {
+		name string
+		body []byte
+	}{
+		{"zlib framed, per RFC 9110", zlibFramed.Bytes()},
+		{"raw deflate, as many servers send", rawFramed.Bytes()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Encoding", "deflate")
+				w.Header().Set(hdrContentTypeKey, "application/json")
+				_, _ = w.Write(tc.body)
+			}))
+			defer ts.Close()
+
+			c := dcnl().SetBaseURL(ts.URL)
+			defer c.Close()
+
+			res, err := c.R().Get("/")
+			assertError(t, err)
+			assertEqual(t, http.StatusOK, res.StatusCode())
+			assertEqual(t, payload, res.String())
+		})
+	}
+}
+
+func TestIsZlibWrapped(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		in     []byte
+		expect bool
+	}{
+		{"zlib default compression", []byte{0x78, 0x9c}, true},
+		{"zlib best compression", []byte{0x78, 0xda}, true},
+		{"raw deflate block", []byte{0x00, 0x01}, false},
+		{"wrong compression method", []byte{0x71, 0x9c}, false},
+		{"too short to tell", []byte{0x78}, false},
+		{"empty", nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertEqual(t, tc.expect, isZlibWrapped(bufio.NewReader(bytes.NewReader(tc.in))))
+		})
+	}
+}
+
+// A header that passes the zlib sniff but that zlib.NewReader rejects (FDICT set,
+// so the stream needs a preset dictionary) must surface as an error rather than
+// an empty body.
+func TestDecompressDeflateZlibHeaderError(t *testing.T) {
+	// 0x78 0x20: CM=deflate, FDICT set, and (0x7820 % 31) == 0
+	body := []byte{0x78, 0x20, 0x00, 0x00, 0x00, 0x00}
+	assertEqual(t, true, isZlibWrapped(bufio.NewReader(bytes.NewReader(body))))
+
+	_, err := decompressDeflate(io.NopCloser(bytes.NewReader(body)))
+	assertNotNil(t, err)
+}
+
+type bodyLimitReaderFunc func([]byte) (int, error)
+
+func (f bodyLimitReaderFunc) Read(p []byte) (int, error) { return f(p) }
+
+func TestLimitReadCloserProbe(t *testing.T) {
+	readErr := errors.New("body read failed")
+	for _, limit := range []int64{5, math.MaxInt64} {
+		for _, tc := range []struct {
+			name string
+			n    int
+			err  error
+		}{
+			{"no progress", 0, nil},
+			{"EOF", 0, io.EOF},
+			{"read error", 0, readErr},
+			{"extra byte", 1, nil},
+			{"extra byte with EOF", 1, io.EOF},
+			{"extra byte with error", 1, readErr},
+		} {
+			t.Run(tc.name+"/"+strconv.FormatInt(limit, 10), func(t *testing.T) {
+				calls := 0
+				lc := &limitReadCloser{
+					l: limit, t: limit,
+					r: bodyLimitReaderFunc(func(p []byte) (int, error) {
+						calls++
+						assertEqual(t, 1, len(p))
+						p[0] = '!'
+						return tc.n, tc.err
+					}),
+					f: func(int64) { t.Error("probe changed the reported size") },
+				}
+				n, err := lc.Read(nil)
+				assertEqual(t, 0, n)
+				assertNil(t, err)
+				assertEqual(t, 0, calls)
+
+				buf := []byte("unchanged")
+				n, err = lc.Read(buf)
+				assertEqual(t, 0, n)
+				assertEqual(t, "unchanged", string(buf))
+				assertEqual(t, limit, lc.t)
+				assertEqual(t, 1, calls)
+				if tc.n == 0 {
+					assertEqual(t, tc.err, err)
+					// A zero-byte, nil-error read must not be mistaken for EOF.
+					lc.r = strings.NewReader("")
+					n, err = lc.Read(buf)
+					assertEqual(t, 0, n)
+					assertEqual(t, io.EOF, err)
+				} else {
+					assertEqual(t, ErrReadExceedsThresholdLimit, err)
+					for range 2 {
+						n, err = lc.Read(buf)
+						assertEqual(t, 0, n)
+						assertEqual(t, ErrReadExceedsThresholdLimit, err)
+					}
+					assertEqual(t, 1, calls)
+					n, err = lc.Read(nil)
+					assertEqual(t, 0, n)
+					assertNil(t, err)
+					assertEqual(t, 1, calls)
+				}
+			})
+		}
+	}
+}
+
+func TestLimitReadCloserResetAfterOverflow(t *testing.T) {
+	r := strings.NewReader("hello!")
+	var size int64
+	lc := &limitReadCloser{r: r, l: 5, f: func(n int64) { size = n }}
+	n, err := lc.Read(nil)
+	assertEqual(t, 0, n)
+	assertNil(t, err)
+	assertEqual(t, 6, r.Len())
+	body, err := io.ReadAll(lc)
+	assertEqual(t, "hello", string(body))
+	assertEqual(t, ErrReadExceedsThresholdLimit, err)
+	assertEqual(t, int64(5), size)
+
+	r.Reset("hello")
+	assertNil(t, lc.Reset())
+	assertEqual(t, int64(0), lc.t)
+	body, err = io.ReadAll(lc)
+	assertNil(t, err)
+	assertEqual(t, "hello", string(body))
+	assertEqual(t, int64(5), size)
+}
+
+func TestLimitReadCloserBoundary(t *testing.T) {
+	readErr := errors.New("body read failed")
+	for _, tc := range []struct {
+		name  string
+		body  io.Reader
+		limit int64
+		want  string
+		err   error
+	}{
+		{"empty", strings.NewReader(""), 5, "", nil},
+		{"below limit", strings.NewReader("hell"), 5, "hell", nil},
+		{"exact limit", strings.NewReader("hello"), 5, "hello", nil},
+		{"over limit", strings.NewReader("hello!"), 5, "hello", ErrReadExceedsThresholdLimit},
+		{"exact limit with EOF", iotest.DataErrReader(strings.NewReader("hello")), 5, "hello", nil},
+		{"over limit with EOF", iotest.DataErrReader(strings.NewReader("hello!")), 5, "hello", ErrReadExceedsThresholdLimit},
+		{"one byte reads", iotest.OneByteReader(strings.NewReader("hello")), 5, "hello", nil},
+		{"error after limit", io.MultiReader(strings.NewReader("hello"), iotest.ErrReader(readErr)), 5, "hello", readErr},
+		{"zero limit", strings.NewReader("hello!"), 0, "hello!", nil},
+		{"negative limit", strings.NewReader("hello!"), -1, "hello!", nil},
+		{"maximum limit", strings.NewReader("hello"), math.MaxInt64, "hello", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var size int64
+			lc := &limitReadCloser{r: tc.body, l: tc.limit, f: func(n int64) { size = n }}
+			body, err := io.ReadAll(lc)
+			assertEqual(t, tc.err, err)
+			assertEqual(t, tc.want, string(body))
+			assertEqual(t, int64(len(tc.want)), size)
+			assertEqual(t, size, lc.t)
+		})
+	}
+}
+
+func TestResponseBodyLimitBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		body string
+		want string
+		err  error
+	}{
+		{"below limit", "hell", "hell", nil},
+		{"exact limit", "hello", "hello", nil},
+		{"over limit", "hello!", "hello", ErrReadExceedsThresholdLimit},
+	} {
+		for _, requestLimit := range []bool{false, true} {
+			for _, unlimitedReads := range []bool{false, true} {
+				t.Run(tc.name+"/requestLimit="+strconv.FormatBool(requestLimit)+"/unlimitedReads="+strconv.FormatBool(unlimitedReads), func(t *testing.T) {
+					c := New().SetResponseBodyLimit(5).SetResponseBodyUnlimitedReads(unlimitedReads)
+					t.Cleanup(func() { c.Close() })
+					c.SetTransport(roundTripFunc(func(r *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode:    http.StatusOK,
+							Header:        http.Header{"Content-Type": {"text/plain"}},
+							Body:          io.NopCloser(strings.NewReader(tc.body)),
+							ContentLength: int64(len(tc.body)),
+							Request:       r,
+						}, nil
+					}))
+					if requestLimit {
+						c.SetResponseBodyLimit(3)
+					}
+					r := c.R()
+					if requestLimit {
+						r.SetResponseBodyLimit(5)
+					}
+					resp, err := r.Get("http://example.test/")
+					assertEqual(t, tc.err, err)
+					assertEqual(t, tc.want, string(resp.Bytes()))
+					assertEqual(t, int64(len(tc.want)), resp.Size())
+				})
+			}
+		}
+	}
+}
+
+func TestResponseBodyLimitJSON(t *testing.T) {
+	const body = `{"name":"resty"}`
+	for _, compressed := range []bool{false, true} {
+		for _, unlimitedReads := range []bool{false, true} {
+			for _, extra := range []string{"", " "} {
+				t.Run("gzip="+strconv.FormatBool(compressed)+"/unlimitedReads="+strconv.FormatBool(unlimitedReads)+"/extra="+strconv.Itoa(len(extra)), func(t *testing.T) {
+					c := New().SetResponseBodyLimit(int64(len(body))).SetResponseBodyUnlimitedReads(unlimitedReads)
+					t.Cleanup(func() { c.Close() })
+					c.SetTransport(roundTripFunc(func(r *http.Request) (*http.Response, error) {
+						var data io.Reader = strings.NewReader(body + extra)
+						header := http.Header{"Content-Type": {"application/json"}}
+						if compressed {
+							var buf bytes.Buffer
+							w := gzip.NewWriter(&buf)
+							_, err := io.WriteString(w, body+extra)
+							assertNil(t, err)
+							assertNil(t, w.Close())
+							data = &buf
+							header.Set("Content-Encoding", "gzip")
+						}
+						return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(data), Request: r}, nil
+					}))
+					var result struct{ Name string }
+					resp, err := c.R().SetResult(&result).Get("http://example.test/")
+					if extra == "" {
+						assertNil(t, err)
+						assertEqual(t, "resty", result.Name)
+					} else {
+						assertEqual(t, ErrReadExceedsThresholdLimit, err)
+					}
+					assertEqual(t, int64(len(body)), resp.Size())
+					if unlimitedReads {
+						assertEqual(t, body, string(resp.Bytes()))
+						for range 2 {
+							data, err := io.ReadAll(resp.Body)
+							assertNil(t, err)
+							assertEqual(t, body, string(data))
+						}
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestLimitReadCloserMaxInt64Boundary(t *testing.T) {
+	var size int64
+	lc := &limitReadCloser{r: strings.NewReader("xy"), l: math.MaxInt64, t: math.MaxInt64 - 1, f: func(n int64) { size = n }}
+	body, err := io.ReadAll(lc)
+	assertEqual(t, "x", string(body))
+	assertEqual(t, ErrReadExceedsThresholdLimit, err)
+	assertEqual(t, int64(math.MaxInt64), size)
+	assertEqual(t, size, lc.t)
+}
+
+type blockedCompressedBody struct {
+	prefix     *bytes.Reader
+	reading    chan struct{}
+	closed     chan struct{}
+	readOnce   sync.Once
+	closeOnce  sync.Once
+	closeCalls atomic.Int32
+}
+
+func (r *blockedCompressedBody) Read(p []byte) (int, error) {
+	if r.prefix.Len() > 0 {
+		return r.prefix.Read(p)
+	}
+	r.readOnce.Do(func() { close(r.reading) })
+	<-r.closed
+	return 0, io.ErrClosedPipe
+}
+func (r *blockedCompressedBody) Close() error {
+	r.closeCalls.Add(1)
+	r.closeOnce.Do(func() { close(r.closed) })
+	return nil
+}
+
+func TestCompressedBodyCloseUnblocksRead(t *testing.T) {
+	for _, encoding := range []string{"gzip", "zlib", "raw deflate"} {
+		t.Run(encoding, func(t *testing.T) {
+			var prefix bytes.Buffer
+			var writer interface {
+				io.WriteCloser
+				Flush() error
+			}
+			var decode ContentDecompresser
+			switch encoding {
+			case "gzip":
+				writer = gzip.NewWriter(&prefix)
+				decode = decompressGzip
+			case "zlib":
+				writer = zlib.NewWriter(&prefix)
+				decode = decompressDeflate
+			default:
+				writer, _ = flate.NewWriter(&prefix, flate.DefaultCompression)
+				decode = decompressDeflate
+			}
+			_, err := writer.Write([]byte("partial response"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := writer.Flush(); err != nil {
+				t.Fatal(err)
+			}
+			source := &blockedCompressedBody{prefix: bytes.NewReader(bytes.Clone(prefix.Bytes())), reading: make(chan struct{}), closed: make(chan struct{})}
+			if err := writer.Close(); err != nil {
+				t.Fatal(err)
+			}
+			defer source.Close()
+			body, err := decode(source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			readDone := make(chan struct{})
+			go func() { _, _ = io.Copy(io.Discard, body); close(readDone) }()
+			<-source.reading
+			closeDone := make(chan struct{})
+			go func() { _ = body.Close(); close(closeDone) }()
+			select {
+			case <-closeDone:
+			case <-time.After(time.Second):
+				source.Close()
+				<-closeDone
+				<-readDone
+				t.Fatal("Close blocked behind Read instead of closing the source")
+			}
+			select {
+			case <-readDone:
+			case <-time.After(time.Second):
+				t.Fatal("Read remained blocked after Close")
+			}
+			var closes sync.WaitGroup
+			for range 8 {
+				closes.Add(1)
+				go func() { defer closes.Done(); _ = body.Close() }()
+			}
+			closes.Wait()
+			if got := source.closeCalls.Load(); got != 1 {
+				t.Fatalf("source closed %d times, want once", got)
+			}
+		})
+	}
+}
+
+func TestStreamingCompressedResponseCanBeClosed(t *testing.T) {
+	for _, encoding := range []string{"gzip", "zlib", "raw deflate"} {
+		t.Run(encoding, func(t *testing.T) {
+			released := make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				contentEncoding := "deflate"
+				if encoding == "gzip" {
+					contentEncoding = "gzip"
+				}
+				w.Header().Set("Content-Encoding", contentEncoding)
+				var compressor interface {
+					io.WriteCloser
+					Flush() error
+				}
+				if encoding == "gzip" {
+					compressor = gzip.NewWriter(w)
+				} else if encoding == "zlib" {
+					compressor = zlib.NewWriter(w)
+				} else {
+					compressor, _ = flate.NewWriter(w, flate.DefaultCompression)
+				}
+				_, _ = io.WriteString(compressor, "partial response")
+				_ = compressor.Flush()
+				w.(http.Flusher).Flush()
+				select {
+				case <-r.Context().Done():
+				case <-released:
+				}
+				_ = compressor.Close()
+			}))
+			defer server.Close()
+			defer close(released)
+			var bodyRead *observedHTTPBody
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			defer transport.CloseIdleConnections()
+			c := dcnl().SetResponseDoNotParse(true).SetHeader("Accept-Encoding", "gzip, deflate").
+				SetTransport(roundTripFunc(func(req *http.Request) (*http.Response, error) {
+					res, err := transport.RoundTrip(req)
+					if err == nil {
+						bodyRead = &observedHTTPBody{ReadCloser: res.Body, reading: make(chan struct{})}
+						res.Body = bodyRead
+					}
+					return res, err
+				}))
+			defer c.Close()
+			response, err := c.R().Get(server.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			prefix := make([]byte, len("partial response"))
+			if _, err := io.ReadFull(response.Body, prefix); err != nil {
+				t.Fatal(err)
+			}
+			assertEqual(t, "partial response", string(prefix))
+			bodyRead.armed.Store(true)
+			readDone := make(chan struct{})
+			go func() { _, _ = io.Copy(io.Discard, response.Body); close(readDone) }()
+			select {
+			case <-bodyRead.reading:
+			case <-time.After(time.Second):
+				t.Fatal("Read did not reach the HTTP body")
+			}
+			closeDone := make(chan struct{})
+			go func() { _ = response.Body.Close(); close(closeDone) }()
+			select {
+			case <-closeDone:
+			case <-time.After(time.Second):
+				t.Fatal("streaming response Close blocked")
+			}
+			select {
+			case <-readDone:
+			case <-time.After(time.Second):
+				t.Fatal("streaming response Read remained blocked")
+			}
+		})
+	}
+}
+
+// Signals only after the decoder has entered its locked Read path.
+type observedHTTPBody struct {
+	io.ReadCloser
+	armed   atomic.Bool
+	once    sync.Once
+	reading chan struct{}
+}
+
+func (r *observedHTTPBody) Read(p []byte) (int, error) {
+	if r.armed.Load() {
+		r.once.Do(func() { close(r.reading) })
+	}
+	return r.ReadCloser.Read(p)
+}
+
+func TestTruncatedResponseBody(t *testing.T) {
+	const payload = "short"
+	var compressed bytes.Buffer
+	gz := gzip.NewWriter(&compressed)
+	_, err := io.WriteString(gz, payload)
+	assertNil(t, err)
+	assertNil(t, gz.Close())
+
+	for _, tc := range []struct {
+		name, encoding, contentLength string
+		body                          []byte
+	}{
+		{"short content length", "", "20", []byte(payload)},
+		{"truncated gzip trailer", "gzip", "", compressed.Bytes()[:compressed.Len()-4]},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				if tc.encoding != "" {
+					w.Header().Set("Content-Encoding", tc.encoding)
+				}
+				if tc.contentLength != "" {
+					w.Header().Set("Content-Length", tc.contentLength)
+				}
+				_, _ = w.Write(tc.body)
+			}))
+			defer ts.Close()
+
+			for _, mode := range []string{"default", "debug", "unlimited reads"} {
+				t.Run(mode, func(t *testing.T) {
+					c := dcnl().SetDebug(mode == "debug").SetResponseBodyUnlimitedReads(mode == "unlimited reads")
+					defer c.Close()
+
+					res, err := c.R().Get(ts.URL)
+					assertErrorIs(t, io.ErrUnexpectedEOF, err)
+					assertEqual(t, payload, string(res.Bytes()))
+				})
+			}
+		})
+	}
+}
+
+func TestEmptyEncodedResponseBody(t *testing.T) {
+	for _, encoding := range []string{"gzip", "deflate", "compress"} {
+		t.Run(encoding, func(t *testing.T) {
+			var compressed bytes.Buffer
+			var w io.WriteCloser
+			switch encoding {
+			case "gzip":
+				w = gzip.NewWriter(&compressed)
+			case "deflate":
+				w = zlib.NewWriter(&compressed)
+			case "compress":
+				w = lzw.NewWriter(&compressed, lzw.LSB, 8)
+			}
+			assertNil(t, w.Close())
+
+			for _, body := range []string{"encoded empty", "zero length", "chunked empty"} {
+				t.Run(body, func(t *testing.T) {
+					ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "text/plain")
+						w.Header().Set("Content-Encoding", encoding)
+						switch body {
+						case "encoded empty":
+							_, _ = w.Write(compressed.Bytes())
+						case "zero length":
+							w.Header().Set("Content-Length", "0")
+						case "chunked empty":
+							w.(http.Flusher).Flush()
+						}
+					}))
+					defer ts.Close()
+
+					for _, mode := range []string{"default", "debug", "unlimited reads"} {
+						t.Run(mode, func(t *testing.T) {
+							c := dcnl().SetDebug(mode == "debug").SetResponseBodyUnlimitedReads(mode == "unlimited reads")
+							defer c.Close()
+							c.AddContentDecompresser("compress", func(r io.ReadCloser) (io.ReadCloser, error) {
+								return &lzwReader{s: r, r: lzw.NewReader(r, lzw.LSB, 8)}, nil
+							})
+
+							res, err := c.R().Get(ts.URL)
+							assertNil(t, err)
+							assertEqual(t, "", string(res.Bytes()))
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
+// responseReadErrorBody returns data and an error once, then EOF, and records Close.
+type responseReadErrorBody struct {
+	payload string
+	err     error
+	closed  bool
+}
+
+func (r *responseReadErrorBody) Read(p []byte) (int, error) {
+	n := copy(p, r.payload)
+	r.payload = r.payload[n:]
+	if len(r.payload) == 0 {
+		err := r.err
+		r.err = io.EOF
+		return n, err
+	}
+	return n, nil
+}
+
+func (r *responseReadErrorBody) Close() error {
+	r.closed = true
+	return nil
+}
+
+func TestResponseReadErrorPreservesBodyAndClosesSource(t *testing.T) {
+	readErr := errors.New("response read failed")
+	for _, tc := range []struct {
+		name, payload, encoding string
+		err                     error
+	}{
+		{"unexpected EOF with data", "short", "", io.ErrUnexpectedEOF},
+		{"read error with data", "short", "", readErr},
+		{"read error without data", "", "", readErr},
+		{"empty encoded source", "", "deflate", io.EOF},
+		{"truncated encoded source", "", "deflate", io.ErrUnexpectedEOF},
+		{"encoded source read error", "", "gzip", readErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, mode := range []string{"default", "debug", "unlimited reads"} {
+				t.Run(mode, func(t *testing.T) {
+					body := &responseReadErrorBody{payload: tc.payload, err: tc.err}
+					c := dcnl().SetDebug(mode == "debug").SetResponseBodyUnlimitedReads(mode == "unlimited reads")
+					defer c.Close()
+					c.SetTransport(roundTripFunc(func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Header: http.Header{
+								"Content-Type":     {"text/plain"},
+								"Content-Encoding": {tc.encoding},
+							},
+							Body: body,
+						}, nil
+					}))
+
+					res, err := c.R().Get("http://example.test")
+					if tc.err == io.EOF {
+						assertNil(t, err)
+					} else {
+						assertErrorIs(t, tc.err, err)
+					}
+					assertTrue(t, body.closed, "response source must be closed")
+					assertEqual(t, tc.payload, string(res.Bytes()))
+				})
+			}
+		})
+	}
+}

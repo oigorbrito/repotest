@@ -1,0 +1,48 @@
+﻿{
+  "schema_version": 2,
+  "tasks": [
+    {
+      "id": "big-sum",
+      "category": "cross-file-large-aggregate",
+      "mode": "read",
+      "prompt": "Sum the limit field of every services/*.json file whose status is active. End with exactly: total_limit=<n>.",
+      "expected": "total_limit=98200"
+    },
+    {
+      "id": "big-max",
+      "category": "cross-file-large-search",
+      "mode": "read",
+      "prompt": "Find the service with the highest limit across services/*.json. If two services tie, choose the lower id. End with exactly: service=<id>; limit=<n>.",
+      "expected": "service=svc-027; limit=1000"
+    },
+    {
+      "id": "big-owner",
+      "category": "cross-file-large-lookup",
+      "mode": "read",
+      "prompt": "Find the owner of service svc-217, then count how many services have that same owner. End with exactly: owner=<name>; count=<n>.",
+      "expected": "owner=team-0; count=42"
+    },
+    {
+      "id": "big-canary",
+      "category": "cross-file-large-count",
+      "mode": "read",
+      "prompt": "Count the services whose notes field contains the word canary. End with exactly: canary=<n>.",
+      "expected": "canary=8"
+    },
+    {
+      "id": "big-edit",
+      "category": "cross-file-large-edit",
+      "mode": "edit",
+      "prompt": "Set the limit of service svc-042 to 999 in services/svc-042.json. Change nothing else. End with exactly: changed=services/svc-042.json; limit=999.",
+      "expected": "changed=services/svc-042.json; limit=999",
+      "allowed_changes": ["services/svc-042.json"],
+      "checks": [
+        {
+          "path": "services/svc-042.json",
+          "contains": ["\"limit\": 999"],
+          "not_contains": ["\"limit\": 555"]
+        }
+      ]
+    }
+  ]
+}

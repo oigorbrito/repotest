@@ -1,0 +1,17 @@
+﻿IMPLEMENTACAO: Pi-Rust
+BASE: D:\projetos\pi-benchmark\diff-review\original-extraido\resty-3
+WORKSPACE: D:\projetos\pi-benchmark\resty-3rust\resty-3
+
+MODIFICADOS: 3
+ADICIONADOS: 1
+REMOVIDOS: 0
+
+=== MODIFICADOS ===
+circuit_breaker.go
+client.go
+BUILD.bazel
+
+=== ADICIONADOS ===
+client_hooks_concurrency_test.go
+
+=== REMOVIDOS ===

@@ -1,0 +1,61 @@
+﻿"agente","tarefa","categoria","faixa","modo","repeticao","resposta_correta","workspace_ok","sucesso","resposta","esperado","erros","segundos","entrada","saida","cache_leitura","cache_escrita","custo_est_usd","custo_reportado_usd"
+"orca","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","","total_limit=98200","","8,6","8","1874","5504","18815","0,003345",
+"aider","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","total_limit=86130","total_limit=98200","","55,7","178000","5","0","0","0,017802","0,02"
+"marshall","big-sum","cross-file-large-aggregate","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","159","1645322","26306","0","0","0,177685",
+"pi","big-sum","cross-file-large-aggregate","grande","read","1","True","True","True","total_limit=98200","total_limit=98200","","21","8","4883","7713","16192","0,004543","0,00454343"
+"orca","big-max","cross-file-large-search","grande","read","1","False","True","False","","service=svc-027; limit=1000","","0,5","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","1","False","True","False","credits.""},""request_id"":""req_011Ch91En6r4ZNd1qqsDfnXp""}'","service=svc-027; limit=1000","","8,2","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","3,2","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","1","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","7,9","8","549","9199","9429","0,001546","0,001545915"
+"orca","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","","owner=team-0; count=42","","0,6","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","credits.""},""request_id"":""req_011Ch91GiyPJVk2AbNFPRrXM""}'","owner=team-0; count=42","","9,4","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","4,3","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","1","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","12","12","970","17957","6280","0,001451","0,00145077"
+"orca","big-canary","cross-file-large-count","grande","read","1","False","True","False","","canary=8","","0,6","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","1","False","True","False","credits.""},""request_id"":""req_011Ch91KNWerCb7bdyhes2dy""}'","canary=8","","11,7","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","1","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","4,7","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","1","True","True","True","canary=8","canary=8","","14,2","12","1067","18333","7693","0,00168","0,001679655"
+"orca","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","1,3","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","credits.""},""request_id"":""req_011Ch91P8383DLFiBQEeQ7xu""}'","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","15,1","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","1","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","5","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","1","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,5","8","225","8218","5138","0,000838","0,00083773"
+"orca","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","","total_limit=98200","","0,5","0","0","0","0","0",
+"aider","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","credits.""},""request_id"":""req_011Ch91R6yC7ETXRxEpYV1v6""}'","total_limit=98200","","9,9","0","0","0","0","0",
+"marshall","big-sum","cross-file-large-aggregate","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","3,7","0","0","0","0","0",
+"pi","big-sum","cross-file-large-aggregate","grande","read","2","True","True","True","total_limit=98200","total_limit=98200","","26,1","8","6111","9175","14670","0,004982","0,0049818"
+"orca","big-max","cross-file-large-search","grande","read","2","False","True","False","","service=svc-027; limit=1000","","0,6","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","2","False","True","False","credits.""},""request_id"":""req_011Ch91UPQj5cYGTX4YANMV5""}'","service=svc-027; limit=1000","","8,1","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","3,4","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","2","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","7,9","10","590","20049","11397","0,001921","0,001921115"
+"orca","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","","owner=team-0; count=42","","0,7","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","credits.""},""request_id"":""req_011Ch91WKZcnBFF9R9azZTYk""}'","owner=team-0; count=42","","8,2","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","3,3","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","2","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","12,3","14","1022","25653","7512","0,001708","0,00170793"
+"orca","big-canary","cross-file-large-count","grande","read","2","False","True","False","","canary=8","","0,6","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","2","False","True","False","credits.""},""request_id"":""req_011Ch91YXchjjMJZ94kt7nSS""}'","canary=8","","9,3","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","2","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","3,2","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","2","True","True","True","canary=8","canary=8","","10,3","12","873","18302","7939","0,001613","0,001613095"
+"orca","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","0,5","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","credits.""},""request_id"":""req_011Ch91an9PBMtrQP5akpYbL""}'","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","9,5","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","2","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","3,6","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","2","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,7","8","225","10251","3105","0,000604","0,000603935"
+"orca","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","","total_limit=98200","","0,6","0","0","0","0","0",
+"aider","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","credits.""},""request_id"":""req_011Ch91cc9RcWpWwfXSYFx9v""}'","total_limit=98200","","9","0","0","0","0","0",
+"marshall","big-sum","cross-file-large-aggregate","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","total_limit=98200","","3,1","0","0","0","0","0",
+"pi","big-sum","cross-file-large-aggregate","grande","read","3","True","True","True","total_limit=98200","total_limit=98200","","27,1","8","7467","9175","14659","0,005658","0,005658425"
+"orca","big-max","cross-file-large-search","grande","read","3","False","True","False","","service=svc-027; limit=1000","","0,7","0","0","0","0","0",
+"aider","big-max","cross-file-large-search","grande","read","3","False","True","False","credits.""},""request_id"":""req_011Ch91fxQQd4mW3Jep22otP""}'","service=svc-027; limit=1000","","7,7","0","0","0","0","0",
+"marshall","big-max","cross-file-large-search","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","service=svc-027; limit=1000","","3,3","0","0","0","0","0",
+"pi","big-max","cross-file-large-search","grande","read","3","True","True","True","service=svc-027; limit=1000","service=svc-027; limit=1000","","9,1","10","567","20059","11374","0,001907","0,00190684"
+"orca","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","","owner=team-0; count=42","","0,5","0","0","0","0","0",
+"aider","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","credits.""},""request_id"":""req_011Ch91hubJfaypfwTjDvViu""}'","owner=team-0; count=42","","8","0","0","0","0","0",
+"marshall","big-owner","cross-file-large-lookup","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","owner=team-0; count=42","","3,3","0","0","0","0","0",
+"pi","big-owner","cross-file-large-lookup","grande","read","3","True","True","True","owner=team-0; count=42","owner=team-0; count=42","","12,9","10","1147","16390","11908","0,002227","0,0022269"
+"orca","big-canary","cross-file-large-count","grande","read","3","False","True","False","","canary=8","","0,7","0","0","0","0","0",
+"aider","big-canary","cross-file-large-count","grande","read","3","False","True","False","credits.""},""request_id"":""req_011Ch91kCGwvihjL1DgPKRZ1""}'","canary=8","","9,6","0","0","0","0","0",
+"marshall","big-canary","cross-file-large-count","grande","read","3","False","True","False","+ FullyQualifiedErrorId : NativeCommandError","canary=8","","3,2","0","0","0","0","0",
+"pi","big-canary","cross-file-large-count","grande","read","3","False","True","False","canary=9","canary=8","","11,1","14","1044","27505","8119","0,001813","0,001813325"
+"orca","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","0,6","0","0","0","0","0",
+"aider","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","credits.""},""request_id"":""req_011Ch91nQjbkFMVmbGbSyiev""}'","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","8,5","0","0","0","0","0",
+"marshall","big-edit","cross-file-large-edit","grande","edit","3","False","False","False","+ FullyQualifiedErrorId : NativeCommandError","changed=services/svc-042.json; limit=999","mudou:  | sem '""limit"": 999' | ainda tem '""limit"": 555'","3,4","0","0","0","0","0",
+"pi","big-edit","cross-file-large-edit","grande","edit","3","True","True","True","changed=services/svc-042.json; limit=999","changed=services/svc-042.json; limit=999","","4,2","8","225","10251","3105","0,000604","0,000603935"

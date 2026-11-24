@@ -1,0 +1,20 @@
+# Documentation index
+
+Created: 2026-10-29. Last updated: 2026-11-04.
+
+| Document | Use it when |
+| --- | --- |
+| [../crates/pi-coding-agent/docs/settings.md](../crates/pi-coding-agent/docs/settings.md) | You configure list overflow or reduced-motion behavior in selectable TUI lists. |
+| [parity/README.md](parity/README.md) | You look for gaps against upstream pi or port an upstream commit. |
+| [parity/GAPS.md](parity/GAPS.md) | You need the open parity gaps and the pi-rust extensions. |
+| [parity/sdk-child-session.md](parity/sdk-child-session.md) | You change the SDK `AgentSession` of `createAgentSession`. It lists the members that run and the ones that still throw. |
+| [agents/node-compat.md](agents/node-compat.md) | You close a Node API gap in the extension runtime. |
+| [agents/ci-triage.md](agents/ci-triage.md) | You diagnose a CI failure or a flaky test. |
+| [agents/release.md](agents/release.md) | You ship a change. |
+| [agents/daily-gap-check.md](agents/daily-gap-check.md) | You run the scheduled gap review. |
+| [providers/usage.md](providers/usage.md) | You change `/usage`, `pi usage`, or `usage.get`. It records the usage endpoints of each provider and their sources. |
+| [providers/subscription-providers.md](providers/subscription-providers.md) | You change the Cursor or Google Antigravity provider. It records their login flows and wire protocols. |
+| [../crates/pi-coding-agent/docs/rpc.md](../crates/pi-coding-agent/docs/rpc.md) | You change RPC mode. It lists the pi-rust additions: built-in commands with `command_output`, and `agentInvoked`. |
+| [../crates/pi-coding-agent/docs/deferred-context.md](../crates/pi-coding-agent/docs/deferred-context.md) | You change deferred skills or context entries, the `contextExposure` setting, or what `tool_search` returns for them. It has the extension API for `contextEntries`. |
+| [../crates/pi-coding-agent/docs/acp-providers.md](../crates/pi-coding-agent/docs/acp-providers.md) | You change the ACP client provider, the `/acp` browser, or the `acpAgents` setting. It records the ACP registry format and how Kiro CLI and Amp run over ACP. |
+| [../crates/pi-coding-agent/docs/mcp.md](../crates/pi-coding-agent/docs/mcp.md) | You change when MCP servers connect (`lifecycle`) or the MCP tool cache in `mcp-cache/`. |

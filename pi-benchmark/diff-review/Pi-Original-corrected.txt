@@ -1,0 +1,16 @@
+﻿IMPLEMENTACAO: Pi-Original
+BASE: D:\projetos\pi-benchmark\diff-review\original-extraido\resty-3
+WORKSPACE: D:\projetos\pi-benchmark\resty-3or\resty-3
+
+MODIFICADOS: 2
+ADICIONADOS: 1
+REMOVIDOS: 0
+
+=== MODIFICADOS ===
+circuit_breaker.go
+client.go
+
+=== ADICIONADOS ===
+hooks_concurrency_test.go
+
+=== REMOVIDOS ===

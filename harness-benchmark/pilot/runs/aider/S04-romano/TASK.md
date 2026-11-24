@@ -1,0 +1,1 @@
+﻿Implemente Get-RomanNumeral em src\Get-RomanNumeral.ps1. Recebe -Number (inteiro de 1 a 3999) e retorna o número em algarismos romanos (ex.: 1994 -> MCMXCIV). Fora desse intervalo, a função deve lançar erro. Não altere tests.ps1. Ao final, rode .\tests.ps1 e confirme que a saída é PASS.
