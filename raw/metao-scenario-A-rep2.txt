@@ -1,0 +1,14 @@
+{
+  "rep": 2,
+  "status": "PASS",
+  "units_before": 3,
+  "units_recovered": 3,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "verified_sqlite_relational",
+  "recovery_time_ms": 14,
+  "execution_time_ms": 54,
+  "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+}

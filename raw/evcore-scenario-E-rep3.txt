@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 2,
+  "units_recovered": 0,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 2,
+  "stale_rejected": null,
+  "state_integrity": "safely_rejected",
+  "recovery_time_ms": 0,
+  "execution_time_ms": 14,
+  "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep3\\\\a4887000-93e0-410f-98dc-31b7e3e1a9e7.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+}

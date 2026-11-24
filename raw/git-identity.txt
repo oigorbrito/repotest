@@ -1,0 +1,37 @@
+=== FineCode ===
+Commit: ad41b5c344d5399982718720db975b1e020e2c40
+Branch/Refs: HEAD -> tui, origin/feat/upstream-import-observability, feat/upstream-import-observability
+Subject: fix(coding-agent): classify divergent review mirrors
+Status:
+?? nul
+
+=== EvCore ===
+Commit: e4e8d9a3a1c9a7dbae7d9feda5dd4be378099d06
+Branch/Refs: HEAD -> claude/tender-hawking-dcgx72
+Subject: feat(auth): browser login for OpenAI Codex (PKCE + loopback)
+Status:
+ M crates/cli/src/auth/mod.rs
+ M crates/cli/src/auth/openai_codex/browser.rs
+ M crates/cli/src/auth/openai_codex/callback.rs
+ M crates/cli/src/auth/openai_codex/mod.rs
+ M crates/cli/src/context_window.rs
+ M crates/cli/src/main.rs
+ M crates/cli/src/msg.rs
+ M crates/cli/src/run_args.rs
+ M crates/cli/src/runtime/worker.rs
+ M crates/cli/src/runtime/worker/login.rs
+ M crates/cli/src/tui/keys/overlays.rs
+ M docs/ENGINEERING_ROADMAP_AUTH_AND_LOCAL_MODELS.md
+?? crates/cli/src/auth/openrouter.rs
+?? crates/cli/src/auth/xai.rs
+
+=== metaO ===
+Commit: 23fc5c659ae5f0606e9e6774108c44636e29b0ac
+Branch/Refs: HEAD, tag: v0.2.0-rc.1, main
+Subject: Make installed CLI release gate compatible with Windows application control (#729)
+Status:
+?? benchmark-evidence/
+?? codex-gpt6-luna-smoke.json
+?? codex-l7-pilot-explicit-model.json
+?? gemini-b4-diag.stderr
+?? gemini-b4-diag.stdout

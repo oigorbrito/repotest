@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 1,
+  "re_executed": 1,
+  "effects_duplicated": 1,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "reconciled_from_event_ledger",
+  "recovery_time_ms": 4,
+  "execution_time_ms": 28,
+  "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+}

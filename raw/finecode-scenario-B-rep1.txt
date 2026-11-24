@@ -1,0 +1,14 @@
+{
+  "rep": 1,
+  "status": "PASS",
+  "units_before": 2,
+  "units_recovered": 2,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "recovered_from_unclosed_storage",
+  "recovery_time_ms": 32,
+  "execution_time_ms": 77,
+  "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+}

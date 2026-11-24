@@ -1,1 +1,0 @@
-{"role": "tx_op", "id": "X", "fenced_tree": true, "occ_tree": true, "outcome": "ACCEPTED", "state": {"revision": 1, "objective": "persist mission lifecycle", "events": [[1, "X"]], "handle": [["e1", "ACTIVE", null, 1]], "integrity": "ok"}}

@@ -1,0 +1,18 @@
+{
+  "events": [
+    1,
+    2,
+    3
+  ],
+  "ledger_ok": true,
+  "record_ok": true,
+  "record_revision": 1,
+  "record_orchestrator_id": "runtime-b",
+  "handle_ok": true,
+  "handle_status": "COMPLETED",
+  "handle_execution_id": "m-s-exec-3",
+  "mode": "inspect",
+  "pid": 24664,
+  "total_ms": 4,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

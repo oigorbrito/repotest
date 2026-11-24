@@ -1,0 +1,17 @@
+{
+  "closed_normally": true,
+  "mode": "run",
+  "open_ms": 0,
+  "pid": 29724,
+  "total_ms": 23,
+  "units_completed_this_run": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "units_recovered": 0,
+  "warnings": [],
+  "work_ms": 22
+}

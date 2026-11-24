@@ -1,0 +1,11 @@
+{
+  "stale_write": "accepted",
+  "revision_after_b": 2,
+  "revision_after_a": 3,
+  "final_orchestrator_id": "worker-A-STALE",
+  "final_revision": 3,
+  "mode": "record",
+  "pid": 41664,
+  "total_ms": 121,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

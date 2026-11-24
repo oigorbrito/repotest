@@ -1,0 +1,14 @@
+{
+  "rep": 2,
+  "status": "PASS",
+  "units_before": 2,
+  "units_recovered": 2,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "recovered_after_os_exit",
+  "recovery_time_ms": 18,
+  "execution_time_ms": 269,
+  "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+}

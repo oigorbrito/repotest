@@ -1,0 +1,17 @@
+{
+  "units_recovered": 0,
+  "events_before": 0,
+  "init_ms": 48,
+  "units_completed_this_run": [
+    1,
+    2,
+    3
+  ],
+  "work_ms": 26,
+  "closed_normally": true,
+  "events_after": 3,
+  "mode": "ledger",
+  "pid": 35172,
+  "total_ms": 77,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

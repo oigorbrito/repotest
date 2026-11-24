@@ -1,0 +1,14 @@
+{
+  "rep": 2,
+  "status": "PASS",
+  "units_before": 3,
+  "units_recovered": 3,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "verified",
+  "recovery_time_ms": 5035,
+  "execution_time_ms": 5095,
+  "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+}

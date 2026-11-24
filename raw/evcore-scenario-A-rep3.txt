@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 3,
+  "units_recovered": 3,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "verified_jsonl",
+  "recovery_time_ms": 6,
+  "execution_time_ms": 15,
+  "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+}

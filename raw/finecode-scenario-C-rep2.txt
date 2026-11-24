@@ -1,0 +1,14 @@
+{
+  "rep": 2,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 2,
+  "re_executed": 1,
+  "effects_duplicated": 1,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "reconciled_to_prior_checkpoint",
+  "recovery_time_ms": 38,
+  "execution_time_ms": 84,
+  "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+}

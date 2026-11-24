@@ -1,0 +1,687 @@
+{
+  "benchmark": "Comparative Durability and Recovery Benchmark",
+  "timestamp": "2026-11-18T22:42:30-03:00",
+  "projects": {
+    "FineCode": {
+      "project": "FineCode",
+      "git_sha": "ad41b5c344d5399982718720db975b1e020e2c40",
+      "branch": "tui",
+      "scenarios": {
+        "A": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified",
+            "recovery_time_ms": 5045,
+            "execution_time_ms": 5139,
+            "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified",
+            "recovery_time_ms": 5035,
+            "execution_time_ms": 5095,
+            "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified",
+            "recovery_time_ms": 5038,
+            "execution_time_ms": 5110,
+            "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          }
+        ],
+        "B": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_from_unclosed_storage",
+            "recovery_time_ms": 32,
+            "execution_time_ms": 77,
+            "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_from_unclosed_storage",
+            "recovery_time_ms": 43,
+            "execution_time_ms": 83,
+            "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_from_unclosed_storage",
+            "recovery_time_ms": 39,
+            "execution_time_ms": 89,
+            "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+          }
+        ],
+        "C": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 2,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_to_prior_checkpoint",
+            "recovery_time_ms": 26,
+            "execution_time_ms": 58,
+            "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 2,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_to_prior_checkpoint",
+            "recovery_time_ms": 38,
+            "execution_time_ms": 84,
+            "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 2,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_to_prior_checkpoint",
+            "recovery_time_ms": 27,
+            "execution_time_ms": 75,
+            "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+          }
+        ],
+        "D": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_abort_signal",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 1438,
+            "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_abort_signal",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 1430,
+            "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_abort_signal",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 1446,
+            "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+          }
+        ],
+        "E": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 5,
+            "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 2,
+            "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 2,
+            "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+          }
+        ]
+      }
+    },
+    "EvCore": {
+      "project": "evcore",
+      "git_sha": "e4e8d9a3a1c9a7dbae7d9feda5dd4be378099d06",
+      "branch": "claude/tender-hawking-dcgx72",
+      "scenarios": {
+        "A": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_jsonl",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 19,
+            "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_jsonl",
+            "recovery_time_ms": 5,
+            "execution_time_ms": 13,
+            "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_jsonl",
+            "recovery_time_ms": 6,
+            "execution_time_ms": 15,
+            "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+          }
+        ],
+        "B": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_with_crash_artifact_dropped",
+            "recovery_time_ms": 11,
+            "execution_time_ms": 18,
+            "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep1\\\\54f8d5a9-3e3c-4305-b69c-055b41dd6c05.jsonl\"]. Total units recovered and finished: 5"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_with_crash_artifact_dropped",
+            "recovery_time_ms": 11,
+            "execution_time_ms": 16,
+            "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep2\\\\13b844c3-73a8-4306-bbaa-995a022a4ca0.jsonl\"]. Total units recovered and finished: 5"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_with_crash_artifact_dropped",
+            "recovery_time_ms": 10,
+            "execution_time_ms": 17,
+            "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep3\\\\9bd2315a-9de4-46a9-b649-7785dac2aebe.jsonl\"]. Total units recovered and finished: 5"
+          }
+        ],
+        "C": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_last_synced_message",
+            "recovery_time_ms": 6,
+            "execution_time_ms": 15,
+            "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_last_synced_message",
+            "recovery_time_ms": 7,
+            "execution_time_ms": 13,
+            "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_last_synced_message",
+            "recovery_time_ms": 5,
+            "execution_time_ms": 6,
+            "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+          }
+        ],
+        "D": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": false,
+            "state_integrity": "concurrent_append_without_cross_process_fencing",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 11,
+            "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": false,
+            "state_integrity": "concurrent_append_without_cross_process_fencing",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 11,
+            "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": false,
+            "state_integrity": "concurrent_append_without_cross_process_fencing",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 10,
+            "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+          }
+        ],
+        "E": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 2,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 11,
+            "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep1\\\\38366da5-f4ce-4a5b-a9f1-e27a9cfa4758.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 2,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 12,
+            "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep2\\\\d0e6d1b6-59dd-4152-b405-3ac4d8f0ae5b.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 2,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 14,
+            "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep3\\\\a4887000-93e0-410f-98dc-31b7e3e1a9e7.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+          }
+        ]
+      }
+    },
+    "metaO": {
+      "project": "metaO",
+      "git_sha": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+      "branch": "main",
+      "scenarios": {
+        "A": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_sqlite_relational",
+            "recovery_time_ms": 18,
+            "execution_time_ms": 64,
+            "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_sqlite_relational",
+            "recovery_time_ms": 14,
+            "execution_time_ms": 54,
+            "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 3,
+            "units_recovered": 3,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "verified_sqlite_relational",
+            "recovery_time_ms": 13,
+            "execution_time_ms": 47,
+            "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+          }
+        ],
+        "B": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_after_os_exit",
+            "recovery_time_ms": 15,
+            "execution_time_ms": 218,
+            "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_after_os_exit",
+            "recovery_time_ms": 18,
+            "execution_time_ms": 269,
+            "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 2,
+            "units_recovered": 2,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "recovered_after_os_exit",
+            "recovery_time_ms": 14,
+            "execution_time_ms": 206,
+            "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+          }
+        ],
+        "C": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_event_ledger",
+            "recovery_time_ms": 4,
+            "execution_time_ms": 32,
+            "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_event_ledger",
+            "recovery_time_ms": 5,
+            "execution_time_ms": 29,
+            "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 1,
+            "effects_duplicated": 1,
+            "effects_lost": 0,
+            "stale_rejected": null,
+            "state_integrity": "reconciled_from_event_ledger",
+            "recovery_time_ms": 4,
+            "execution_time_ms": 28,
+            "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+          }
+        ],
+        "D": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_sqlite_unique_constraints",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 23,
+            "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep1). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_sqlite_unique_constraints",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 24,
+            "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep2). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 1,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 0,
+            "stale_rejected": true,
+            "state_integrity": "fenced_by_sqlite_unique_constraints",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 23,
+            "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep3). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+          }
+        ],
+        "E": [
+          {
+            "rep": 1,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 22,
+            "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+          },
+          {
+            "rep": 2,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 23,
+            "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+          },
+          {
+            "rep": 3,
+            "status": "PASS",
+            "units_before": 1,
+            "units_recovered": 0,
+            "re_executed": 0,
+            "effects_duplicated": 0,
+            "effects_lost": 1,
+            "stale_rejected": null,
+            "state_integrity": "safely_rejected",
+            "recovery_time_ms": 0,
+            "execution_time_ms": 17,
+            "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+          }
+        ]
+      }
+    }
+  }
+}

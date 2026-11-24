@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 0,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 1,
+  "stale_rejected": null,
+  "state_integrity": "safely_rejected",
+  "recovery_time_ms": 0,
+  "execution_time_ms": 2,
+  "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+}

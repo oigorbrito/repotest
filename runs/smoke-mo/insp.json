@@ -1,0 +1,18 @@
+{
+  "events": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "ledger_ok": true,
+  "record_ok": false,
+  "record_error": "MissionNotFound: mission not found: m-1",
+  "handle_ok": false,
+  "handle_error": "ActiveExecutionNotFound: 'm-1'",
+  "mode": "inspect",
+  "pid": 31156,
+  "total_ms": 20,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

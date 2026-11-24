@@ -1,1 +1,0 @@
-{"role": "snapshot", "id": "snap", "fenced_tree": true, "occ_tree": true, "state": {"revision": 1, "objective": "persist mission lifecycle", "events": [], "handle": [["e2", "ACTIVE", null, 2]], "integrity": "ok"}}

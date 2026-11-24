@@ -1,0 +1,16 @@
+# Ignored heavy copies and test dumps
+copies/
+test-2/
+test-3/
+evbench/
+_run0-*/
+node_modules/
+target/
+*.sqlite*
+*.bin
+*.exe
+*.pdb
+*.rlib
+*.o
+*.rmeta
+*.pack

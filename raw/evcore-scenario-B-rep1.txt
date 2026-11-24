@@ -1,0 +1,14 @@
+{
+  "rep": 1,
+  "status": "PASS",
+  "units_before": 2,
+  "units_recovered": 2,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "recovered_with_crash_artifact_dropped",
+  "recovery_time_ms": 11,
+  "execution_time_ms": 18,
+  "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep1\\\\54f8d5a9-3e3c-4305-b69c-055b41dd6c05.jsonl\"]. Total units recovered and finished: 5"
+}

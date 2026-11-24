@@ -1,0 +1,227 @@
+{
+  "project": "FineCode",
+  "git_sha": "ad41b5c344d5399982718720db975b1e020e2c40",
+  "branch": "tui",
+  "scenarios": {
+    "A": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified",
+        "recovery_time_ms": 5045,
+        "execution_time_ms": 5139,
+        "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified",
+        "recovery_time_ms": 5035,
+        "execution_time_ms": 5095,
+        "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified",
+        "recovery_time_ms": 5038,
+        "execution_time_ms": 5110,
+        "notes": "Executed 3, closed gracefully. Reopened: recovered 3 units, completed 2 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      }
+    ],
+    "B": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_from_unclosed_storage",
+        "recovery_time_ms": 32,
+        "execution_time_ms": 77,
+        "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_from_unclosed_storage",
+        "recovery_time_ms": 43,
+        "execution_time_ms": 83,
+        "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_from_unclosed_storage",
+        "recovery_time_ms": 39,
+        "execution_time_ms": 89,
+        "notes": "Crash without close after 2 units. Reopened: recovered 2 units, completed 3 remaining. Total units: [unit_1,unit_2,unit_3,unit_4,unit_5]. Outcome: completed"
+      }
+    ],
+    "C": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 2,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_to_prior_checkpoint",
+        "recovery_time_ms": 26,
+        "execution_time_ms": 58,
+        "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 2,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_to_prior_checkpoint",
+        "recovery_time_ms": 38,
+        "execution_time_ms": 84,
+        "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 2,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_to_prior_checkpoint",
+        "recovery_time_ms": 27,
+        "execution_time_ms": 75,
+        "notes": "Effect 2 was executed 2 times. System rolled back to last durable checkpoint (n=2). Duplication empirically confirmed in absence of runtime.memo()."
+      }
+    ],
+    "D": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_abort_signal",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 1438,
+        "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_abort_signal",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 1430,
+        "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_abort_signal",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 1446,
+        "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+      }
+    ],
+    "E": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 5,
+        "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 2,
+        "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 2,
+        "notes": "Corrupted SQLite safely rejected with error: 'file is not a database'. No silent corruption."
+      }
+    ]
+  }
+}

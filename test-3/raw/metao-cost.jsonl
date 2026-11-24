@@ -1,2 +1,0 @@
-{"tree": "metao-baseline", "fenced_api": false, "n": 500, "append_us_per_op_median": 11034.1, "append_us_per_op_all": [10196.0, 10984.2, 11261.6, 11034.1, 11083.8], "replace_us_per_op_median": 12166.7, "replace_us_per_op_all": [12282.1, 12146.2, 12222.3, 12166.7, 9156.0]}
-{"tree": "metao", "fenced_api": true, "n": 500, "append_us_per_op_median": 11053.3, "append_us_per_op_all": [12911.0, 11048.7, 10924.9, 11053.3, 11359.4], "replace_us_per_op_median": 12156.6, "replace_us_per_op_all": [12129.1, 11925.1, 12156.6, 12334.9, 12167.0]}

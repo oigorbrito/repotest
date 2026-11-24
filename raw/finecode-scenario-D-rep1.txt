@@ -1,0 +1,14 @@
+{
+  "rep": 1,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 1,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": true,
+  "state_integrity": "fenced_by_abort_signal",
+  "recovery_time_ms": 0,
+  "execution_time_ms": 1438,
+  "notes": "Supervisor abortTask: 'marked'. Stale commit rejected: true (This operation was aborted). Final task state: terminal (aborted)."
+}

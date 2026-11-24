@@ -1,1 +1,0 @@
-{"role": "snapshot", "id": "snap", "fenced_tree": false, "occ_tree": false, "state": {"revision": 61, "objective": "persist mission lifecycle;W0-0;W0-1;W0-2;W0-3;W3-0;W3-1;W3-2;W2-0;W2-1;W2-2;W2-3;W2-4;W2-5;W2-6;W2-7;W2-8;W2-9;W2-10;W2-11;W2-12;W2-13;W2-14", "events": [], "handle": [], "integrity": "ok"}}

@@ -1,0 +1,22 @@
+{"v":1,"id":"e33450e4-ff7f-45ab-9243-3c475e2b5062","created_at":1795054644,"workspace":"/bench/ws","model":"scripted"}
+{"System":{"content":"sys"}}
+{"User":{"content":"unit 1 main"}}
+{"Assistant":{"content":null,"tool_calls":[{"id":"c1-main","name":"effect","arguments":{"unit":1}}]}}
+{"Tool":{"results":[{"call_id":"c1-main","tool_name":"effect","output":{"ok":true},"is_error":false}]}}
+{"Assistant":{"content":"done 1 main","tool_calls":[]}}
+{"User":{"content":"unit 2 main"}}
+{"Assistant":{"content":null,"tool_calls":[{"id":"c2-main","name":"effect","arguments":{"unit":2}}]}}
+{"Tool":{"results":[{"call_id":"c2-main","tool_name":"effect","output":{"ok":true},"is_error":false}]}}
+{"Assistant":{"content":"done 2 main","tool_calls":[]}}
+{"User":{"content":"unit 3 main"}}
+{"Assistant":{"content":null,"tool_calls":[{"id":"c3-main","name":"effect","arguments":{"unit":3}}]}}
+{"Tool":{"results":[{"call_id":"c3-main","tool_name":"effect","output":{"ok":true},"is_error":false}]}}
+{"Assistant":{"content":"done 3 main","tool_calls":[]}}
+{"User":{"content":"unit 4 main"}}
+{"Assistant":{"content":null,"tool_calls":[{"id":"c4-main","name":"effect","arguments":{"unit":4}}]}}
+{"Tool":{"results":[{"call_id":"c4-main","tool_name":"effect","output":{"ok":true},"is_error":false}]}}
+{"Assistant":{"content":"done 4 main","tool_calls":[]}}
+{"User":{"content":"unit 5 main"}}
+{"Assistant":{"content":null,"tool_calls":[{"id":"c5-main","name":"effect","arguments":{"unit":5}}]}}
+{"Tool":{"results":[{"call_id":"c5-main","tool_name":"effect","output":{"ok":true},"is_error":false}]}}
+{"Assistant":{"content":"done 5 main","tool_calls":[]}}

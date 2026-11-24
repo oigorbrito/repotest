@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 1,
+  "re_executed": 0,
+  "effects_duplicated": 0,
+  "effects_lost": 0,
+  "stale_rejected": false,
+  "state_integrity": "concurrent_append_without_cross_process_fencing",
+  "recovery_time_ms": 0,
+  "execution_time_ms": 10,
+  "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+}

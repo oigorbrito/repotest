@@ -1,0 +1,17 @@
+{
+  "verdict": "PROJECT_ACCEPTED",
+  "graph_units": [
+    "wu-1",
+    "wu-2",
+    "wu-3",
+    "wu-4",
+    "wu-5"
+  ],
+  "reason": "",
+  "trace_len": 22,
+  "supervise_ms": 110,
+  "mode": "supervise",
+  "pid": 17956,
+  "total_ms": 125,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

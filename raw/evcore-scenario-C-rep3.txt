@@ -1,0 +1,14 @@
+{
+  "rep": 3,
+  "status": "PASS",
+  "units_before": 1,
+  "units_recovered": 1,
+  "re_executed": 1,
+  "effects_duplicated": 1,
+  "effects_lost": 0,
+  "stale_rejected": null,
+  "state_integrity": "reconciled_from_last_synced_message",
+  "recovery_time_ms": 5,
+  "execution_time_ms": 6,
+  "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+}

@@ -1,0 +1,17 @@
+{
+  "verdict": "PROJECT_BLOCKED",
+  "graph_units": [
+    "wu-1",
+    "wu-2",
+    "wu-3",
+    "wu-4",
+    "wu-5"
+  ],
+  "reason": "captured checkpoint does not match execution repository state",
+  "trace_len": 3,
+  "supervise_ms": 19,
+  "mode": "supervise",
+  "pid": 9596,
+  "total_ms": 34,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

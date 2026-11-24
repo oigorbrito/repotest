@@ -1,6 +1,0 @@
-{"key":"unit_1","occurrence":"9cfebf3d-3a30-4a84-81f9-82f55880a1a9","pid":36344,"run":"instA","t":1795057084338}
-{"key":"unit_1","occurrence":"2d64eb22-5659-40db-b40e-176c18d4fd02","pid":13776,"run":"instB","t":1795057084349}
-{"key":"unit_2","occurrence":"b887f1b8-45f7-4872-9840-69c778d204a4","pid":36344,"run":"instA","t":1795057084360}
-{"key":"unit_2","occurrence":"961ac7b6-5678-4f16-a85e-4dd0c5250f38","pid":13776,"run":"instB","t":1795057084374}
-{"key":"unit_3","occurrence":"236ce903-6e45-4a93-9f4c-2b5786a26366","pid":13776,"run":"instB","t":1795057084389}
-{"key":"unit_3","occurrence":"0dcf7b46-9db6-4021-856e-ff430c3b3897","pid":36344,"run":"instA","t":1795057084405}

@@ -1,0 +1,11 @@
+{
+  "takeover_by_worker2": "accepted",
+  "stale_complete_by_worker1": "accepted",
+  "final_execution_id": "m-h-exec-2",
+  "final_orchestrator_id": "worker-2",
+  "final_status": "COMPLETED",
+  "mode": "handle",
+  "pid": 32260,
+  "total_ms": 32,
+  "module_file": "D:\\projetos\\durability-benchmark\\copies\\metaO\\src\\metao\\__init__.py"
+}

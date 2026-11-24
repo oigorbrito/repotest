@@ -1,0 +1,15 @@
+{
+  "file": "D:/projetos/durability-benchmark/runs/smoke-ev/sess\\e33450e4-ff7f-45ab-9243-3c475e2b5062.jsonl",
+  "mode": "inspect",
+  "ok": true,
+  "pid": 17144,
+  "total_ms": 1,
+  "user_messages": [
+    "unit 1 main",
+    "unit 2 main",
+    "unit 3 main",
+    "unit 4 main",
+    "unit 5 main"
+  ],
+  "warnings": []
+}

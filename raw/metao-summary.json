@@ -1,0 +1,227 @@
+{
+  "project": "metaO",
+  "git_sha": "23fc5c659ae5f0606e9e6774108c44636e29b0ac",
+  "branch": "main",
+  "scenarios": {
+    "A": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_sqlite_relational",
+        "recovery_time_ms": 18,
+        "execution_time_ms": 64,
+        "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_sqlite_relational",
+        "recovery_time_ms": 14,
+        "execution_time_ms": 54,
+        "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_sqlite_relational",
+        "recovery_time_ms": 13,
+        "execution_time_ms": 47,
+        "notes": "Executed 3 events, closed gracefully. Reopened: recovered 3 events, completed 2 remaining. Final status: ACCEPTED, revision: 2."
+      }
+    ],
+    "B": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_after_os_exit",
+        "recovery_time_ms": 15,
+        "execution_time_ms": 218,
+        "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_after_os_exit",
+        "recovery_time_ms": 18,
+        "execution_time_ms": 269,
+        "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_after_os_exit",
+        "recovery_time_ms": 14,
+        "execution_time_ms": 206,
+        "notes": "Abrupt os._exit(0) after 2 units. Reopened: recovered 2 units intact from SQLite WAL. Finished 3 remaining (total: 5)."
+      }
+    ],
+    "C": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_event_ledger",
+        "recovery_time_ms": 4,
+        "execution_time_ms": 32,
+        "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_event_ledger",
+        "recovery_time_ms": 5,
+        "execution_time_ms": 29,
+        "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_event_ledger",
+        "recovery_time_ms": 4,
+        "execution_time_ms": 28,
+        "notes": "Effect 2 occurred 2 times. The event was not committed before crash; recovery restarted from sequence 2, duplicating the uncheckpointed side effect."
+      }
+    ],
+    "D": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_sqlite_unique_constraints",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 23,
+        "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep1). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_sqlite_unique_constraints",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 24,
+        "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep2). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": true,
+        "state_integrity": "fenced_by_sqlite_unique_constraints",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 23,
+        "notes": "Duplicate mission rejected via MissionAlreadyExists: True (mission-D-rep3). Stale event sequence rejected via UNIQUE(mission_id, sequence): True (UNIQUE constraint failed: mission_events.mission_id, mission_events.sequence)."
+      }
+    ],
+    "E": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 22,
+        "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 23,
+        "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 1,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 17,
+        "notes": "Column tamper detected by _validated() -> MissionStoreCorrupt: True ('mission revision column does not match snapshot'). Low-level DB corruption rejected -> sqlite3.DatabaseError: True ('file is not a database')."
+      }
+    ]
+  }
+}

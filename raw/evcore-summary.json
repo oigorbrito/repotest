@@ -1,0 +1,227 @@
+{
+  "project": "evcore",
+  "git_sha": "e4e8d9a3a1c9a7dbae7d9feda5dd4be378099d06",
+  "branch": "claude/tender-hawking-dcgx72",
+  "scenarios": {
+    "A": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_jsonl",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 19,
+        "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_jsonl",
+        "recovery_time_ms": 5,
+        "execution_time_ms": 13,
+        "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 3,
+        "units_recovered": 3,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "verified_jsonl",
+        "recovery_time_ms": 6,
+        "execution_time_ms": 15,
+        "notes": "3 units executed and synced. Reopened: recovered 3. Completed 2 remaining (total: 5). Warnings: []"
+      }
+    ],
+    "B": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_with_crash_artifact_dropped",
+        "recovery_time_ms": 11,
+        "execution_time_ms": 18,
+        "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep1\\\\54f8d5a9-3e3c-4305-b69c-055b41dd6c05.jsonl\"]. Total units recovered and finished: 5"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_with_crash_artifact_dropped",
+        "recovery_time_ms": 11,
+        "execution_time_ms": 16,
+        "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep2\\\\13b844c3-73a8-4306-bbaa-995a022a4ca0.jsonl\"]. Total units recovered and finished: 5"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 2,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "recovered_with_crash_artifact_dropped",
+        "recovery_time_ms": 10,
+        "execution_time_ms": 17,
+        "notes": "Truncated final line dropped automatically by resume(). Warnings: [\"dropped truncated final line 4 of D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionB_rep3\\\\9bd2315a-9de4-46a9-b649-7785dac2aebe.jsonl\"]. Total units recovered and finished: 5"
+      }
+    ],
+    "C": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_last_synced_message",
+        "recovery_time_ms": 6,
+        "execution_time_ms": 15,
+        "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_last_synced_message",
+        "recovery_time_ms": 7,
+        "execution_time_ms": 13,
+        "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 1,
+        "effects_duplicated": 1,
+        "effects_lost": 0,
+        "stale_rejected": null,
+        "state_integrity": "reconciled_from_last_synced_message",
+        "recovery_time_ms": 5,
+        "execution_time_ms": 6,
+        "notes": "Effect 2 occurred 2 times. Session checkpointed per-message; unsynced effect caused re-execution upon recovery (at-least-once)."
+      }
+    ],
+    "D": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": false,
+        "state_integrity": "concurrent_append_without_cross_process_fencing",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 11,
+        "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": false,
+        "state_integrity": "concurrent_append_without_cross_process_fencing",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 11,
+        "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 1,
+        "units_recovered": 1,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 0,
+        "stale_rejected": false,
+        "state_integrity": "concurrent_append_without_cross_process_fencing",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 10,
+        "notes": "Stale worker write was NOT rejected. EvCore uses in-process Mutex per SessionHandler but lacks cross-handle OCC fencing. Messages on disk: [\"worker1_msg1\", \"worker2_msg2\", \"worker1_stale_msg\"]"
+      }
+    ],
+    "E": [
+      {
+        "rep": 1,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 2,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 11,
+        "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep1\\\\38366da5-f4ce-4a5b-a9f1-e27a9cfa4758.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+      },
+      {
+        "rep": 2,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 2,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 12,
+        "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep2\\\\d0e6d1b6-59dd-4152-b405-3ac4d8f0ae5b.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+      },
+      {
+        "rep": 3,
+        "status": "PASS",
+        "units_before": 2,
+        "units_recovered": 0,
+        "re_executed": 0,
+        "effects_duplicated": 0,
+        "effects_lost": 2,
+        "stale_rejected": null,
+        "state_integrity": "safely_rejected",
+        "recovery_time_ms": 0,
+        "execution_time_ms": 14,
+        "notes": "Corrupted JSON line in middle of file rejected with SessionError::Corrupt: Corrupt { path: \"D:\\\\projetos\\\\durability-benchmark\\\\evcore\\\\sessionE_rep3\\\\a4887000-93e0-410f-98dc-31b7e3e1a9e7.jsonl\", line: 4, source: Error(\"unknown variant `type`, expected one of `System`, `User`, `Assistant`, `Tool`\", line: 1, column: 7) }"
+      }
+    ]
+  }
+}
